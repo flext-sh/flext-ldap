@@ -296,5 +296,5 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 
 ---
 
-**C4 Model - Level 1: System Context** _Understanding FLEXT-LDAP's role in the
-enterprise ecosystem_
+**C4 Model - Level 1: System Context**
+_Understanding FLEXT-LDAP's role in the enterprise ecosystem_

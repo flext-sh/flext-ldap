@@ -34,9 +34,10 @@ services or adapters for testing and alternative runtimes.
   high-level API used by callers.
 - **Services**: Connection, Operations, Sync, and Server Detection manage LDAP lifecycle
   concerns and return typed :class:`flext_core.r` values.
-- **Adapters**: :class:`flext_ldap.adapters.ldap3.Ldap3Adapter` and
+- **Adapters**: :class:`flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter` and
   :class:`flext_ldap.adapters.entry.FlextLdapEntryAdapter` isolate protocol handling and
-  entry normalization.
+  entry normalization; :class:`flext_ldap.adapters.host.FlextLdapAdapterHost` lazily
+  provides the shared adapter to the service mixins.
 - **Shared types**: `settings.py`, `models.py`, `constants.py`, `protocols.py`, and
   `typings.py` define pydantic models, enums, and typing contracts used across layers.
 
@@ -55,7 +56,7 @@ services or adapters for testing and alternative runtimes.
 1. `ldap.connect` converts incoming dictionaries to
    :class:`~flext_ldap._models.FlextLdapModels.ConnectionConfig` when needed.
 1. :class:`~flext_ldap.services.connection.FlextLdapConnection` delegates binding to
-   :class:`~flext_ldap.adapters.ldap3.Ldap3Adapter`, with optional retry handling.
+   :class:`~flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter`, with optional retry handling.
 1. After a successful bind, the connection service can trigger
    :class:`~flext_ldap.services.detection.FlextLdapServerDetector` to infer the server
    type from `rootDSE` attributes.

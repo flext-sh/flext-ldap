@@ -1,4 +1,4 @@
-"""LDAP3 adapter — ConnectionManager.
+"""LDAP3 adapter — FlextLdapLdap3ConnectionManager.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,7 +14,7 @@ from flext_ldap import c, m, p
 from .wrappers import FlextLdapLdap3Wrappers
 
 
-class ConnectionManager:
+class FlextLdapLdap3ConnectionManager:
     """Connection management logic (SRP)."""
 
     @staticmethod
@@ -130,4 +130,4 @@ class ConnectionManager:
             return r[bool].fail(error_msg)
 
 
-__all__: list[str] = ["ConnectionManager"]
+__all__: list[str] = ["FlextLdapLdap3ConnectionManager"]

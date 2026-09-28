@@ -15,7 +15,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
     @staticmethod
     def _get_first_value(attrs: t.Ldap.OperationAttributes, key: str) -> str | None:
         """Compatibility shim for unit tests and older callers."""
-        value: str | None = u.Ldap.get_first_attribute_value(attrs, key)
+        value: str | None = u.Ldap.resolve_first_attribute_value(attrs, key)
         return value
 
     @staticmethod

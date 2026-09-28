@@ -13,7 +13,7 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
     """LDAP rootDSE query and connection detection helpers."""
 
     @staticmethod
-    def get_first_attribute_value(
+    def resolve_first_attribute_value(
         attrs: t.Ldap.OperationAttributes, key: str
     ) -> str | None:
         """Return the first normalized value for a rootDSE attribute."""
@@ -84,10 +84,10 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
         root_dse_attrs = root_dse_result.value
         return r[str].ok(
             cls.detect_server_type(
-                vendor_name=cls.get_first_attribute_value(
+                vendor_name=cls.resolve_first_attribute_value(
                     root_dse_attrs, c.Ldap.RootDseAttribute.VENDOR_NAME
                 ),
-                vendor_version=cls.get_first_attribute_value(
+                vendor_version=cls.resolve_first_attribute_value(
                     root_dse_attrs, c.Ldap.RootDseAttribute.VENDOR_VERSION
                 ),
                 naming_contexts=root_dse_attrs.get(

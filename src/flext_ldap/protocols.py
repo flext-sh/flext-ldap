@@ -110,22 +110,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Return string representation of scope."""
                 ...
 
-        class Parse:
-            """Parse-related protocols."""
-
-            @runtime_checkable
-            class ParseResult(Protocol):
-                """Protocol for parse results (structural type)."""
-
-                failure: bool
-                "Indicates if parsing failed."
-                success: bool
-                "Indicates if parsing succeeded."
-                error: str | None
-                "Error message if parsing failed."
-                value: t.Scalar | None
-                "Parsed value or result t.JsonValue."
-
         @runtime_checkable
         class SearchOptions(Protocol):
             """Protocol for LDAP search options (structural type).
@@ -489,31 +473,6 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def attributes(self) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
                 """The attributes property - covariant Mapping for structural compatibility."""
                 ...
-
-        class ServiceContracts:
-            """Service boundary contracts - stricter contracts for service interfaces."""
-
-            @runtime_checkable
-            class EntryContract(Protocol):
-                """Structural LDAP entry contract for service boundaries.
-
-                Stricter than LdapEntry - requires non-None dn and attributes.
-                For use at service layer boundaries where data is validated.
-                """
-
-                dn: str
-                attributes: t.MappingKV[str, t.StrSequence]
-
-            @runtime_checkable
-            class SearchOptionsContract(Protocol):
-                """Structural LDAP search options contract for service boundaries.
-
-                Minimal required fields for LDAP search operations at service layer.
-                """
-
-                scope: str
-                filter_str: str
-                attributes: t.StrSequence
 
 
 p = FlextLdapProtocols

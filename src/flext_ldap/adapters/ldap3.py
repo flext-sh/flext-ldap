@@ -16,10 +16,10 @@ from flext_ldif import e, r
 from flext_ldap import c, m, p, s, t, u
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
-from ._ldap3.connection_manager import ConnectionManager as _ConnectionManager
-from ._ldap3.operation_executor import OperationExecutor as _OperationExecutor
-from ._ldap3.result_converter import ResultConverter as _ResultConverter
-from ._ldap3.search_executor import SearchExecutor as _SearchExecutor
+from ._ldap3.connection_manager import FlextLdapLdap3ConnectionManager
+from ._ldap3.operation_executor import FlextLdapLdap3OperationExecutor
+from ._ldap3.result_converter import FlextLdapLdap3ResultConverter
+from ._ldap3.search_executor import FlextLdapLdap3SearchExecutor
 from ._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 
@@ -33,16 +33,18 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     model_config = m.ConfigDict(frozen=False)
 
-    @staticmethod
-    def _is_bound(connection: p.Ldap.Ldap3Connection) -> bool:
-        """Check if ldap3 p.Ldap.Ldap3Connection is bound."""
-        bound_state: bool = getattr(connection, "bound", False)
-        return bound_state
-
-    ConnectionManager: ClassVar[type[_ConnectionManager]] = _ConnectionManager
-    ResultConverter: ClassVar[type[_ResultConverter]] = _ResultConverter
-    OperationExecutor: ClassVar[type[_OperationExecutor]] = _OperationExecutor
-    SearchExecutor: ClassVar[type[_SearchExecutor]] = _SearchExecutor
+    ConnectionManager: ClassVar[type[FlextLdapLdap3ConnectionManager]] = (
+        FlextLdapLdap3ConnectionManager
+    )
+    ResultConverter: ClassVar[type[FlextLdapLdap3ResultConverter]] = (
+        FlextLdapLdap3ResultConverter
+    )
+    OperationExecutor: ClassVar[type[FlextLdapLdap3OperationExecutor]] = (
+        FlextLdapLdap3OperationExecutor
+    )
+    SearchExecutor: ClassVar[type[FlextLdapLdap3SearchExecutor]] = (
+        FlextLdapLdap3SearchExecutor
+    )
 
     _connection: p.Ldap.Ldap3Connection | None
     _server: p.Ldif.Ldap3Server | None
@@ -64,7 +66,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         """Whether adapter has an active connection."""
         if self._connection is None:
             return False
-        return FlextLdapLdap3Adapter._is_bound(self._connection)
+        return FlextLdapLdap3Wrappers.bound(self._connection)
 
     @staticmethod
     def _map_scope(scope: c.Ldap.SearchScope | str) -> p.Result[int]:
@@ -110,7 +112,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         tls_result = self.ConnectionManager.handle_tls(connection, settings)
         if tls_result.failure:
             return tls_result
-        if not FlextLdapLdap3Wrappers.is_bound(connection):
+        if not FlextLdapLdap3Wrappers.bound(connection):
             return e.fail_operation("bind to LDAP server")
         return r[bool].ok(value=True)
 
@@ -197,32 +199,3 @@ class FlextLdapLdap3Adapter(s[bool]):
         """Unbind and close LDAP connection."""
         if self._connection is not None:
             _ = FlextLdapLdap3Wrappers.unbind(self._connection)
-
-
-class FlextLdapAdapterHost[
-    TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload]
-](s[TResult]):
-    """Own the shared ldap3 adapter behind the ``p.Ldap.LdapAdapter`` contract.
-
-    Service mixins inherit this host to obtain the lazily constructed adapter
-    via DIP: callers depend on the protocol while this module (the sole ldap3
-    owner per AGENTS.md §2.7) constructs the concrete implementation.
-    """
-
-    _adapter: p.Ldap.LdapAdapter | None = u.PrivateAttr(default_factory=lambda: None)
-
-    def _ensure_adapter(self) -> p.Ldap.LdapAdapter:
-        """Return the shared ldap3 adapter for this service instance."""
-        if self._adapter is None:
-            self._adapter = FlextLdapLdap3Adapter()
-        return self._adapter
-
-    @property
-    def is_connected(self) -> bool:
-        """The ``True`` when the shared adapter has an active bind."""
-        adapter = self._adapter
-        if adapter is None:
-            return False
-        connected: bool = adapter.is_connected
-        return connected

@@ -1,4 +1,4 @@
-"""LDAP3 adapter — OperationExecutor.
+"""LDAP3 adapter — FlextLdapLdap3OperationExecutor.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class OperationExecutor:
+class FlextLdapLdap3OperationExecutor:
     """LDAP add/modify/delete dispatcher (SRP).
 
     Single ``_execute`` boundary translates ldap3 wrapper return values into
@@ -63,7 +63,9 @@ class OperationExecutor:
                 )
         except c.EXC_BROAD_IO_TYPE as exc:
             return r[m.Ldap.OperationResult].fail_op(failure_prefix, exc)
-        return OperationExecutor._extract_error_result(connection, failure_prefix)
+        return FlextLdapLdap3OperationExecutor._extract_error_result(
+            connection, failure_prefix
+        )
 
     @staticmethod
     def _extract_error_result(
@@ -73,7 +75,9 @@ class OperationExecutor:
         error_msg = f"{prefix}: LDAP operation returned failure status"
         result_payload = connection.result
         if result_payload is not None:
-            payload = OperationExecutor.ResultPayload.model_validate(result_payload)
+            payload = FlextLdapLdap3OperationExecutor.ResultPayload.model_validate(
+                result_payload
+            )
             description = payload.description
             if description is not None:
                 error_msg = f"{prefix}: {description}"
@@ -89,7 +93,7 @@ class OperationExecutor:
         attrs_dict: t.MappingKV[str, t.StrSequence] = {
             k: list(v) for k, v in ldap_attrs.items()
         }
-        return OperationExecutor._execute(
+        return FlextLdapLdap3OperationExecutor._execute(
             connection,
             c.Ldap.OperationType.ADD,
             lambda: FlextLdapLdap3Wrappers.add(connection, dn_str, None, attrs_dict),
@@ -101,7 +105,7 @@ class OperationExecutor:
     ) -> p.Result[m.Ldap.OperationResult]:
         """Execute LDAP delete via ``Connection.delete`` and return ``r``."""
         dn_str = u.Ldif.get_dn_value(dn)
-        return OperationExecutor._execute(
+        return FlextLdapLdap3OperationExecutor._execute(
             connection,
             c.Ldap.OperationType.DELETE,
             lambda: FlextLdapLdap3Wrappers.delete(connection, dn_str),
@@ -115,11 +119,11 @@ class OperationExecutor:
     ) -> p.Result[m.Ldap.OperationResult]:
         """Execute LDAP modify via ``Connection.modify`` and return ``r``."""
         dn_str = u.Ldif.get_dn_value(dn)
-        return OperationExecutor._execute(
+        return FlextLdapLdap3OperationExecutor._execute(
             connection,
             c.Ldap.OperationType.MODIFY,
             lambda: FlextLdapLdap3Wrappers.modify(connection, dn_str, changes),
         )
 
 
-__all__: list[str] = ["OperationExecutor"]
+__all__: list[str] = ["FlextLdapLdap3OperationExecutor"]

@@ -50,19 +50,19 @@ class TestsFlextLdapConstantsUnit:
         self, status: c.Ldap.Status
     ) -> None:
         """Verify is valid status accepts every enum member."""
-        u.Ldap.Tests.that(u.Ldap.Validation.is_valid_status(status), eq=True)
+        u.Ldap.Tests.that(u.Ldap.Validation.valid_status(status), eq=True)
 
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     def test_is_valid_status_accepts_every_status_string_value(
         self, status: c.Ldap.Status
     ) -> None:
         """Verify is valid status accepts every status string value."""
-        u.Ldap.Tests.that(u.Ldap.Validation.is_valid_status(status.value), eq=True)
+        u.Ldap.Tests.that(u.Ldap.Validation.valid_status(status.value), eq=True)
 
     def test_is_valid_status_rejects_unknown_string(self) -> None:
         """Verify is valid status rejects unknown string."""
         u.Ldap.Tests.that(
-            u.Ldap.Validation.is_valid_status(c.Ldap.Tests.CONSTANT_INVALID_STATUS),
+            u.Ldap.Validation.valid_status(c.Ldap.Tests.CONSTANT_INVALID_STATUS),
             eq=False,
         )
 

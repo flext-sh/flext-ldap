@@ -218,6 +218,3 @@ class TestsFlextLdapEntryAdapter:
 
         converted = u.Ldap.Tests.ok(round_tripped)
         u.Ldap.Tests.that(converted, keys=list(original), kv=original)
-
-
-__all__: list[str] = ["TestsFlextLdapEntryAdapter"]

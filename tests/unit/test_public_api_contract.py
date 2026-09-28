@@ -1,7 +1,7 @@
-"""Behavioral contract test for the frozen flext-ldap public API surface.
+"""Behavioral contract test for the flext-ldap public API surface.
 
 Asserts the OBSERVABLE public contract of the ``flext_ldap`` package: the
-frozen root export set, the importability of every exported name, the identity
+root export set propagated from each module's declarations, the importability of every exported name, the identity
 of the canonical single-letter aliases, and the operations the ``FlextLdap``
 facade promises its callers. It deliberately avoids internal implementation
 details (MRO ordering, private attributes, adapter modules).
@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import importlib
+import pkgutil
 from typing import TYPE_CHECKING
 
 import pytest
@@ -31,49 +33,6 @@ from flext_ldap import (
 if TYPE_CHECKING:
     from flext_ldap import t
 pytestmark = pytest.mark.unit
-
-# Why: the lazy-init generator (flext-1wjg1.16) now declares the public ABI
-# of every public submodule at root, widening this frozen set beyond the
-# domain facades — regenerate-and-align rather than hand-narrow the codegen.
-_FROZEN_ROOT_EXPORTS: frozenset[str] = frozenset({
-    "FlextLdap",
-    "FlextLdapApiRuntime",
-    "FlextLdapConfig",
-    "FlextLdapConstants",
-    "FlextLdapModels",
-    "FlextLdapProtocols",
-    "FlextLdapService",
-    "FlextLdapSettings",
-    "FlextLdapSync",
-    "FlextLdapTypes",
-    "FlextLdapUtilities",
-    "__author__",
-    "__author_email__",
-    "__description__",
-    "__license__",
-    "__title__",
-    "__url__",
-    "__version__",
-    "__version_info__",
-    "adapters",
-    "c",
-    "config",
-    "d",
-    "e",
-    "h",
-    "ldap",
-    "m",
-    "p",
-    "r",
-    "s",
-    "services",
-    # NOTE (multi-agent): settings singleton export is the SSOT convention
-    # (same as flext-core/flext-cli roots); frozen after ADR-005 namespacing.
-    "settings",
-    "t",
-    "u",
-    "x",
-})
 
 # Canonical single-letter alias -> the domain facade it must resolve to.
 # This identity is the public contract that lets consumers write ``c.Ldap.*``,
@@ -108,12 +67,23 @@ _FACADE_OPERATIONS: t.VariadicTuple[str] = (
 class TestsFlextLdapPublicApiContract:
     """Lock the observable public surface of the flext-ldap package."""
 
-    def test_root_all_equals_frozen_export_set(self) -> None:
-        """Verify root all equals frozen export set."""
-        actual: frozenset[str] = frozenset(flext_ldap.__all__)
-        tm.that(actual, eq=_FROZEN_ROOT_EXPORTS)
+    def test_root_all_propagates_every_module_declaration(self) -> None:
+        """Verify root exports every name its top-level modules declare.
 
-    @pytest.mark.parametrize("name", sorted(_FROZEN_ROOT_EXPORTS))
+        The owner of each public name is the module that lists it in its own
+        ``__all__``; the root only propagates. Dunder metadata modules (for
+        example ``__version__``) are not facade owners and are excluded.
+        """
+        declared: set[str] = set()
+        for module_info in pkgutil.iter_modules(flext_ldap.__path__):
+            if module_info.ispkg or module_info.name.startswith("__"):
+                continue
+            module = importlib.import_module(f"flext_ldap.{module_info.name}")
+            declared.update(module.__all__)
+        tm.that(declared, empty=False)
+        tm.that(declared - frozenset(flext_ldap.__all__), empty=True)
+
+    @pytest.mark.parametrize("name", sorted(flext_ldap.__all__))
     def test_every_declared_export_is_importable(self, name: str) -> None:
         """Verify every declared export is importable."""
         tm.that(

@@ -1,4 +1,4 @@
-"""LDAP3 adapter — SearchExecutor.
+"""LDAP3 adapter — FlextLdapLdap3SearchExecutor.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,16 +10,16 @@ from flext_ldif import r
 
 from flext_ldap import c, m, p, t
 
-from .result_converter import ResultConverter
+from .result_converter import FlextLdapLdap3ResultConverter
 from .wrappers import FlextLdapLdap3Wrappers
 
 
-class SearchExecutor:
+class FlextLdapLdap3SearchExecutor:
     """LDAP search executor (SRP).
 
     Stateless dispatcher: invokes ldap3 Connection.search via
     ``FlextLdapLdap3Wrappers``, validates the result code, then delegates
-    parsing to ``ResultConverter``.
+    parsing to ``FlextLdapLdap3ResultConverter``.
     """
 
     @staticmethod
@@ -28,17 +28,9 @@ class SearchExecutor:
         params: m.Ldap.SearchParams,
         server_type: c.Ldif.ServerTypes | str,
     ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
-        """Execute LDAP search and return parsed entries via ``ResultConverter``."""
+        """Execute LDAP search and return entries parsed by the result converter."""
         try:
-            _ = FlextLdapLdap3Wrappers.search(
-                connection,
-                search_base=params.base_dn,
-                search_filter=params.filter_str,
-                search_scope=params.ldap_scope,
-                attributes=params.search_attributes,
-                size_limit=params.size_limit,
-                time_limit=params.time_limit,
-            )
+            _ = FlextLdapLdap3Wrappers.search(connection, params)
         except c.EXC_BROAD_IO_TYPE as exc:
             return r[t.SequenceOf[m.Ldif.Entry]].fail_op("Search", exc)
         conn_result = connection.result or {}
@@ -60,7 +52,7 @@ class SearchExecutor:
                 f"Unsupported server type: {server_type}"
             )
         _ = server_type_enum
-        ldap3_results = ResultConverter.convert_ldap3_results(connection)
+        ldap3_results = FlextLdapLdap3ResultConverter.convert_ldap3_results(connection)
         entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for dn, attrs in ldap3_results:
             str_attrs: t.MutableMappingKV[str, t.MutableSequenceOf[str] | str] = {
@@ -73,4 +65,4 @@ class SearchExecutor:
         return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
 
 
-__all__: list[str] = ["SearchExecutor"]
+__all__: list[str] = ["FlextLdapLdap3SearchExecutor"]
