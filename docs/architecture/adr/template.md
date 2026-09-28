@@ -141,8 +141,8 @@ requirements and constraints.}
 
 ## ADR Maintenance
 
-**Review Date**: {YYYY-MM-DD} (annually or when significant changes occur) **Last
-Reviewed**: {YYYY-MM-DD} **Reviewers**: {list of people who reviewed}
+**Review Date**: {YYYY-MM-DD} (annually or when significant changes occur)
+**Last Reviewed**: {YYYY-MM-DD} **Reviewers**: {list of people who reviewed}
 
 **Changes Made**:
 

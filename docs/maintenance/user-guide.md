@@ -524,8 +524,8 @@ python maintenance/maintain.py --comprehensive
 
 ---
 
-**Documentation Maintenance System User Guide** _Automated Quality Assurance for
-Technical Documentation_
+**Documentation Maintenance System User Guide**
+_Automated Quality Assurance for Technical Documentation_
 
 **Key Benefits:**
 

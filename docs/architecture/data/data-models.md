@@ -20,5 +20,5 @@ enterprise-grade type safety and validation through Pydantic v2.
 
 ---
 
-**Domain Data Models** _Enterprise-grade LDAP entities with business logic and
-validation_
+**Domain Data Models**
+_Enterprise-grade LDAP entities with business logic and validation_
