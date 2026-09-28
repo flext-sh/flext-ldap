@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import r
+from flext_ldif import FlextLdifUtilities, r
 
 from flext_ldap import c, t
 
@@ -88,10 +88,48 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         }
 
     @classmethod
+    def rdn_attribute_names(cls, entry: p.Ldif.Entry) -> p.Result[frozenset[str]]:
+        """Lowercased attribute names of the entry DN's leading RDN (RFC 4514)."""
+        if entry.dn is None:
+            return r[frozenset[str]].fail("Entry has no DN")
+        components = FlextLdifUtilities.Ldif.split(entry.dn.value)
+        if not components:
+            return r[frozenset[str]].fail(
+                f"Entry DN has no RDN components: '{entry.dn.value}'"
+            )
+        parsed = FlextLdifUtilities.Ldif.parse_rdn(components[0])
+        if parsed.failure:
+            return r[frozenset[str]].fail_op("Entry DN RDN parse", parsed.error)
+        return parsed.map(
+            lambda pairs: frozenset(
+                cls.norm_str(attr_name, case="lower") for attr_name, _value in pairs
+            )
+        )
+
+    @classmethod
     def compare_entries(
         cls, existing_entry: p.Ldif.Entry, new_entry: p.Ldif.Entry
     ) -> p.Result[t.Ldap.OperationChanges]:
-        """Compare canonical LDIF entries and return LDAP modify operations."""
+        """Compare canonical LDIF entries and return LDAP modify operations.
+
+        RDN attributes derived from the entry DN are excluded from the change
+        set: LDAP modify can never change an entry's RDN (notAllowedOnRDN).
+        """
+        existing_rdn_result = cls.rdn_attribute_names(existing_entry)
+        if existing_rdn_result.failure:
+            return r[t.Ldap.OperationChanges].fail_op(
+                "Existing entry DN RDN parse", existing_rdn_result.error
+            )
+        new_rdn_result = cls.rdn_attribute_names(new_entry)
+        if new_rdn_result.failure:
+            return r[t.Ldap.OperationChanges].fail_op(
+                "New entry DN RDN parse", new_rdn_result.error
+            )
+        ignore = (
+            c.Ldif.OperationalAttributes.IGNORE_SET
+            | existing_rdn_result.value
+            | new_rdn_result.value
+        )
         existing_attrs = cls.extract_entry_attributes(existing_entry)
         if not existing_attrs:
             return r[t.Ldap.OperationChanges].fail(
@@ -102,14 +140,8 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
             return r[t.Ldap.OperationChanges].fail(
                 "New entry has no attributes to compare"
             )
-        changes, processed = cls.process_new_attributes(
-            new_attrs, existing_attrs, c.Ldif.OperationalAttributes.IGNORE_SET
-        )
-        changes.update(
-            cls.process_deleted_attributes(
-                existing_attrs, c.Ldif.OperationalAttributes.IGNORE_SET, processed
-            )
-        )
+        changes, processed = cls.process_new_attributes(new_attrs, existing_attrs, ignore)
+        changes.update(cls.process_deleted_attributes(existing_attrs, ignore, processed))
         return r[t.Ldap.OperationChanges].ok(changes)
 
 

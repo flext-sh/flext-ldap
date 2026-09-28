@@ -23,10 +23,13 @@ from tests import c, m, t, u
 pytestmark = pytest.mark.unit
 
 
-def _entry(attributes: t.MappingKV[str, t.StrSequence] | None) -> m.Ldif.Entry:
-    """Build an LDIF entry on the canonical test DN with ``attributes``."""
+def _entry(
+    attributes: t.MappingKV[str, t.StrSequence] | None,
+    dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
+) -> m.Ldif.Entry:
+    """Build an LDIF entry on the given DN (canonical test DN by default)."""
     return m.Ldif.Entry(
-        dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
+        dn=m.Ldif.DN(value=dn),
         attributes=(
             None
             if attributes is None
@@ -338,12 +341,64 @@ class TestsFlextLdapUtilitiesUnit:
 
     # --- compare_entries ---
     def test_compare_entries_success(self) -> None:
-        """Verify compare entries success."""
+        """Verify compare entries produces changes for a non-RDN difference."""
+        existing = _entry({"cn": [c.Ldap.Tests.STRING_SIMPLE], "sn": ["old"]})
+        new_entry = _entry({"cn": [c.Ldap.Tests.STRING_SIMPLE], "sn": ["new"]})
+        result = u.Ldap.compare_entries(existing, new_entry)
+        changes = u.Ldap.Tests.ok(result)
+        tm.that(changes, has="sn")
+
+    def test_compare_entries_excludes_rdn_attribute_from_changes(self) -> None:
+        """Verify the RDN attribute never appears in computed changes."""
+        # Only the RDN attribute (cn of the canonical test DN) differs.
         existing = _entry({"cn": ["old"]})
         new_entry = _entry({"cn": ["new"]})
         result = u.Ldap.compare_entries(existing, new_entry)
         changes = u.Ldap.Tests.ok(result)
-        tm.that(changes, has="cn")
+        tm.that(changes, lacks=c.Ldap.AttributeName.COMMON_NAME)
+        tm.that(changes, len=0)
+
+    def test_compare_entries_excludes_rdn_attribute_when_existing_lacks_it(
+        self,
+    ) -> None:
+        """Verify no REPLACE is computed for the RDN attribute missing server-side."""
+        existing = _entry({"sn": ["old"]})
+        new_entry = _entry({"cn": [c.Ldap.Tests.STRING_SIMPLE], "sn": ["new"]})
+        result = u.Ldap.compare_entries(existing, new_entry)
+        changes = u.Ldap.Tests.ok(result)
+        tm.that(changes, lacks=c.Ldap.AttributeName.COMMON_NAME)
+        tm.that(changes, has="sn")
+
+    def test_compare_entries_excludes_rdn_attribute_from_delete_changes(self) -> None:
+        """Verify no DELETE is computed for the RDN attribute absent from the target."""
+        existing = _entry({"cn": [c.Ldap.Tests.STRING_SIMPLE], "sn": ["old"]})
+        new_entry = _entry({"sn": ["new"]})
+        result = u.Ldap.compare_entries(existing, new_entry)
+        changes = u.Ldap.Tests.ok(result)
+        tm.that(changes, lacks=c.Ldap.AttributeName.COMMON_NAME)
+        tm.that(changes, has="sn")
+
+    def test_compare_entries_identical_entries_have_no_changes(self) -> None:
+        """Verify identical entries compare equal (empty change set)."""
+        entry_data: dict[str, list[str]] = {
+            "cn": [c.Ldap.Tests.STRING_SIMPLE],
+            "sn": ["user"],
+        }
+        result = u.Ldap.compare_entries(_entry(entry_data), _entry(entry_data))
+        changes = u.Ldap.Tests.ok(result)
+        tm.that(changes, len=0)
+
+    def test_rdn_attribute_names_multivalued_rdn(self) -> None:
+        """Verify rdn_attribute_names covers every attribute of a multi-valued RDN."""
+        entry = _entry({}, dn="cn=user+ou=eng,dc=example,dc=com")
+        names = u.Ldap.Tests.ok(u.Ldap.rdn_attribute_names(entry))
+        tm.that(names, has="cn")
+        tm.that(names, has="ou")
+
+    def test_rdn_attribute_names_without_dn_fails(self) -> None:
+        """Verify rdn_attribute_names fails for an entry without DN."""
+        entry = m.Ldif.Entry(dn=None, attributes=None)
+        u.Ldap.Tests.fail(u.Ldap.rdn_attribute_names(entry))
 
     def test_compare_entries_no_existing_attrs(self) -> None:
         """Verify compare entries no existing attrs."""
