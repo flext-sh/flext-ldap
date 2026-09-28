@@ -17,6 +17,23 @@
   - [Coverage Analysis](#coverage-analysis)
 - [Architecture Guidelines](#architecture-guidelines)
   - [Clean Architecture Layers](#clean-architecture-layers)
+  - [Coding Standards](#coding-standards)
+- [Code Quality Standards](#code-quality-standards)
+  - [Type Safety Requirements](#type-safety-requirements)
+  - [Import Organization](#import-organization)
+- [Testing Guidelines](#testing-guidelines)
+  - [Unit Test Structure](#unit-test-structure)
+  - [Integration Test Structure](#integration-test-structure)
+  - [Test Fixtures](#test-fixtures)
+- [Documentation Standards](#documentation-standards)
+  - [Code Documentation](#code-documentation)
+  - [API Documentation](#api-documentation)
+- [Performance Guidelines](#performance-guidelines)
+  - [Connection Management](#connection-management)
+  - [Search Optimization](#search-optimization)
+  - [Best Practices](#best-practices)
+- [Contribution Guidelines](#contribution-guidelines)
+  - [Pull Request Process](#pull-request-process)
   - [Code Review Checklist](#code-review-checklist)
 
 <!-- TOC END -->
@@ -429,6 +446,7 @@ class FlextLdapService(Generic[T]):
 from __future__ import annotations
 
 import pytest
+
 from flext_ldap import FlextLdapUser
 
 
@@ -481,6 +499,7 @@ class TestFlextLdapUser:
 from __future__ import annotations
 
 import pytest
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -540,8 +559,7 @@ from __future__ import annotations
 # tests/conftest.py
 import pytest
 from flext_tests import tk
-from flext_cli import u
-from flext_core import FlextSettings
+
 from flext_ldap import FlextLdapSettings, set_flext_ldap_settings
 
 

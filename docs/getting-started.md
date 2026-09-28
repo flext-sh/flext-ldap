@@ -19,8 +19,12 @@
   - [User Authentication](#user-authentication)
 - [Universal LDAP Interface](#universal-ldap-interface)
   - [Server-Specific Operations](#server-specific-operations)
+  - [Entry Conversion (ldap3 ↔ ldif)](#entry-conversion-ldap3-ldif)
   - [Schema Discovery](#schema-discovery)
+  - [ACL Management](#acl-management)
   - [Paged Search](#paged-search)
+- [Development Environment](#development-environment)
+  - [Test LDAP Server Setup](#test-ldap-server-setup)
   - [Run Tests](#run-tests)
   - [Development Workflow](#development-workflow)
 - [Next Steps](#next-steps)
@@ -278,6 +282,7 @@ FLEXT-LDAP provides server-specific implementations with automatic server detect
 from __future__ import annotations
 
 import ldap3
+
 from flext_ldap import (
     FlextLdapEntryAdapter,
     FlextLdapServersAdapter,
@@ -341,8 +346,9 @@ run(server_specific_operations())
 Convert between ldap3 and ldif entry formats:
 
 ```python
-from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
+
+from flext_ldap import FlextLdapEntryAdapter
 
 adapter = FlextLdapEntryAdapter()
 
@@ -376,6 +382,7 @@ Discover schema from different LDAP server types:
 from __future__ import annotations
 
 import ldap3
+
 from flext_ldap import OpenLDAP2Operations
 
 
@@ -410,8 +417,9 @@ Manage server-specific ACLs:
 ```python
 from __future__ import annotations
 
-from flext_ldap import OpenLDAP2Operations
 import ldap3
+
+from flext_ldap import OpenLDAP2Operations
 
 
 def manage_acls():
@@ -455,6 +463,7 @@ Execute paged searches with automatic pagination:
 from __future__ import annotations
 
 import ldap3
+
 from flext_ldap import OpenLDAP2Operations
 
 

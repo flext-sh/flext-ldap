@@ -5,8 +5,28 @@
 - [Table of Contents](#table-of-contents)
 - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
   - [Core FLEXT Dependencies](#core-flext-dependencies)
+  - [Configuration Management](#configuration-management)
+- [FastAPI Integration](#fastapi-integration)
+  - [API Endpoints with LDAP Authentication](#api-endpoints-with-ldap-authentication)
+- [Django Integration](#django-integration)
+  - [Django Authentication Backend](#django-authentication-backend)
+  - [Django User Sync Management Command](#django-user-sync-management-command)
+- [Flask Integration](#flask-integration)
+  - [Flask Application with LDAP Authentication](#flask-application-with-ldap-authentication)
+- [Docker Integration](#docker-integration)
+  - [Docker Compose Setup](#docker-compose-setup)
+  - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
+- [Kubernetes Integration](#kubernetes-integration)
+  - [Kubernetes Deployment](#kubernetes-deployment)
 - [ldif Integration](#ldif-integration)
   - [Entry Format Conversion](#entry-format-conversion)
+  - [LDIF File Processing](#ldif-file-processing)
+  - [Export to LDIF](#export-to-ldif)
+  - [Server Servers Detection](#server-servers-detection)
+  - [Universal LDAP Processor](#universal-ldap-processor)
+- [Monitoring and Observability](#monitoring-and-observability)
+  - [Prometheus Metrics](#prometheus-metrics)
+  - [Health Check Endpoints](#health-check-endpoints)
 
 <!-- TOC END -->
 
@@ -74,6 +94,7 @@ from __future__ import annotations
 
 # FLEXT-Core integration
 from flext_cli import u
+
 from flext_ldap.api import ldap
 
 
@@ -160,8 +181,9 @@ ldap_config = settings.get_ldap_config()
 ```python
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -267,6 +289,7 @@ from __future__ import annotations
 
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
+
 from flext_ldap.api import ldap
 
 
@@ -339,8 +362,9 @@ AUTHENTICATION_BACKENDS = [
 ```python
 from __future__ import annotations
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -443,8 +467,10 @@ class Command(BaseCommand):
 ```python
 from __future__ import annotations
 
-from flask import Flask, request, jsonify
 from functools import wraps
+
+from flask import Flask, jsonify, request
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -708,8 +734,9 @@ FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server ser
 detection:
 
 ```python
-from flext_ldap import FlextLdapEntryAdapter
 import ldap3
+
+from flext_ldap import FlextLdapEntryAdapter
 
 adapter = FlextLdapEntryAdapter()
 
@@ -1100,7 +1127,9 @@ start_http_server(8001)
 
 ```python
 from __future__ import annotations
+
 from fastapi import FastAPI
+
 from flext_ldap.api import ldap
 
 app = FastAPI()

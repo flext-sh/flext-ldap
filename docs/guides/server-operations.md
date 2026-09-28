@@ -12,6 +12,7 @@
 - [🔧 OpenLDAP 2.x Operations](#openldap-2x-operations)
   - [Features](#features)
   - [Basic Usage](#basic-usage)
+  - [ACL Operations](#acl-operations)
   - [Entry Operations](#entry-operations)
   - [Paged Search](#paged-search)
 - [](#_4)
@@ -45,24 +46,26 @@
 - [](#_9)
 - [🔄 Entry Adapter Integration](#entry-adapter-integration)
 - [](#_10)
+- [🔍 Servers Detection](#servers-detection)
+- [](#_11)
 - [📊 Server Comparison](#server-comparison)
   - [Connection Features](#connection-features)
   - [Schema Operations](#schema-operations)
   - [ACL Features](#acl-features)
   - [Search Features](#search-features)
-- [](#_11)
+- [](#_12)
 - [🎯 Best Practices](#best-practices)
   - [1. Use Server Detection](#1-use-server-detection)
   - [2. Handle Errors Explicitly](#2-handle-errors-explicitly)
   - [3. Use Entry Adapter](#3-use-entry-adapter)
   - [4. Server-Specific Normalization](#4-server-specific-normalization)
   - [5. Connection Management](#5-connection-management)
-- [](#_12)
+- [](#_13)
 - [🔧 Troubleshooting](#troubleshooting)
   - [Common Issues](#common-issues)
-- [](#_13)
-- [📚 Additional Resources](#additional-resources)
 - [](#_14)
+- [📚 Additional Resources](#additional-resources)
+- [](#_15)
 
 <!-- TOC END -->
 
@@ -223,6 +226,7 @@ Attribute: aci - Schema DN: cn=subschema - Lines: 310 - Version Support: RFC 451
 
 ```python
 import ldap3
+
 from flext_ldap import OpenLDAP2Operations
 
 # Initialize operations
