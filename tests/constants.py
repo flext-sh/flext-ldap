@@ -308,6 +308,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
                 MappingProxyType({"cn": ("user",), "sn": ("Doe",)})
             )
+            # Multi-valued attribute payload for the ldap3 add wrapper: an
+            # objectClass chain whose classes beyond the first MUST reach
+            # the wire verbatim (no first-value collapse).
+            ADD_WRAPPER_OBJECT_CLASSES: Final[t.StrSequence] = (
+                "top",
+                "inetOrgPerson",
+                "person",
+            )
             # Substring matches the centralized validation error
             # ("Failed to validate entry.attributes: empty"). Update with the
             # canonical message rather than re-introducing custom wording.
