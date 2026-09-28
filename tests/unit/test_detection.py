@@ -135,7 +135,7 @@ class TestsFlextLdapDetection:
         self, attrs: t.MappingKV[str, t.StrSequence], key: str, expected: str | None
     ) -> None:
         """The rootDSE helper returns the first non-empty value, else ``None``."""
-        value = u.Ldap.get_first_attribute_value(dict(attrs), key)
+        value = u.Ldap.resolve_first_attribute_value(dict(attrs), key)
 
         tm.that(value, eq=expected)
 

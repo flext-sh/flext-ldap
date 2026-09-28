@@ -35,7 +35,7 @@ from typing import override
 from flext_ldif import ldif, r
 
 from flext_ldap import c, m, p, t, u
-from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost
+from flext_ldap.adapters.host import FlextLdapAdapterHost
 
 from ._upsert_handler import FlextLdapUpsertHandler
 
@@ -43,8 +43,9 @@ from ._upsert_handler import FlextLdapUpsertHandler
 class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
     """Coordinate LDAP operations on an active connection.
 
-    Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
-    so this layer can concentrate on typed arguments, predictable
+    Protocol calls are delegated to
+    :class:`~flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter` so this layer can
+    concentrate on typed arguments, predictable
     :class:`flext_core` responses, and shared comparison helpers.
 
     Business Rules:

@@ -610,21 +610,18 @@ class TestsFlextLdapUtilitiesUnit:
         tm.that(meta.removed_attributes, has="removed_attr")
         tm.that(meta.base64_encoded_attributes, has="b64_attr")
 
-    # --- is_base64_encoded ---
+    # --- base64_encoded ---
     def test_is_base64_encoded_with_prefix(self) -> None:
         """Verify is base64 encoded with prefix."""
-        result = u.Ldap.is_base64_encoded(":: dGVzdA==")
+        result = u.Ldap.base64_encoded(":: dGVzdA==")
         tm.that(result, eq=True)
 
     def test_is_base64_encoded_high_ascii(self) -> None:
         """Verify is base64 encoded high ascii."""
-        result = u.Ldap.is_base64_encoded("test\x80value")
+        result = u.Ldap.base64_encoded("test\x80value")
         tm.that(result, eq=True)
 
     def test_is_base64_encoded_normal(self) -> None:
         """Verify is base64 encoded normal."""
-        result = u.Ldap.is_base64_encoded("normalvalue")
+        result = u.Ldap.base64_encoded("normalvalue")
         tm.that(result, eq=False)
-
-
-__all__: list[str] = ["TestsFlextLdapUtilitiesUnit"]

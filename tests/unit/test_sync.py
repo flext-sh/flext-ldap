@@ -167,6 +167,3 @@ class TestsFlextLdapSync:
         )
         # Assert: aggregate reports failure honestly instead of masking the bad phase
         u.Ldap.Tests.fail(result)
-
-
-__all__: list[str] = ["TestsFlextLdapSync"]
