@@ -50,9 +50,12 @@ src/flext_ldap/
 
 ## Commands
 
+Run from the workspace root (selector-free; the root dispatcher routes to every
+member — `PROJECT=` is not a root Make variable):
+
 ```bash
-make check PROJECT=flext-ldap
-make test PROJECT=flext-ldap # tests/{unit,integration,fixtures}
+make check
+make test
 ```
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->
