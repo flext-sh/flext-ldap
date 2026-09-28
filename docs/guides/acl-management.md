@@ -7,6 +7,7 @@
 - [Architecture](#architecture)
 - [Quick Start](#quick-start)
   - [Basic Usage](#basic-usage)
+  - [Converting ACL Formats](#converting-acl-formats)
   - [Batch Conversion](#batch-conversion)
 - [ACL Format Examples](#acl-format-examples)
   - [OpenLDAP Format](#openldap-format)
@@ -14,6 +15,7 @@
   - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds-apache-ds)
 - [Creating Custom ACLs](#creating-custom-acls)
   - [Using the Unified Model](#using-the-unified-model)
+- [ACL Validation](#acl-validation)
 - [Migration Scenarios](#migration-scenarios)
   - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
   - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
@@ -200,7 +202,7 @@ if batch_result.success:
 
 ```python
 # Simple ACI
-'(target="ldap:///ou=users,dc=example,dc=com")'
+"""(target="ldap:///ou=users,dc=example,dc=com")"""
 
 '(version 3.0; acl "User Read"; allow (read) userdn="ldap:///anyone";)'
 

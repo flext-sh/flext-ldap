@@ -16,6 +16,7 @@
   - [Content Audit Issues](#content-audit-issues)
   - [Link Validation Problems](#link-validation-problems)
   - [Style Validation Errors](#style-validation-errors)
+  - [Content Optimization Issues](#content-optimization-issues)
   - [Reporting System Problems](#reporting-system-problems)
   - [Synchronization Issues](#synchronization-issues)
 - [Performance Issues](#performance-issues)
@@ -37,6 +38,7 @@
   - [Enable Debug Logging](#enable-debug-logging)
   - [Performance Profiling](#performance-profiling)
   - [Memory Monitoring](#memory-monitoring)
+  - [Network Debugging](#network-debugging)
   - [File System Debugging](#file-system-debugging)
 - [Advanced Troubleshooting](#advanced-troubleshooting)
   - [Custom Diagnostic Scripts](#custom-diagnostic-scripts)
@@ -323,7 +325,7 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 ````text
 # Manually specify language
-```python notest
+```{.python .notest}
 from __future__ import annotations
 
 

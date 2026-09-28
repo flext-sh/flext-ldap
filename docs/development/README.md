@@ -19,6 +19,19 @@
 - [Essential Commands](#essential-commands)
 - [FLEXT Patterns](#flext-patterns)
   - [Railway-Oriented Programming](#railway-oriented-programming)
+  - [Use x](#use-x)
+  - [Pydantic v2 Models](#pydantic-v2-models)
+- [Git Workflow](#git-workflow)
+  - [Branch Naming](#branch-naming)
+  - [Commit Messages](#commit-messages)
+- [Pull Request Checklist](#pull-request-checklist)
+- [Getting Help](#getting-help)
+  - [Resources](#resources)
+  - [Communication](#communication)
+- [Best Practices](#best-practices)
+  - [DO ✅](#do)
+  - [DON'T ❌](#dont)
+- [Related Documentation](#related-documentation)
 
 <!-- TOC END -->
 
@@ -161,7 +174,7 @@ make clean-all # Deep clean including venvs
 ```python
 from __future__ import annotations
 
-from flext_core import r, p
+from flext_core import p, r
 
 
 def my_operation(data: dict) -> p.Result[ProcessedData]:
