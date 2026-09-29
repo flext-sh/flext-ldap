@@ -140,8 +140,12 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
             return r[t.Ldap.OperationChanges].fail(
                 "New entry has no attributes to compare"
             )
-        changes, processed = cls.process_new_attributes(new_attrs, existing_attrs, ignore)
-        changes.update(cls.process_deleted_attributes(existing_attrs, ignore, processed))
+        changes, processed = cls.process_new_attributes(
+            new_attrs, existing_attrs, ignore
+        )
+        changes.update(
+            cls.process_deleted_attributes(existing_attrs, ignore, processed)
+        )
         return r[t.Ldap.OperationChanges].ok(changes)
 
 

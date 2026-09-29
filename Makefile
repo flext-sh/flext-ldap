@@ -97,6 +97,7 @@ override PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 override PYTEST_PARALLEL_WORKERS := 1
 override PYTEST_PARALLEL_WORKER_MEMORY_GB := 2
 override PYTEST_PARALLEL_DISTRIBUTION := load
+override PYTEST_PARALLEL_SCHEDULE_CHUNK := 1
 override PYTEST_PROFILE_SORT := cumulative
 override PYTEST_PROFILE_LIMIT := 50
 override PROCESS_TIMEOUT_COMMAND := timeout
@@ -222,7 +223,7 @@ override UV_PROJECT_ENVIRONMENT := $(RUNTIME_VENV)
 override VIRTUAL_ENV := $(RUNTIME_VENV)
 override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
 unexport UV
-export FLEXT_INFRA_PYTHON UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
+export FLEXT_INFRA_PYTHON UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH RUNTIME_ROOT
 
 # Resolve native tools through the same isolated lock reader used by setup.
 # Execute the caller's command with that PATH without reloading host Mise tools.
@@ -439,9 +440,11 @@ endef
 PROJECT_TOOL_EXEC = $(SHELL) -c '$(subst ','"'"',$(PROJECT_TOOL_RUNTIME))' --
 
 # One bootstrap serves `setup` (frozen) and `upg` (resolving); the public verb
-# selects its lifecycle and resolution through target-specific variables.
+# selects its lifecycle, Mise release resolution and tool locking through
+# target-specific variables.
 TOOL_BOOTSTRAP_LIFECYCLE := _setup_lifecycle
 TOOL_BOOTSTRAP_RESOLVE :=
+TOOL_BOOTSTRAP_LOCK :=
 .PHONY: _bootstrap_setup_tools
 
 _bootstrap_setup_tools:
@@ -701,9 +704,10 @@ caller_mise_version=; \
 	fi; \
 	caller_mise_version="$$runtime_release"; \
 	printf 'mise setup receipt=%s storage=%s\n' "$$runtime_release" "$$mise_storage_root"; \
-	# Only ``upg`` resolves. Lock every configured tool in one pass so removed \
-	# selectors cannot survive beside their replacement in mise.lock. \
-	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
+	# Only ``upg`` locks, once per manifest it provisions from. Lock every \
+	# configured tool in one pass so removed selectors cannot survive beside \
+	# their replacement in mise.lock. \
+	if [ "$(TOOL_BOOTSTRAP_LOCK)" = "1" ]; then \
 		mise_checked "$$scratch/lock.log" mise_exec project "$$pinned_mise" -C "$$project_root" lock --bump; \
 	fi; \
 	# ``locked`` mode installs exactly what the committed mise.lock pins. \
@@ -861,8 +865,30 @@ endef
 
 # uv resolves the containing workspace and writes its single uv.lock. Invoking
 # it once per member re-resolves that same lock for every member.
+# uv truncates and rewrites uv.lock in place, so a run killed mid-write leaves
+# a partial lock (flext-idihq). The lock therefore resolves in a scratch mirror
+# of the manifests uv itself reports (`uv workspace dir|list`), must pass
+# `uv lock --check` against that mirror (every declared member present), and
+# only then replaces the committed lock by one rename inside its directory. An
+# interrupted run never touches the committed lock.
 define _lock_project
-	@$(UV) lock --project "$(PROJECT_ROOT)" $(1)
+	@set -eu; \
+	workspace=$$($(UV) workspace dir --project "$(PROJECT_ROOT)"); \
+	stage=$$(mktemp -d); candidate="$$workspace/.uv.lock.$$$$"; \
+	trap 'find "$$stage" -depth -delete; rm -f "$$candidate"' EXIT; \
+	trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM; \
+	$(UV) workspace list --paths --project "$$workspace" > "$$stage/.members"; \
+	while IFS= read -r member; do \
+		relative=$${member#"$$workspace"}; \
+		mkdir -p "$$stage/mirror$$relative"; \
+		cp "$$member/pyproject.toml" "$$stage/mirror$$relative/pyproject.toml"; \
+	done < "$$stage/.members"; \
+	if [ -f "$$workspace/uv.lock" ]; then cp "$$workspace/uv.lock" "$$stage/mirror/uv.lock"; fi; \
+	$(UV) lock --project "$$stage/mirror" $(1); \
+	$(UV) lock --check --project "$$stage/mirror"; \
+	if [ -e "$$candidate" ]; then printf 'ERROR: lock staging path already exists: %s\n' "$$candidate" >&2; exit 2; fi; \
+	cp "$$stage/mirror/uv.lock" "$$candidate"; \
+	mv -f "$$candidate" "$$workspace/uv.lock"
 endef
 
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
@@ -1147,6 +1173,7 @@ setup: _bootstrap_setup_tools
 # must not require an existing environment.
 upg: TOOL_BOOTSTRAP_LIFECYCLE := _upg_lifecycle
 upg: TOOL_BOOTSTRAP_RESOLVE := 1
+upg: TOOL_BOOTSTRAP_LOCK := 1
 upg: _builtin_require_runtime_root _bootstrap_setup_tools
 
 # Only the runtime root resolves the Mise release. An attached member's pin and
@@ -1290,6 +1317,13 @@ _builtin_setup_submodules:
 	fi; \
 	managed=$$(printf '%s' "$$managed" | tr ' ' '\n' | sort -u | tr '\n' ' '); \
 	if [ -z "$$managed" ]; then exit 0; fi; \
+	absent=""; \
+	for path in $$managed; do \
+		[ -e "$$root/$$path/.git" ] || absent="$$absent $$path"; \
+	done; \
+	if [ -n "$$absent" ]; then \
+		git -C "$$root" submodule update --init --jobs "$${FLEXT_SUBMODULE_JOBS:-8}" -- $$absent; \
+	fi; \
 	validate_submodule() { \
 		superproject="$$1"; \
 		child_path="$$2"; \
@@ -1423,30 +1457,34 @@ endif
 # Setup always reconciles directly from the lock. The venv is created when
 # missing and is never cleared while present, because a concurrent lane may be
 # running against it.
+# Governed gitlinks are provisioned in every context, GitHub Actions included:
+# the workspace projections (Makefile, pyproject, .gitignore, dependabot, docs)
+# derive from the member checkouts, so a member-less CI checkout would render a
+# different workspace and break the gen fixed point (flext-gdm8w). The CI scope
+# (CODEGEN_SCOPE/SELECTED_PROJECTS) still limits which repository is gated.
+_builtin_setup_environment: _builtin_setup_submodules
 ifeq ($(MAKE_PROFILE),workspace)
-_builtin_setup_environment: $(if $(GITHUB_CI_SELF),,_builtin_setup_submodules)
 	@$(SETUP_ENVIRONMENT_RECIPE)
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
 else
-_builtin_setup_environment: _builtin_setup_submodules
 	@$(SETUP_ENVIRONMENT_RECIPE)
 endif
 # End SECTION: setup environment
 
-# `upg` is the only recipe that resolves: the bootstrap above bumps mise.lock
-# before installing, and this lifecycle upgrades every uv.lock, provisions the
-# environment frozen from the new locks, and conforms dependency floors.
-# The floors land in the codegen SSOT, so `gen` projects them into every
-# pyproject and the locks are re-resolved against those raised floors before
-# the frozen reprovision: the committed lock must match the committed
-# pyproject, or `setup --locked` (the CI path) rejects it.
+# `upg` is the only recipe that resolves. Its first half provisions the
+# generator: the bootstrap above resolves the Mise release and locks the tools
+# the committed manifest declares, then this lifecycle upgrades every uv.lock
+# (which carries the generator itself), provisions the environment frozen from
+# it, and conforms dependency floors. The floors land in the codegen SSOT, so
+# `gen` projects them into every pyproject and renders the managed tool
+# manifests (.mise.toml) of the upgraded generator.
 # Branch-tracked git dependencies are moving sources by declaration
 # (workspace.yaml owns the branch): --refresh re-reads their metadata so a
 # stale cached requires-dist can never block or skew the resolution
 # (flext-62fbu). Like `setup`, it runs the declared pre-/post-upg lifecycle
 # hooks, post-upg inside the activated environment.
 .PHONY: _upg_lifecycle
-_upg_lifecycle: $(if $(GITHUB_CI_SELF),,_builtin_setup_submodules)
+_upg_lifecycle: _builtin_setup_submodules
 	@set -eu; \
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
@@ -1461,9 +1499,26 @@ _upg_lifecycle: $(if $(GITHUB_CI_SELF),,_builtin_setup_submodules)
 	$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
 		--apply --rewrite-constraints "$$@"
 	@$(SELF_MAKE) gen
+	@$(SELF_MAKE) _upg_relock
+
+# The second half belongs to the Makefile `gen` just rendered, so it runs as a
+# fresh make invocation rather than as lines of the recipe already expanded
+# above. It locks mise.lock from the rendered .mise.toml (never from the
+# manifest the generator was provisioned with), installs exactly that lock,
+# re-resolves uv.lock against the raised floors and reprovisions frozen from
+# both: the committed locks must match the committed manifests, or `setup`
+# (the CI path, `--locked`) rejects them. The Mise release is not resolved
+# again; the first half already pinned it.
+.PHONY: _upg_relock
+_upg_relock: TOOL_BOOTSTRAP_LIFECYCLE := _upg_converge
+_upg_relock: TOOL_BOOTSTRAP_LOCK := 1
+_upg_relock: _bootstrap_setup_tools
+
+.PHONY: _upg_converge
+_upg_converge:
 	$(call _lock_project,)
 	@$(SELF_MAKE) _builtin_setup_environment
-	$(call _lock_project,--check)
+	@$(UV) lock --check --project "$(PROJECT_ROOT)"
 	+@XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" exec "$(PROJECT_ROOT)" $(SELF_MAKE) _upg_activated
 
@@ -1498,6 +1553,10 @@ _builtin-self-fix: _builtin_fix_all
 
 _builtin-self-fix-enforcement: _builtin_fix_enforcement
 
+_builtin-self-fix-namespace: _builtin_fix_namespace
+
+_builtin-self-fix-accessors: _builtin_fix_accessors
+
 _builtin-self-build: _builtin_build_artifacts
 
 
@@ -1515,7 +1574,9 @@ _builtin-self-sonarcloud-sync: _builtin_sonarcloud_sync_project
 
 
 _builtin_build_artifacts:
+
 	@$(UV) build --project "$(PROJECT_ROOT)"
+
 
 # Check is read-only: it runs the gates without --apply, so the tree is left
 # unchanged; fix applies the declared repairs of the fixable gates.
@@ -1543,7 +1604,6 @@ gates="lint,pyrefly,mypy,pyright,silent-failure,deferred-self-reference,security
 		$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates" --projects .
 
 _builtin_test_all: _builtin_require_environment
-
 	@set -eu; \
 database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
 case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
@@ -1553,7 +1613,6 @@ mkdir -p "$$(dirname "$$database")"; \
 TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
 
 _builtin_test_full_all: _builtin_require_environment
-
 	@set -eu; \
 database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
 case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
@@ -1629,6 +1688,30 @@ profile-gen-report: _builtin_require_environment
 	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
 		'import pstats, sys; pstats.Stats(sys.argv[1]).sort_stats("cumtime").print_stats(50)' \
 		"$(PROFILE_REPORTS_DIR)/lazy-init.pstats"
+
+# Profile the canonical pytest entry (flext_infra._pytest_entry) under cProfile
+# for cold-run diagnosis (flext-itpd1.3.7): the same persistent testmon database
+# guard and environment as the bounded gate, but deliberately NOT wrapped in
+# PYTEST_BOUNDED so the diagnostic completes and dumps its profile; the gate's
+# own timeout on `make test` stays untouched.
+.PHONY: profile-test
+profile-test: _builtin_require_environment
+	@mkdir -p "$(PROFILE_REPORTS_DIR)"
+	@set -eu; \
+database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
+case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
+case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
+case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
+mkdir -p "$$(dirname "$$database")"; \
+	TESTMON_DATAFILE="$$database" $(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
+		'import cProfile, sys; path = sys.argv[1]; sys.argv = [sys.argv[0]]; from flext_infra._pytest_entry import FlextInfraPytestEntry; profile = cProfile.Profile(); status = profile.runcall(FlextInfraPytestEntry.main); profile.dump_stats(path); raise SystemExit(status)' \
+		"$(PROFILE_REPORTS_DIR)/pytest.pstats"
+
+.PHONY: profile-test-report
+profile-test-report: _builtin_require_environment
+	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
+		'import pstats, sys; pstats.Stats(sys.argv[1]).sort_stats("cumtime").print_stats(50)' \
+		"$(PROFILE_REPORTS_DIR)/pytest.pstats"
 
 _builtin_status_diagnostics: _builtin_require_environment
 	@printf 'profile=%s\nproject=%s\nruntime=%s\n' \
@@ -1715,6 +1798,14 @@ _builtin_gen_all:
 _builtin_mod_apply: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor mod --apply
 
+# Namespace and accessor migration are the same selector-free refactor surface
+# as `mod`: each public verb owns one fixed rewrite of every resolved consumer.
+_builtin_fix_namespace: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) refactor namespace-enforce --repository-root "$(PROJECT_ROOT)" --apply
+
+_builtin_fix_accessors: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) refactor accessor-migrate --repository-root "$(PROJECT_ROOT)" --apply
+
 # Selector-free public verbs map one-to-one to their canonical implementation;
 # each implementation owns one fixed operation.
 _builtin-build: _builtin_build_artifacts
@@ -1725,6 +1816,8 @@ _builtin-test-full: _builtin_test_full_all
 _builtin-fmt: _builtin_fmt_all
 _builtin-fix: _builtin_fix_all
 _builtin-fix-enforcement: _builtin_fix_enforcement
+_builtin-fix-namespace: _builtin_fix_namespace
+_builtin-fix-accessors: _builtin_fix_accessors
 _builtin-audit:
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
