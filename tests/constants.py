@@ -32,10 +32,7 @@ def _docker_admin_password() -> str:
 
 def _docker_legacy_admin_password() -> str:
     """Resolve the legacy test OpenLDAP admin password (env override allowed)."""
-    return (
-        os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "")
-        or "REDACTED_LDAP_BIND_PASSWORD123"
-    )
+    return os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "") or "admin123"
 
 
 def _bind_admin_password() -> str:
@@ -186,9 +183,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
             DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
             DOCKER_ADMIN_PASSWORD: Final[str] = _docker_admin_password()
-            DOCKER_LEGACY_ADMIN_DN: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-            )
+            DOCKER_LEGACY_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
             DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = _docker_legacy_admin_password()
             DOCKER_STARTUP_TIMEOUT: Final[int] = 8
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 8
@@ -215,9 +210,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
             ENTRY_DN_USER_EXAMPLE: Final[str] = "cn=user,dc=example,dc=com"
             ENTRY_DN_TEST_EXAMPLE: Final[str] = "cn=test,dc=example,dc=com"
-            ENTRY_DN_ADMIN_EXAMPLE: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-            )
+            ENTRY_DN_ADMIN_EXAMPLE: Final[str] = "cn=admin,dc=example,dc=com"
             ENTRY_DN_USER_NEW: Final[str] = "cn=user,dc=new,dc=com"
 
             BIND_ADMIN_DN: Final[str] = "cn=admin,dc=x,dc=y"
