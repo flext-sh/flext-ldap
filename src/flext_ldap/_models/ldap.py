@@ -140,6 +140,39 @@ class FlextLdapModelsLdap:
         ] = 0
         skipped: Annotated[t.NonNegativeInt, u.Field(description="Entries skipped")] = 0
 
+    class SubtreeDeleteResult(m.BaseModel):
+        """Outcome of a deepest-first subtree deletion."""
+
+        base_dn: Annotated[
+            str, u.Field(description="Base DN of the targeted subtree")
+        ] = ""
+        deleted_count: Annotated[
+            t.NonNegativeInt,
+            u.Field(description="Entries deleted before the run stopped"),
+        ] = 0
+        failed_dn: Annotated[
+            str | None, u.Field(description="DN of the first failed deletion, if any")
+        ] = None
+        cause: Annotated[
+            str | None, u.Field(description="Failure cause reported for failed_dn")
+        ] = None
+
+    class UpsertPlan(m.BaseModel):
+        """Read-only classification of planned upsert operations (zero writes)."""
+
+        adds: Annotated[
+            t.NonNegativeInt,
+            u.Field(description="Entries absent from the directory (would be added)"),
+        ] = 0
+        modifies: Annotated[
+            t.NonNegativeInt,
+            u.Field(description="Entries present with differences (would be modified)"),
+        ] = 0
+        unchanged: Annotated[
+            t.NonNegativeInt,
+            u.Field(description="Entries already matching the desired state"),
+        ] = 0
+
     class UpsertResult(m.BaseModel):
         """Result of a single upsert operation."""
 

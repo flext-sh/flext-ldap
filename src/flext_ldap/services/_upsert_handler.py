@@ -273,3 +273,63 @@ class FlextLdapUpsertHandler:
                 "Schema modify entry has only empty values"
             )
         return last_result
+
+    def plan(self, entries: t.SequenceOf[p.Ldif.Entry]) -> p.Result[m.Ldap.UpsertPlan]:
+        """Classify entries against the directory without writing anything.
+
+        Business Rules:
+            - Uses the exact classification the write path uses: base-scope
+              search, then ``u.Ldap.compare_entries`` for present entries
+            - Absent entry counts as ``adds``; present-with-changes counts as
+              ``modifies``; present-and-identical counts as ``unchanged``
+            - Zero writes: no add/modify call is ever issued
+            - First search/comparison failure aborts the plan with a typed
+              failure (the owner of upsert semantics owns "what would change")
+
+        Audit Implication:
+            Enables dry-run migration reports: the plan is derived from the
+            live directory, so reruns are deterministic between writes.
+
+        Returns:
+            r with UpsertPlan carrying add/modify/unchanged counts.
+
+        """
+        adds = 0
+        modifies = 0
+        unchanged = 0
+        for entry in entries:
+            if entry.dn is None or not entry.dn.value:
+                return r[m.Ldap.UpsertPlan].fail("Plan entry missing DN")
+            search_options = m.Ldap.SearchOptions.base_scope(entry.dn.value)
+            search_result = self._ops.search(search_options)
+            if search_result.failure:
+                search_error = u.Ldap.norm_str(
+                    u.to_str(search_result.error, default="Unknown error"), case="lower"
+                )
+                if "nosuchobject" in search_error or "no such object" in search_error:
+                    adds += 1
+                    continue
+                return r[m.Ldap.UpsertPlan].fail_op(
+                    "Plan search for existing entry", search_result.error
+                )
+            search_data = search_result.map_or(None)
+            existing_entries: t.SequenceOf[m.Ldif.Entry] = []
+            if search_data is not None and search_data.entries:
+                existing_entries = list(search_data.entries)
+            if not existing_entries:
+                adds += 1
+                continue
+            changes_result = u.Ldap.compare_entries(existing_entries[0], entry)
+            if changes_result.failure:
+                return r[m.Ldap.UpsertPlan].fail_op(
+                    "Plan entry comparison", changes_result.error
+                )
+            empty_changes: t.Ldap.OperationChanges = {}
+            changes = changes_result.unwrap_or(empty_changes)
+            if changes:
+                modifies += 1
+            else:
+                unchanged += 1
+        return r[m.Ldap.UpsertPlan].ok(
+            m.Ldap.UpsertPlan(adds=adds, modifies=modifies, unchanged=unchanged)
+        )
