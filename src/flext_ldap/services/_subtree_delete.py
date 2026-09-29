@@ -68,20 +68,12 @@ class FlextLdapSubtreeDeleteHandler:
                 "Subtree delete requires a non-empty base DN"
             )
         base_dn = dn.strip()
-        existence_result = self._search_base(base_dn)
+        existence_result = self._ops.find_entry(base_dn)
         if existence_result.failure:
-            existence_error = u.Ldap.norm_str(
-                u.to_str(existence_result.error, default="Unknown error"), case="lower"
-            )
-            if "nosuchobject" in existence_error or "no such object" in existence_error:
-                return r[m.Ldap.SubtreeDeleteResult].fail(
-                    f"Subtree delete base does not exist: {base_dn}"
-                )
             return r[m.Ldap.SubtreeDeleteResult].fail_op(
                 "Subtree delete existence check", existence_result.error
             )
-        existing = existence_result.unwrap()
-        if not existing.entries:
+        if not existence_result.value.entries:
             return r[m.Ldap.SubtreeDeleteResult].fail(
                 f"Subtree delete base does not exist: {base_dn}"
             )
@@ -111,10 +103,6 @@ class FlextLdapSubtreeDeleteHandler:
         return r[m.Ldap.SubtreeDeleteResult].ok(
             m.Ldap.SubtreeDeleteResult(base_dn=base_dn, deleted_count=deleted_count)
         )
-
-    def _search_base(self, base_dn: str) -> p.Result[m.Ldap.SearchResult]:
-        """Base-scope search confirming the target entry exists."""
-        return self._ops.search(m.Ldap.SearchOptions.base_scope(base_dn))
 
     def _collect_subtree_dns(self, base_dn: str) -> p.Result[t.SequenceOf[str]]:
         """Enumerate every DN under (and including) the base, attributes omitted."""

@@ -225,3 +225,39 @@ class TestsFlextLdapPlanUpsert:
         operations = FlextLdapOperations()
         plan_result = operations.plan_upsert([self._entry(self.NEW_DN)])
         u.Ldap.Tests.that(plan_result.failure, eq=True)
+
+    @staticmethod
+    def _modify_entry(dn: str, *, additions: t.MappingKV[str, str]) -> m.Ldif.Entry:
+        attributes: dict[str, list[str]] = {
+            c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.LdifChangeType.MODIFY.value],
+            c.Ldif.ChangeOperation.ADD: list(additions),
+        }
+        attributes.update({name: [value] for name, value in additions.items()})
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes(
+                attributes=attributes, attribute_metadata={}
+            ),
+        )
+
+    def test_plan_modify_entry_counts_without_reading_the_directory(self) -> None:
+        """A modify-add entry plans as a modify with no read, like the write path.
+
+        The operations service is not connected, so any directory read would
+        fail the plan: success proves the modify entry was routed without one.
+        """
+        operations = FlextLdapOperations()
+        plan_result = operations.plan_upsert([
+            self._modify_entry(self.EXISTS_DN, additions={"description": "added"})
+        ])
+        u.Ldap.Tests.ok(plan_result)
+        plan = plan_result.value
+        u.Ldap.Tests.that((plan.adds, plan.modifies, plan.unchanged), eq=(0, 1, 0))
+
+    def test_plan_modify_without_additions_fails_like_the_write_path(self) -> None:
+        """A modify entry without add operations fails the plan and the upsert alike."""
+        operations = FlextLdapOperations()
+        entry = self._modify_entry(self.EXISTS_DN, additions={})
+        plan_error = u.Ldap.Tests.fail(operations.plan_upsert([entry]))
+        write_error = u.Ldap.Tests.fail(operations.upsert(entry))
+        u.Ldap.Tests.that(plan_error, eq=write_error)

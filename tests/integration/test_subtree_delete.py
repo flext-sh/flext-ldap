@@ -60,6 +60,34 @@ def _user_entry(dn: str, identifier: str, *, cn: str) -> m.Ldif.Entry:
     )
 
 
+def _modify_add_entry(dn: str, attribute: str, value: str) -> m.Ldif.Entry:
+    """Build a ``changetype: modify`` entry adding one attribute value."""
+    return m.Ldif.Entry(
+        dn=m.Ldif.DN(value=dn),
+        attributes=m.Ldif.Attributes.model_validate({
+            "attributes": {
+                c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.LdifChangeType.MODIFY.value],
+                c.Ldif.ChangeOperation.ADD: [attribute],
+                attribute: [value],
+            },
+            "attribute_metadata": {},
+            "metadata": None,
+        }),
+        changetype=None,
+        metadata=None,
+        validation_metadata=None,
+    )
+
+
+def _attribute_values(dn: str, attribute: str) -> t.StrSequence:
+    """Read one attribute of one entry through the public ``find_entry``."""
+    found = ldap.find_entry(dn, attributes=[attribute])
+    tm.ok(found)
+    tm.that(len(found.value.entries), eq=1)
+    attributes = tm.not_none(found.value.entries[0].attributes)
+    return list(attributes.attributes.get(attribute, []))
+
+
 class TestsFlextLdapSubtreeDeleteIntegration:
     """Subtree deletion through the public facade against a real directory."""
 
@@ -170,6 +198,82 @@ class TestsFlextLdapPlanUpsertIntegration:
             )
             tm.ok(fresh_now)
             tm.that(len(fresh_now.value.entries), eq=0)
+        finally:
+            _ = ldap.delete(stored_dn)
+            ldap.disconnect()
+
+    def test_modify_entries_plan_as_the_write_path_applies_them(
+        self, ldap_container: t.MappingKV[str, t.Scalar]
+    ) -> None:
+        """A modify-add entry plans as one modify; applying the batch matches the plan."""
+        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        base_dn = str(ldap_container["base_dn"])
+        identifier = f"pm-{uuid4().hex[:8]}"
+        stored_dn = f"uid={identifier},{base_dn}"
+        new_dn = f"uid=planned-{identifier},{base_dn}"
+        description = f"planned {identifier}"
+        stored = _user_entry(stored_dn, identifier, cn="Stored Name")
+        batch = [
+            stored,
+            _user_entry(new_dn, f"planned-{identifier}", cn="Fresh"),
+            _modify_add_entry(stored_dn, "description", description),
+        ]
+        tm.ok(ldap.connect(conn_config))
+        try:
+            tm.ok(ldap.add(stored))
+
+            plan_result = ldap.plan_upsert(batch)
+
+            tm.ok(plan_result)
+            plan = plan_result.value
+            tm.that((plan.adds, plan.modifies, plan.unchanged), eq=(1, 1, 1))
+            tm.that(_attribute_values(stored_dn, "description"), eq=[])
+            absent = ldap.find_entry(new_dn)
+            tm.ok(absent)
+            tm.that(len(absent.value.entries), eq=0)
+
+            applied = ldap.batch_upsert(batch, stop_on_error=True)
+
+            tm.ok(applied)
+            tm.that(applied.value.synced, eq=plan.adds + plan.modifies)
+            tm.that(applied.value.skipped, eq=plan.unchanged)
+            tm.that(_attribute_values(stored_dn, "description"), eq=[description])
+        finally:
+            _ = ldap.delete(new_dn)
+            _ = ldap.delete(stored_dn)
+            ldap.disconnect()
+
+
+class TestsFlextLdapFindEntryIntegration:
+    """Absence-aware single-entry reads against a real directory."""
+
+    def test_absent_entry_is_an_empty_result(
+        self, ldap_container: t.MappingKV[str, t.Scalar]
+    ) -> None:
+        """A DN that does not exist reads as a successful empty result."""
+        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        base_dn = str(ldap_container["base_dn"])
+        absent_dn = f"uid=absent-{uuid4().hex[:8]},{base_dn}"
+        tm.ok(ldap.connect(conn_config))
+        try:
+            found = ldap.find_entry(absent_dn)
+            tm.ok(found)
+            tm.that(len(found.value.entries), eq=0)
+        finally:
+            ldap.disconnect()
+
+    def test_present_entry_reads_the_requested_attributes(
+        self, ldap_container: t.MappingKV[str, t.Scalar]
+    ) -> None:
+        """A present entry is returned with the attributes asked for."""
+        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        base_dn = str(ldap_container["base_dn"])
+        identifier = f"fe-{uuid4().hex[:8]}"
+        stored_dn = f"uid={identifier},{base_dn}"
+        tm.ok(ldap.connect(conn_config))
+        try:
+            tm.ok(ldap.add(_user_entry(stored_dn, identifier, cn="Found Name")))
+            tm.that(_attribute_values(stored_dn, "cn"), eq=["Found Name"])
         finally:
             _ = ldap.delete(stored_dn)
             ldap.disconnect()
