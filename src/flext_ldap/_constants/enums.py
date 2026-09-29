@@ -36,6 +36,8 @@ class FlextLdapConstantsEnums:
         UNBIND = "unbind"
         SYNC = "sync"
         BATCH_UPSERT = "batch_upsert"
+        PLAN_UPSERT = "plan_upsert"
+        SUBTREE_DELETE = "subtree_delete"
 
     @unique
     class ResultCode(IntEnum):
@@ -60,6 +62,7 @@ class FlextLdapConstantsEnums:
         """LDAP protocol-level attribute names."""
 
         ALL_ATTRIBUTES = "*"
+        NO_ATTRIBUTES = "1.1"
         OBJECT_CLASS = "objectClass"
         DN = "dn"
         CHANGETYPE = "changetype"

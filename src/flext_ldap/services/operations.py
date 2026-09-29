@@ -37,6 +37,7 @@ from flext_ldif import ldif, r
 from flext_ldap import c, m, p, t, u
 from flext_ldap.adapters.host import FlextLdapAdapterHost
 
+from ._subtree_delete import FlextLdapSubtreeDeleteHandler
 from ._upsert_handler import FlextLdapUpsertHandler
 
 
@@ -82,12 +83,23 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         default_factory=lambda: None
     )
 
+    _subtree_delete_handler_instance: FlextLdapSubtreeDeleteHandler | None = (
+        u.PrivateAttr(default_factory=lambda: None)
+    )
+
     @property
     def _upsert_handler(self) -> FlextLdapUpsertHandler:
         """Lazy-init upsert handler."""
         if self._upsert_handler_instance is None:
             self._upsert_handler_instance = FlextLdapUpsertHandler(self)
         return self._upsert_handler_instance
+
+    @property
+    def _subtree_delete_handler(self) -> FlextLdapSubtreeDeleteHandler:
+        """Lazy-init subtree-delete handler."""
+        if self._subtree_delete_handler_instance is None:
+            self._subtree_delete_handler_instance = FlextLdapSubtreeDeleteHandler(self)
+        return self._subtree_delete_handler_instance
 
     @staticmethod
     def already_exists_error(error_message: str) -> bool:
@@ -320,6 +332,53 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             return r[m.Ldap.OperationResult].from_failure(dn_build)
         dn_model: m.Ldif.DN = dn_build.unwrap()
         return self._fold_operation_result(self._ensure_adapter().delete(dn_model))
+
+    def delete_subtree(
+        self, dn: str | p.Ldif.DN
+    ) -> p.Result[m.Ldap.SubtreeDeleteResult]:
+        """Delete an entry and everything below it, deepest-first.
+
+        Business Rules:
+            - Base entry must exist (typed failure when absent)
+            - Subtree enumeration uses a DN-only search (attributes ``1.1``)
+            - Children are always deleted before their parents (no LDAP 66)
+            - The first failed deletion stops the run and reports progress
+              (base DN, deleted count, failed DN, cause) as a typed failure
+
+        Audit Implications:
+            - deleted_count on success; on failure the message carries the
+              exact stop point for forensic analysis
+
+        Args:
+            dn: Distinguished name of the subtree root (string or DN model)
+
+        Returns:
+            r containing SubtreeDeleteResult with base_dn and deleted_count.
+
+        """
+        subtree_root: str
+        subtree_root = dn if isinstance(dn, str) else m.Ldif.DN.model_validate(dn).value
+        return self._subtree_delete_handler.run(subtree_root)
+
+    def plan_upsert(
+        self, entries: t.SequenceOf[p.Ldif.Entry]
+    ) -> p.Result[m.Ldap.UpsertPlan]:
+        """Classify entries for upsert without writing (dry plan).
+
+        Business Rules:
+            - Delegates to FlextLdapUpsertHandler.plan (the owner of the
+              upsert compare semantics owns "what would change")
+            - Counts adds/modifies/unchanged using the live directory
+            - Zero writes are issued
+
+        Args:
+            entries: Entries to classify against the directory
+
+        Returns:
+            r containing UpsertPlan with add/modify/unchanged counts.
+
+        """
+        return self._upsert_handler.plan(entries)
 
     @override
     def execute(self) -> p.Result[m.Ldap.Response]:

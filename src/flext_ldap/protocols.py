@@ -200,6 +200,18 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Upsert multiple entries and report canonical batch statistics."""
                 ...
 
+            def delete_subtree(
+                self, dn: str | FlextLdifProtocols.Ldif.DN
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SubtreeDeleteResult]:
+                """Delete an entry and its descendants, deepest-first."""
+                ...
+
+            def plan_upsert(
+                self, entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry]
+            ) -> FlextLdifProtocols.Result[lm.Ldap.UpsertPlan]:
+                """Classify entries for upsert without writing (dry plan)."""
+                ...
+
             def connect(
                 self,
                 connection_config: FlextLdapProtocols.Ldap.ConnectionConfig,
