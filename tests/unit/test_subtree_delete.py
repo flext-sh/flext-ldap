@@ -235,9 +235,7 @@ class TestsFlextLdapPlanUpsert:
         attributes.update({name: [value] for name, value in additions.items()})
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
-            attributes=m.Ldif.Attributes(
-                attributes=attributes, attribute_metadata={}
-            ),
+            attributes=m.Ldif.Attributes(attributes=attributes, attribute_metadata={}),
         )
 
     def test_plan_modify_entry_counts_without_reading_the_directory(self) -> None:

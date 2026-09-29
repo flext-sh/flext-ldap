@@ -95,9 +95,7 @@ class FlextLdapUpsertHandler:
         return changetype == c.Ldif.LdifChangeType.MODIFY
 
     @staticmethod
-    def _modify_additions(
-        entry_model: m.Ldif.Entry,
-    ) -> list[tuple[str, t.StrSequence]]:
+    def _modify_additions(entry_model: m.Ldif.Entry) -> list[tuple[str, t.StrSequence]]:
         """Collect the non-empty MODIFY_ADD values of a modify entry.
 
         Change operations are the carrier; the legacy ``add:`` attribute
