@@ -147,7 +147,7 @@ class FlextLdapLdap3ResultExtract:
             return None
         metadata_dict: t.MutableMappingKV[str, t.Scalar | t.ScalarList] = {}
         for raw_key, raw_value in metadata.items():
-            if isinstance(raw_value, t.PRIMITIVES_TYPES):
+            if isinstance(raw_value, c.PRIMITIVES_TYPES):
                 metadata_dict[raw_key] = raw_value
         return metadata_dict or None
 
