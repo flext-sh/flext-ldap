@@ -558,9 +558,9 @@ from __future__ import annotations
 
 # tests/conftest.py
 import pytest
-from flext_tests import tk
 
 from flext_ldap import FlextLdapSettings, set_flext_ldap_settings
+from flext_tests import tk
 
 
 @pytest.fixture(scope="session")
