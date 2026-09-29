@@ -29,12 +29,12 @@
     "object_classes": ["person", "organizationalPerson", "inetOrgPerson"]
   },
   {
-    "dn": "uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=flext,dc=local",
-    "uid": "REDACTED_LDAP_BIND_PASSWORD",
+    "dn": "uid=admin,ou=people,dc=flext,dc=local",
+    "uid": "admin",
     "cn": "Administrator",
     "sn": "Admin",
     "given_name": "System",
-    "mail": "REDACTED_LDAP_BIND_PASSWORD@example.com",
+    "mail": "admin@example.com",
     "telephone_number": "+1234567892",
     "department": "IT",
     "title": "System Administrator",
