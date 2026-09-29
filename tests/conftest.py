@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Protocol, TypeGuard
 
 import pytest
-from flext_tests import tk
 
 from tests import c, t, u
 
@@ -76,8 +75,6 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
     """Provide ldap container."""
-    if tk.ci_disables_docker():
-        pytest.skip(c.Tests.DOCKER_CI_SKIP_REASON)
     if not _docker_compose_available():
         pytest.skip(
             "LDAP smoke tests require the Docker compose file; skipping because "

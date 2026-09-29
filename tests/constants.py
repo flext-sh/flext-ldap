@@ -180,6 +180,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
             DOCKER_SERVICE_NAME: Final[str] = "openldap"
             DOCKER_PORT: Final[int] = 3390
+            # Port slapd listens on inside the container; compose publishes it
+            # on DOCKER_PORT (docker/docker-compose.openldap.yml "3390:389").
+            DOCKER_CONTAINER_PORT: Final[int] = 389
             DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
             DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
             DOCKER_ADMIN_PASSWORD: Final[str] = _docker_admin_password()
