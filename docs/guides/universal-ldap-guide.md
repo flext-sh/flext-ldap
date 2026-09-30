@@ -279,8 +279,9 @@ if attrs_result.success:
 ```python
 from __future__ import annotations
 
-from flext_ldap import ldap
 from flext_ldif import ldif
+
+from flext_ldap import ldap
 
 
 def migrate_openldap1_to_openldap2():

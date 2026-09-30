@@ -249,8 +249,8 @@ make ldap-test-server
 # Verify server connectivity
 docker exec -it flext-ldap-test-server ldapsearch \
   -x -H ldap://localhost:389 \
-  -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" \
-  -w "REDACTED_LDAP_BIND_PASSWORD123" \
+  -D "cn=admin,dc=flext,dc=local" \
+  -w "admin123" \
   -b "dc=flext,dc=local"
 
 # Stop test server
@@ -558,9 +558,9 @@ from __future__ import annotations
 
 # tests/conftest.py
 import pytest
+from flext_tests import tk
 
 from flext_ldap import FlextLdapSettings, set_flext_ldap_settings
-from flext_tests import tk
 
 
 @pytest.fixture(scope="session")
@@ -576,7 +576,7 @@ def ldap_server():
         environment={
             "LDAP_ORGANISATION": "FLEXT Test",
             "LDAP_DOMAIN": "internal.invalid",
-            "LDAP_ADMIN_PASSWORD": "REDACTED_LDAP_BIND_PASSWORD123",
+            "LDAP_ADMIN_PASSWORD": "admin123",
         },
         detach=True,
         remove=True,
@@ -601,8 +601,8 @@ def ldap_server():
     test_config = FlextLdapSettings(
         host="localhost",
         port=3390,
-        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        bind_password="REDACTED_LDAP_BIND_PASSWORD123",
+        bind_dn="cn=admin,dc=flext,dc=local",
+        bind_password="admin123",
         base_dn="dc=flext,dc=local",
     )
     set_flext_ldap_settings(test_config)

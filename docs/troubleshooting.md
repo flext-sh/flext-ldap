@@ -99,7 +99,7 @@ nmap -p 389,636 ldap.example.com
 
 # Test with ldapsearch (if available)
 ldapsearch -x -H ldap://ldap.example.com:389 -D \
-    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password -b "dc=example,dc=com"
+    "cn=admin,dc=example,dc=com" -w password -b "dc=example,dc=com"
 ```
 
 **Solutions:**
@@ -128,7 +128,7 @@ openssl x509 -in /path/to/cert.pem -text -noout
 
 # Test LDAP with StartTLS
 ldapsearch -x -H ldap://ldap.example.com:389 -ZZ -D \
-    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
+    "cn=admin,dc=example,dc=com" -w password
 ```
 
 **Solutions:**
@@ -186,10 +186,8 @@ def diagnose_auth():
     connection_result = api.test_connection()
     print(f"Connection: {connection_result.success}")
 
-    # Test with known REDACTED_LDAP_BIND_PASSWORD credentials
-    auth_result = api.authenticate_user(
-        "REDACTED_LDAP_BIND_PASSWORD", "REDACTED_LDAP_BIND_PASSWORD-password"
-    )
+    # Test with known admin credentials
+    auth_result = api.authenticate_user("admin", "admin-password")
     print(f"Auth result: {auth_result.success}")
     if auth_result.failure:
         print(f"Error: {auth_result.error}")
@@ -203,7 +201,7 @@ run(diagnose_auth())
 1. **Verify bind DN format** - must be RFC 4514 compliant
 1. **Check bind password** - ensure no special characters are escaped incorrectly
 1. **Confirm user exists** in the directory
-1. **Test with LDAP REDACTED_LDAP_BIND_PASSWORD tools** first
+1. **Test with LDAP admin tools** first
 
 ### DN Format Issues
 
@@ -392,7 +390,7 @@ def diagnose_performance():
     test_cases = [
         {
             "name": "Base scope (fastest)",
-            "base_dn": "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+            "base_dn": "cn=admin,dc=example,dc=com",
             "scope": "base",
             "filter": "(objectClass=*)",
         },
@@ -664,8 +662,8 @@ docker logs flext-ldap-test-server
 # Test connectivity
 docker exec -it flext-ldap-test-server ldapsearch \
   -x -H ldap://localhost:389 \
-  -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" \
-  -w "REDACTED_LDAP_BIND_PASSWORD123" \
+  -D "cn=admin,dc=flext,dc=local" \
+  -w "admin123" \
   -b "dc=flext,dc=local"
 
 # Restart test server
@@ -754,9 +752,9 @@ wireshark ldap.pcap
 
 # Test with different LDAP tools
 ldapsearch -v -x -H ldap://server:389 -D \
-    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
+    "cn=admin,dc=example,dc=com" -w password
 ldapwhoami -v -x -H ldap://server:389 -D \
-    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w password
+    "cn=admin,dc=example,dc=com" -w password
 ```
 
 ### Performance Profiling

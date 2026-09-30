@@ -189,10 +189,10 @@ if batch_result.success:
 
 ```python
 # Attribute ACL
-"""access to attr=(userPassword) by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (write)"""
+"""access to attr=(userPassword) by group="cn=admins" (write)"""
 
 # Entry-level ACL
-'access to entry by user="cn=REDACTED_LDAP_BIND_PASSWORD" (read,write,delete)'
+'access to entry by user="cn=admin" (read,write,delete)'
 
 # Multiple attributes
 'access to attr=(cn, sn, mail) by group="cn=users" (read)'
@@ -212,7 +212,7 @@ if batch_result.success:
 # Group-based ACI
 '(target="ldap:///ou=data,dc=example,dc=com")'
 '(version 3.0; acl "Admin Access"; allow (read, write)'
-'groupdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)'
+'groupdn="ldap:///cn=admins,ou=groups,dc=example,dc=com";)'
 ```
 
 ## Creating Custom ACLs
@@ -276,8 +276,8 @@ else:
 # Parse Oracle ACLs from existing directory
 oracle_acls = [
     'access to attr=(cn, sn) by group="cn=users" (read)',
-    'access to attr=(userPassword) by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (write)',
-    'access to entry by user="cn=REDACTED_LDAP_BIND_PASSWORD" (read,write,delete)',
+    'access to attr=(userPassword) by group="cn=admins" (write)',
+    'access to entry by user="cn=admin" (read,write,delete)',
 ]
 
 # Convert to OpenLDAP format

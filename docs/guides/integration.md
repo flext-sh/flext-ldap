@@ -94,6 +94,7 @@ from __future__ import annotations
 
 # FLEXT-Core integration
 from flext_cli import u
+
 from flext_ldap.api import ldap
 
 
@@ -345,7 +346,7 @@ class FlextLdapBackend(BaseBackend):
 
     def _is_staff_user(self, ldap_user) -> bool:
         """Check if LDAP user should have staff privileges."""
-        staff_groups = ["cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com"]
+        staff_groups = ["cn=admins,ou=groups,dc=example,dc=com"]
         return any(group in ldap_user.member_of for group in staff_groups)
 
 
@@ -570,8 +571,8 @@ services:
     environment:
       - FLEXT_LDAP_HOST=ldap-server
       - FLEXT_LDAP_PORT=389
-      - FLEXT_LDAP_BIND_DN=cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
-      - FLEXT_LDAP_BIND_PASSWORD=REDACTED_LDAP_BIND_PASSWORD
+      - FLEXT_LDAP_BIND_DN=cn=admin,dc=example,dc=com
+      - FLEXT_LDAP_BIND_PASSWORD=admin
       - FLEXT_LDAP_BASE_DN=dc=example,dc=com
     depends_on:
       - ldap-server
@@ -583,7 +584,7 @@ services:
     environment:
       - LDAP_ORGANISATION=Example Corp
       - LDAP_DOMAIN=example.com
-      - LDAP_ADMIN_PASSWORD=REDACTED_LDAP_BIND_PASSWORD
+      - LDAP_ADMIN_PASSWORD=admin
     ports:
       - "389:389"
       - "636:636"
@@ -591,8 +592,8 @@ services:
       - ldap_data:/var/lib/ldap
       - ldap_config:/etc/ldap/slapd.d
 
-  ldap-REDACTED_LDAP_BIND_PASSWORD:
-    image: osixia/phpldapREDACTED_LDAP_BIND_PASSWORD:latest
+  ldap-admin:
+    image: osixia/phpldapadmin:latest
     environment:
       - PHPLDAPADMIN_LDAP_HOSTS=ldap-server
     ports:
@@ -742,7 +743,7 @@ adapter = FlextLdapEntryAdapter()
 # Convert ldap3 entries to ldif format
 connection = ldap3.Connection(
     ldap3.Server("ldap://server:389"),
-    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    user="cn=admin,dc=example,dc=com",
     password="password",
     auto_bind=True,
 )
@@ -787,7 +788,7 @@ def process_ldif_file():
     # Connect to LDAP server
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -824,7 +825,7 @@ def export_to_ldif():
     # Connect and search
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -875,7 +876,7 @@ def detect_and_configure():
     """Detect server type and configure operations accordingly."""
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -1046,7 +1047,7 @@ class UniversalLdapProcessor:
 def main():
     processor = UniversalLdapProcessor(
         host="ldap://server:389",
-        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        bind_dn="cn=admin,dc=example,dc=com",
         bind_password="password",
     )
 
