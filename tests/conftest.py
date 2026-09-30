@@ -40,8 +40,7 @@ def _get_worker_id(settings: pytest.Config) -> str:
 
 
 def _docker_compose_path() -> Path:
-    compose_file_rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-    return Path(__file__).resolve().parents[2] / compose_file_rel
+    return u.Ldap.Tests.repository_root() / c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
 
 
 def _docker_compose_available() -> bool:

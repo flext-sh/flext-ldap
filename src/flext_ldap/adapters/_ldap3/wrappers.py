@@ -43,12 +43,18 @@ class FlextLdapLdap3Wrappers:
         object_class: t.StrSequence | str | None,
         attributes: t.MappingKV[str, t.StrSequence],
     ) -> bool:
-        """Type-safe wrapper for untyped ldap3 Connection.add()."""
-        normalized_attributes = {
-            key: values[0] if values else "" for key, values in attributes.items()
-        }
+        """Type-safe wrapper for untyped ldap3 Connection.add().
+
+        Attribute values are forwarded verbatim: ldap3 accepts sequence
+        values natively and the directory server enforces each attribute's
+        single-valued syntax. Collapsing sequences to their first element
+        silently dropped entry data — an ``objectClass`` chain of
+        ``["top", "inetOrgPerson", "person"]`` reached the wire as
+        ``"top"`` and the add failed server-side schema validation with
+        ``objectClassViolation``.
+        """
         add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
-        return add_fn(dn, object_class, normalized_attributes)
+        return add_fn(dn, object_class, dict(attributes))
 
     @staticmethod
     def delete(connection: p.Ldap.Ldap3Connection, dn: str) -> bool:
