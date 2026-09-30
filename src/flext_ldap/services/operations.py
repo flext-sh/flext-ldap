@@ -124,6 +124,43 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         """
         return bool(c.Ldap.ENTRY_ALREADY_EXISTS_RE.search(error_message))
 
+    @staticmethod
+    def no_such_object_error(error_message: str) -> bool:
+        """Return ``True`` when the error reports an absent entry (LDAP 32).
+
+        The single classifier of ``noSuchObject``: every absence-aware read
+        goes through :meth:`find_entry` instead of matching error text.
+        """
+        return bool(c.Ldap.NO_SUCH_OBJECT_RE.search(error_message))
+
+    def find_entry(
+        self, dn: str, *, attributes: t.StrSequence | None = None
+    ) -> p.Result[m.Ldap.SearchResult]:
+        """Read one entry by DN; an absent entry is an empty result, not a failure.
+
+        Business Rules:
+            - Base-scope search on ``dn``, restricted to ``attributes`` when
+              given (operational attributes such as ``aci`` must be named)
+            - noSuchObject (LDAP 32) is the legal absence of the entry: the
+              result succeeds with no entries
+            - Every other search failure propagates unchanged
+
+        Returns:
+            r with a SearchResult holding the entry, or no entries when absent.
+
+        """
+        options = m.Ldap.SearchOptions.base_scope(dn)
+        if attributes is not None:
+            options = options.model_copy(update={"attributes": list(attributes)})
+        found = self.search(options)
+        if found.failure and self.no_such_object_error(
+            u.to_str(found.error, default="")
+        ):
+            return r[m.Ldap.SearchResult].ok(
+                m.Ldap.SearchResult(entries=[], search_options=options)
+            )
+        return found
+
     def add(self, entry: p.Ldif.Entry) -> p.Result[m.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
@@ -368,7 +405,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         Business Rules:
             - Delegates to FlextLdapUpsertHandler.plan (the owner of the
               upsert compare semantics owns "what would change")
-            - Counts adds/modifies/unchanged using the live directory
+            - Routes each entry like the write path: a ``changetype: modify``
+              entry with add operations is a modify (no search); any other
+              entry is classified against the live directory as
+              add/modify/unchanged
             - Zero writes are issued
 
         Args:
