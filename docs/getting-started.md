@@ -346,9 +346,8 @@ run(server_specific_operations())
 Convert between ldap3 and ldif entry formats:
 
 ```python
-from flext_ldif import FlextLdifModels
-
 from flext_ldap import FlextLdapEntryAdapter
+from flext_ldif import FlextLdifModels
 
 adapter = FlextLdapEntryAdapter()
 

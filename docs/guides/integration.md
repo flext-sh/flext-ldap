@@ -94,7 +94,6 @@ from __future__ import annotations
 
 # FLEXT-Core integration
 from flext_cli import u
-
 from flext_ldap.api import ldap
 
 
