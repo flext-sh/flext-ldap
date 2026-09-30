@@ -69,6 +69,12 @@ class FlextLdapLdap3Wrappers:
         return bound_state
 
     @staticmethod
+    def bind(connection: p.Ldap.Ldap3Connection) -> bool:
+        """Bind only after the adapter owns the connection for cleanup."""
+        bind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "bind")
+        return bind_fn()
+
+    @staticmethod
     def modify(
         connection: p.Ldap.Ldap3Connection, dn: str, changes: t.Ldap.OperationChanges
     ) -> bool:

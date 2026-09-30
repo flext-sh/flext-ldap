@@ -25,7 +25,7 @@ class FlextLdapLdap3ConnectionManager:
 
         Business Rules:
             - Bind credentials (user, password) from settings
-            - auto_bind from settings controls automatic binding
+            - Constructor never binds; the adapter binds after taking ownership
             - auto_range from settings controls automatic range handling
             - Receive timeout uses settings.timeout value
             - p.Ldap.Ldap3Connection is created but may not be bound yet
@@ -33,14 +33,14 @@ class FlextLdapLdap3ConnectionManager:
         Architecture:
             - Uses ldap3 p.Ldap.Ldap3Connection() constructor directly
             - Returns p.Ldap.Ldap3Connection instance (may need bind() call)
-            - No network calls if auto_bind=False
+            - No network calls during construction
 
         Args:
             server: ldap3 Server t.JsonValue from create_server().
             settings: p.Ldap.Ldap3Connection configuration with bind credentials.
 
         Returns:
-            ldap3 p.Ldap.Ldap3Connection t.JsonValue (bound if auto_bind=True).
+            ldap3 p.Ldap.Ldap3Connection t.JsonValue, initially unbound.
 
         """
         if not isinstance(server, Server):
@@ -50,7 +50,7 @@ class FlextLdapLdap3ConnectionManager:
             server=server,
             user=settings.bind_dn,
             password=settings.bind_password,
-            auto_bind=settings.auto_bind,
+            auto_bind=False,
             auto_range=settings.auto_range,
             check_names=False,
             receive_timeout=settings.timeout,
