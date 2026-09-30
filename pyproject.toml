@@ -335,8 +335,6 @@ exclude = [
   "**/node_modules",
   "**/site-packages",
   "**/site-packages/**",
-  "**/tests/fixtures",
-  "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
   ".git",
@@ -404,7 +402,7 @@ reportAttributeAccessIssue = "none"
 reportGeneralTypeIssues = "none"
 reportInvalidTypeForm = "none"
 reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
+reportPrivateUsage = "error"
 reportReturnType = "none"
 reportUnknownArgumentType = "none"
 reportUnknownLambdaType = "none"
@@ -489,7 +487,7 @@ namespace-packages = ["tests", "examples", "scripts"]
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = ["examples", "scripts", "src", "tests"]
+src = ["examples", "src", "tests"]
 target-version = "py313"
 
 [tool.ruff.format]
@@ -500,6 +498,7 @@ quote-style = "double"
 skip-magic-trailing-comma = true
 
 [tool.ruff.lint]
+extend-safe-fixes = []
 ignore = [
   "ambiguous-unicode-character-comment",
   "ambiguous-unicode-character-docstring",
@@ -534,6 +533,17 @@ ignore = [
   "typing-only-third-party-import",
 ]
 select = ["ALL"]
+unfixable = [
+  "duplicate-value",
+  "multi-value-repeated-key-literal",
+  "multi-value-repeated-key-variable",
+  "outdated-version-block",
+  "p-print",
+  "print",
+  "pytest-duplicate-parametrize-test-cases",
+  "redefined-while-unused",
+  "unused-variable",
+]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.argparse]
 msg = "Use cli.register_result_command + Pydantic model from flext_cli."
@@ -543,6 +553,9 @@ msg = "Use flext_cli.cli application, registration, execution, and invocation me
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.rich]
 msg = "Use cli.print / cli.display_message / cli.render_panel / cli.render_table."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.tabulate]
+msg = "Use cli.render_table from flext_cli."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
 msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
