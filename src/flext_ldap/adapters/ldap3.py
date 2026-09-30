@@ -109,12 +109,25 @@ class FlextLdapLdap3Adapter(s[bool]):
             connection = self._create_connection(settings)
         except c.Ldap.EXC_CONNECTION as exc:
             return r[bool].fail_op("Connection", exc)
-        tls_result = self.ConnectionManager.handle_tls(connection, settings)
-        if tls_result.failure:
-            return tls_result
-        if not FlextLdapLdap3Wrappers.bound(connection):
-            return e.fail_operation("bind to LDAP server")
-        return r[bool].ok(value=True)
+        connected = False
+        try:
+            tls_result = self.ConnectionManager.handle_tls(connection, settings)
+            if tls_result.failure:
+                return tls_result
+            if settings.auto_bind:
+                try:
+                    bound = FlextLdapLdap3Wrappers.bind(connection)
+                except c.Ldap.EXC_CONNECTION as exc:
+                    return r[bool].fail_op("Connection", exc)
+                if not bound:
+                    return e.fail_operation("bind to LDAP server")
+            if not FlextLdapLdap3Wrappers.bound(connection):
+                return e.fail_operation("bind to LDAP server")
+            connected = True
+            return r[bool].ok(value=True)
+        finally:
+            if not connected:
+                self.disconnect()
 
     def delete(self, dn: str | m.Ldif.DN) -> p.Result[m.Ldap.OperationResult]:
         """Delete LDAP entry via railway: connection → execute_delete."""
