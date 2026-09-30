@@ -212,6 +212,12 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Classify entries for upsert without writing (dry plan)."""
                 ...
 
+            def find_entry(
+                self, dn: str, *, attributes: t.StrSequence | None = None
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
+                """Read one entry by DN; an absent entry is an empty result."""
+                ...
+
             def connect(
                 self,
                 connection_config: FlextLdapProtocols.Ldap.ConnectionConfig,

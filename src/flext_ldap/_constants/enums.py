@@ -56,6 +56,7 @@ class FlextLdapConstantsEnums:
         NOT_CONNECTED = "Not connected to LDAP server"
         CONNECTION_FAILED = "Connection failed"
         UNKNOWN_ERROR = "unknown error"
+        MODIFY_ENTRY_WITHOUT_ADDITIONS = "Schema modify entry missing add operations"
 
     @unique
     class AttributeName(StrEnum):

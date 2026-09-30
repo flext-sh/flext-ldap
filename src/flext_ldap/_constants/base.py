@@ -67,6 +67,10 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
         re.IGNORECASE,
     )
 
+    NO_SUCH_OBJECT_RE: Final[t.RegexPattern] = re.compile(
+        r"nosuchobject|no such object", re.IGNORECASE
+    )
+
     OPERATION_SUCCESS_MESSAGES: ClassVar[
         Mapping[FlextLdapConstantsEnums.OperationType, str]
     ] = MappingProxyType({
