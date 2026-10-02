@@ -26,7 +26,12 @@ pytestmark = [pytest.mark.integration, pytest.mark.docker]
 
 
 def _ou_entry(dn: str, ou: str) -> m.Ldif.Entry:
-    """Build an organizationalUnit entry for the real directory."""
+    """Build an organizationalUnit entry for the real directory.
+
+    Returns:
+        The resulting ``m.Ldif.Entry`` value.
+
+    """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes.model_validate({
@@ -41,7 +46,12 @@ def _ou_entry(dn: str, ou: str) -> m.Ldif.Entry:
 
 
 def _user_entry(dn: str, identifier: str, *, cn: str) -> m.Ldif.Entry:
-    """Build an inetOrgPerson entry for the real directory."""
+    """Build an inetOrgPerson entry for the real directory.
+
+    Returns:
+        The resulting ``m.Ldif.Entry`` value.
+
+    """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes.model_validate({
@@ -61,7 +71,12 @@ def _user_entry(dn: str, identifier: str, *, cn: str) -> m.Ldif.Entry:
 
 
 def _modify_add_entry(dn: str, attribute: str, value: str) -> m.Ldif.Entry:
-    """Build a ``changetype: modify`` entry adding one attribute value."""
+    """Build a ``changetype: modify`` entry adding one attribute value.
+
+    Returns:
+        The resulting ``m.Ldif.Entry`` value.
+
+    """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes.model_validate({
@@ -80,7 +95,12 @@ def _modify_add_entry(dn: str, attribute: str, value: str) -> m.Ldif.Entry:
 
 
 def _attribute_values(dn: str, attribute: str) -> t.StrSequence:
-    """Read one attribute of one entry through the public ``find_entry``."""
+    """Read one attribute of one entry through the public ``find_entry``.
+
+    Returns:
+        The resulting ``t.StrSequence`` value.
+
+    """
     found = ldap.find_entry(dn, attributes=[attribute])
     tm.ok(found)
     tm.that(len(found.value.entries), eq=1)
@@ -209,8 +229,10 @@ class TestsFlextLdapPlanUpsertIntegration:
     def test_modify_entries_plan_as_the_write_path_applies_them(
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
-        """A modify-add entry plans as one modify;
-        applying the batch matches the plan."""
+        """A modify-add entry plans as one modify.
+
+        Applying the batch matches the plan.
+        """
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"pm-{uuid4().hex[:8]}"
