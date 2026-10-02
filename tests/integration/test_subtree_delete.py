@@ -209,7 +209,8 @@ class TestsFlextLdapPlanUpsertIntegration:
     def test_modify_entries_plan_as_the_write_path_applies_them(
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
-        """A modify-add entry plans as one modify; applying the batch matches the plan."""
+        """A modify-add entry plans as one modify;
+        applying the batch matches the plan."""
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"pm-{uuid4().hex[:8]}"

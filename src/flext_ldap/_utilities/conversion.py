@@ -88,8 +88,9 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         return updated
 
     # NOTE (multi-agent): mro-wgwh.2 — entry attribute/category behavior moved here
-    # from m.Ldap.SearchResult (models facet is declaration-only); resolve_entry_category
-    # composes the two extractions, killing the duplicated objectClass logic.
+    # from m.Ldap.SearchResult (models facet is declaration-only);
+    # resolve_entry_category composes the two extractions, killing the duplicated
+    # objectClass logic.
     @staticmethod
     def extract_attrs_dict_from_entry(
         entry: p.Ldif.Entry,

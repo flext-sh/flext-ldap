@@ -256,7 +256,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Architecture:
             - Uses upsert() method for each entry
-            - Progress callback signature: (current: int, total: int, dn: str, stats: LdapBatchStats)
+            - Progress callback signature:
+              (current: int, total: int, dn: str, stats: LdapBatchStats)
             - Returns r pattern - no exceptions raised
 
         Args:
@@ -297,7 +298,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 break
         if sync_options.stop_on_error and stop_error_index is not None:
             return r[m.Ldap.LdapBatchStats].fail(
-                f"Batch upsert stopped on error at entry {stop_error_index}/{total_entries}",
+                f"Batch upsert stopped on error at entry {stop_error_index}/"
+                f"{total_entries}",
             )
         self.logger.info(
             "Batch upsert completed",
@@ -471,7 +473,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Business Rules:
             - Entry must exist before modification (LDAP error 32 if not found)
-            - Changes use ldap3 format: {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
+            - Changes use ldap3 format:
+              {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
             - DN normalization is applied using u.Ldif.get_dn_value()
             - String DNs are converted to DN models for type safety
             - Schema constraints are validated by LDAP server
@@ -530,7 +533,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             - Returns r pattern - no exceptions raised
 
         Args:
-            search_options: Search configuration (base_dn, filter_str, scope, attributes)
+            search_options: Search configuration
+              (base_dn, filter_str, scope, attributes)
             server_type: LDAP server type for parsing servers (default: RFC)
 
         Returns:
@@ -594,11 +598,13 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Args:
             entry: Entry model to upsert (must include DN and attributes)
-            retry_on_errors: List of error patterns to retry on (e.g., ["session terminated"])
+            retry_on_errors: List of error patterns to retry on
+              (e.g., ["session terminated"])
             max_retries: Maximum number of retry attempts (default: 1, no retry)
 
         Returns:
-            r containing LdapOperationResult with operation type (ADDED|MODIFIED|SKIPPED)
+            r containing LdapOperationResult with operation type
+              (ADDED|MODIFIED|SKIPPED)
 
         """
         if not (retry_on_errors and max_retries > 1):

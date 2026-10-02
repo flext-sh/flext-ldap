@@ -131,7 +131,8 @@ class FlextLdapEntryAdapter(s[bool]):
             - DN is extracted from entry.entry_dn (string conversion)
             - Attributes are extracted from entry.entry_attributes_as_dict
             - Attribute values are normalized to t.StrSequence format
-            - Base64 encoding detection uses ASCII threshold (127) for non-printable chars
+            - Base64 encoding detection uses ASCII threshold (127) for
+            - non-printable chars
             - Removed attributes (None values) are tracked in conversion metadata
             - Conversion metadata includes source DN, removed attrs, base64 attrs
             - Server type from adapter instance is stored in ServerMetadata

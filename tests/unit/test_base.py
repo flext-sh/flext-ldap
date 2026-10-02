@@ -111,7 +111,8 @@ class TestsFlextLdapBase:
     def test_settings_isolated_from_root_global() -> None:
         """Verify settings isolated from root global."""
         cfg = m.Ldap.Tests.SuccessService().settings
-        # NOTE (multi-agent): restore root singleton read removed by a bad "fixes" commit.
+        # NOTE (multi-agent): restore root singleton read removed by
+        # a bad "fixes" commit.
         glob = FlextSettings.fetch_global()
 
         tm.that(cfg is glob, eq=False)

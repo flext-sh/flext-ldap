@@ -158,7 +158,8 @@ class TestsFlextLdapSync:
             c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
             encoding="utf-8",
         )
-        # Act / Assert: an unsupported arity is a contract violation, not a failure result
+        # Act / Assert: an unsupported arity is a contract violation,
+        # not a failure result
         with pytest.raises(TypeError, match="single-phase"):
             ldap.sync_phase_entries(
                 ldif_file,

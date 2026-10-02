@@ -1,7 +1,8 @@
 """Behavioral contract test for the flext-ldap public API surface.
 
 Asserts the OBSERVABLE public contract of the ``flext_ldap`` package: the
-root export set propagated from each module's declarations, the importability of every exported name, the identity
+root export set propagated from each module's declarations, the importability
+of every exported name, the identity
 of the canonical single-letter aliases, and the operations the ``FlextLdap``
 facade promises its callers. It deliberately avoids internal implementation
 details (MRO ordering, private attributes, adapter modules).

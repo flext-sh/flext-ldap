@@ -197,7 +197,8 @@ class TestsFlextLdapConfig:
         """Verify clone preserves public state."""
         original = LdapTestSettings(
             Ldap=_LdapSettings(
-                host=c.Ldap.Tests.CONFIG_ORIGINAL_HOST, port=c.Ldap.PORT,
+                host=c.Ldap.Tests.CONFIG_ORIGINAL_HOST,
+                port=c.Ldap.PORT,
             ),
         )
 

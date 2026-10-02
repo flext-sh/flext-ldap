@@ -149,7 +149,8 @@ class FlextLdapSync(FlextLdapOperations):
         )
         if not overall_success:
             return r[m.Ldap.MultiPhaseSyncResult].fail(
-                f"Multi-phase sync completed with failures: {total_failed} entries failed",
+                f"Multi-phase sync completed with failures: {total_failed} "
+                "entries failed",
             )
         return r[m.Ldap.MultiPhaseSyncResult].ok(sync_result)
 

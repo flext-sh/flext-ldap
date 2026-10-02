@@ -108,9 +108,15 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
             FlextLdapConstantsEnums.SearchScopeValue,
         ]
     ] = MappingProxyType({
-        FlextLdapConstantsEnums.SearchScope.BASE: FlextLdapConstantsEnums.SearchScopeValue.BASE,
-        FlextLdapConstantsEnums.SearchScope.ONELEVEL: FlextLdapConstantsEnums.SearchScopeValue.LEVEL,
-        FlextLdapConstantsEnums.SearchScope.SUBTREE: FlextLdapConstantsEnums.SearchScopeValue.SUBTREE,
+        FlextLdapConstantsEnums.SearchScope.BASE: (
+            FlextLdapConstantsEnums.SearchScopeValue.BASE
+        ),
+        FlextLdapConstantsEnums.SearchScope.ONELEVEL: (
+            FlextLdapConstantsEnums.SearchScopeValue.LEVEL
+        ),
+        FlextLdapConstantsEnums.SearchScope.SUBTREE: (
+            FlextLdapConstantsEnums.SearchScopeValue.SUBTREE
+        ),
     })
 
     DEFAULT_TYPE: Final[FlextLdifConstants.Ldif.ServerTypes] = (
