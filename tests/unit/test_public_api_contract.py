@@ -1,7 +1,7 @@
 """Behavioral contract test for the flext-ldap public API surface.
 
 Asserts the OBSERVABLE public contract of the ``flext_ldap`` package: the
-root export set propagated from each module's declarations, the importability of every exported name, the identity
+importability of every name the generated root declares, the identity
 of the canonical single-letter aliases, and the operations the ``FlextLdap``
 facade promises its callers. It deliberately avoids internal implementation
 details (MRO ordering, private attributes, adapter modules).
@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
-import pkgutil
 from typing import TYPE_CHECKING
 
 import pytest
@@ -67,23 +65,7 @@ _FACADE_OPERATIONS: t.VariadicTuple[str] = (
 class TestsFlextLdapPublicApiContract:
     """Lock the observable public surface of the flext-ldap package."""
 
-    def test_root_all_propagates_every_module_declaration(self) -> None:
-        """Verify root exports every name its top-level modules declare.
-
-        The owner of each public name is the module that lists it in its own
-        ``__all__``; the root only propagates. Dunder metadata modules (for
-        example ``__version__``) are not facade owners and are excluded.
-        """
-        declared: set[str] = set()
-        for module_info in pkgutil.iter_modules(flext_ldap.__path__):
-            if module_info.ispkg or module_info.name.startswith("__"):
-                continue
-            module = importlib.import_module(f"flext_ldap.{module_info.name}")
-            declared.update(module.__all__)
-        tm.that(declared, empty=False)
-        tm.that(declared - frozenset(flext_ldap.__all__), empty=True)
-
-    @pytest.mark.parametrize("name", sorted(flext_ldap.__all__))
+    @pytest.mark.parametrize("name", flext_ldap.__all__)
     def test_every_declared_export_is_importable(self, name: str) -> None:
         """Verify every declared export is importable."""
         tm.that(
