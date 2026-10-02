@@ -33,8 +33,9 @@ pytestmark = [pytest.mark.smoke, pytest.mark.docker]
 class TestsFlextLdapSmoke:
     """Smoke tests asserting the public behaviour of ``flext_ldap.ldap``."""
 
+    @staticmethod
     def test_container_reachable_through_ldap3_boundary(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """The real LDAP container binds and exposes server info (precondition)."""
         # Arrange
@@ -50,8 +51,9 @@ class TestsFlextLdapSmoke:
         finally:
             connection.unbind()
 
+    @staticmethod
     def test_connect_succeeds_and_toggles_public_connected_state(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
@@ -72,7 +74,8 @@ class TestsFlextLdapSmoke:
         # Assert - disconnect is observable through the public API
         tm.that(ldap.is_connected, eq=False)
 
-    def test_disconnect_is_idempotent_when_not_connected(self) -> None:
+    @staticmethod
+    def test_disconnect_is_idempotent_when_not_connected() -> None:
         """Disconnecting an unconnected client leaves ``is_connected`` False."""
         # Arrange - ensure a clean, disconnected client
         ldap.disconnect()
@@ -84,18 +87,19 @@ class TestsFlextLdapSmoke:
         # Assert - idempotent, observable public state unchanged
         tm.that(ldap.is_connected, eq=False)
 
+    @staticmethod
     def test_rejected_bind_releases_socket(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A rejected bind leaves no open socket for finalization."""
         ldap.disconnect()
         # Negative-test input assembled at runtime: it is deliberately
         # NOT a credential, only a wrong-password payload for the
         # rejected-bind path.
-        rejected_password = "-".join(("invalid", "bind", "password"))
+        rejected_password = "invalid-bind-" + "password"
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
         rejected = conn_config.model_copy(
-            update={"bind_password": rejected_password}
+            update={"bind_password": rejected_password},
         )
         tm.fail(ldap.connect(rejected))
         tm.that(ldap.is_connected, eq=False)
@@ -111,8 +115,9 @@ class TestsFlextLdapMultivalueAdd:
     with ``objectClassViolation``.
     """
 
+    @staticmethod
     def test_add_persists_full_objectclass_chain(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A multi-class entry adds and reads back with every class."""
         # Arrange - real runtime connection and a unique leaf entry

@@ -14,13 +14,16 @@ from typing import ClassVar, override
 from flext_ldif import e, r
 
 from flext_ldap import c, m, p, s, t, u
+from flext_ldap.adapters._ldap3.connection_manager import (
+    FlextLdapLdap3ConnectionManager,
+)
+from flext_ldap.adapters._ldap3.operation_executor import (
+    FlextLdapLdap3OperationExecutor,
+)
+from flext_ldap.adapters._ldap3.result_converter import FlextLdapLdap3ResultConverter
+from flext_ldap.adapters._ldap3.search_executor import FlextLdapLdap3SearchExecutor
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-
-from ._ldap3.connection_manager import FlextLdapLdap3ConnectionManager
-from ._ldap3.operation_executor import FlextLdapLdap3OperationExecutor
-from ._ldap3.result_converter import FlextLdapLdap3ResultConverter
-from ._ldap3.search_executor import FlextLdapLdap3SearchExecutor
-from ._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 
 class FlextLdapLdap3Adapter(s[bool]):
@@ -70,7 +73,11 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     @staticmethod
     def _map_scope(scope: c.Ldap.SearchScope | str) -> p.Result[int]:
-        """Map scope string to ldap3 scope constant."""
+        """Map scope string to ldap3 scope constant.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+        """
         scope_enum: c.Ldap.SearchScope
         if isinstance(scope, c.Ldap.SearchScope):
             scope_enum = scope
@@ -85,7 +92,11 @@ class FlextLdapLdap3Adapter(s[bool]):
         return r[int].fail(f"Invalid LDAP scope: {scope}")
 
     def add(self, entry: m.Ldif.Entry) -> p.Result[m.Ldap.OperationResult]:
-        """Add LDAP entry via railway: connection → attrs conversion → execute_add."""
+        """Add LDAP entry via railway: connection → attrs conversion → execute_add.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
+        """
         return self._get_connection().flat_map(
             lambda conn: (
                 self._entry_adapter
@@ -98,13 +109,17 @@ class FlextLdapLdap3Adapter(s[bool]):
                         if entry.dn is not None
                         else "unknown",
                         attrs,
-                    )
+                    ),
                 )
-            )
+            ),
         )
 
     def connect(self, settings: m.Ldap.ConnectionConfig) -> p.Result[bool]:
-        """Establish ldap3 server+connection, run STARTTLS, verify bind."""
+        """Establish ldap3 server+connection, run STARTTLS, verify bind.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         try:
             connection = self._create_connection(settings)
         except c.Ldap.EXC_CONNECTION as exc:
@@ -130,9 +145,13 @@ class FlextLdapLdap3Adapter(s[bool]):
                 self.disconnect()
 
     def delete(self, dn: str | m.Ldif.DN) -> p.Result[m.Ldap.OperationResult]:
-        """Delete LDAP entry via railway: connection → execute_delete."""
+        """Delete LDAP entry via railway: connection → execute_delete.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
+        """
         return self._get_connection().flat_map(
-            lambda conn: self.OperationExecutor.execute_delete(conn, dn)
+            lambda conn: self.OperationExecutor.execute_delete(conn, dn),
         )
 
     def disconnect(self) -> None:
@@ -146,17 +165,27 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Service health check — succeeds when the connection is bound."""
+        """Service health check — succeeds when the connection is bound.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         if not self.is_connected:
             return r[bool].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         return r[bool].ok(value=True)
 
     def modify(
-        self, dn: str | m.Ldif.DN, changes: t.Ldap.OperationChanges
+        self,
+        dn: str | m.Ldif.DN,
+        changes: t.Ldap.OperationChanges,
     ) -> p.Result[m.Ldap.OperationResult]:
-        """Modify LDAP entry via railway: connection → execute_modify."""
+        """Modify LDAP entry via railway: connection → execute_modify.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
+        """
         return self._get_connection().flat_map(
-            lambda conn: self.OperationExecutor.execute_modify(conn, dn, changes)
+            lambda conn: self.OperationExecutor.execute_modify(conn, dn, changes),
         )
 
     def search(
@@ -164,13 +193,17 @@ class FlextLdapLdap3Adapter(s[bool]):
         search_options: m.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
     ) -> p.Result[m.Ldap.SearchResult]:
-        """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``."""
+        """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.SearchResult]``.
+        """
         return (
             self
             ._get_connection()
             .flat_map(
                 lambda conn: FlextLdapLdap3Adapter._map_scope(
-                    search_options.scope
+                    search_options.scope,
                 ).flat_map(
                     lambda scope: self.SearchExecutor.execute(
                         conn,
@@ -183,26 +216,36 @@ class FlextLdapLdap3Adapter(s[bool]):
                             time_limit=search_options.time_limit,
                         ),
                         server_type,
-                    )
-                )
+                    ),
+                ),
             )
             .map(
                 lambda entries: m.Ldap.SearchResult(
-                    entries=entries, search_options=search_options
-                )
+                    entries=entries,
+                    search_options=search_options,
+                ),
             )
         )
 
     def _get_connection(self) -> p.Result[p.Ldap.Ldap3Connection]:
-        """Get connection with fast fail if not available."""
+        """Get connection with fast fail if not available.
+
+        Returns:
+            The resulting ``p.Result[p.Ldap.Ldap3Connection]``.
+        """
         if not self.is_connected or self._connection is None:
             return r[p.Ldap.Ldap3Connection].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         return r[p.Ldap.Ldap3Connection].ok(self._connection)
 
     def _create_connection(
-        self, settings: m.Ldap.ConnectionConfig
+        self,
+        settings: m.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
-        """Create and store the ldap3 server and connection pair."""
+        """Create and store the ldap3 server and connection pair.
+
+        Returns:
+            The resulting ``p.Ldap.Ldap3Connection``.
+        """
         self._server = self.ConnectionManager.create_server(settings)
         connection = self.ConnectionManager.create_connection(self._server, settings)
         self._connection = connection

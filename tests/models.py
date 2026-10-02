@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
-    """Test models - composição de TestsFlextModels + m."""
+    """Test models composed from TestsFlextModels plus m."""
 
     class Ldap(FlextLdapModels.Ldap):
         """LDAP test models."""
@@ -36,16 +36,18 @@ class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
                 """Test service that always succeeds."""
 
                 @override
-                def execute(self) -> p.Result[bool]:
-                    return r[bool].ok(True)
+                @staticmethod
+                def execute() -> p.Result[bool]:
+                    return r[bool].ok(value=True)
 
             class FailService(TestsFlextLdapServiceBase[bool]):
                 """Test service that always fails."""
 
                 @override
-                def execute(self) -> p.Result[bool]:
+                @staticmethod
+                def execute() -> p.Result[bool]:
                     return r[bool].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE
+                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
                     )
 
 

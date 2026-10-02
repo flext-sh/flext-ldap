@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, ClassVar, Final
 from flext_ldif import FlextLdifConstants
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
-from .enums import FlextLdapConstantsEnums
+from flext_ldap._constants.enums import FlextLdapConstantsEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -68,7 +68,8 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
     )
 
     NO_SUCH_OBJECT_RE: Final[t.RegexPattern] = re.compile(
-        r"nosuchobject|no such object", re.IGNORECASE
+        r"nosuchobject|no such object",
+        re.IGNORECASE,
     )
 
     OPERATION_SUCCESS_MESSAGES: ClassVar[
@@ -107,9 +108,15 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
             FlextLdapConstantsEnums.SearchScopeValue,
         ]
     ] = MappingProxyType({
-        FlextLdapConstantsEnums.SearchScope.BASE: FlextLdapConstantsEnums.SearchScopeValue.BASE,
-        FlextLdapConstantsEnums.SearchScope.ONELEVEL: FlextLdapConstantsEnums.SearchScopeValue.LEVEL,
-        FlextLdapConstantsEnums.SearchScope.SUBTREE: FlextLdapConstantsEnums.SearchScopeValue.SUBTREE,
+        FlextLdapConstantsEnums.SearchScope.BASE: (
+            FlextLdapConstantsEnums.SearchScopeValue.BASE
+        ),
+        FlextLdapConstantsEnums.SearchScope.ONELEVEL: (
+            FlextLdapConstantsEnums.SearchScopeValue.LEVEL
+        ),
+        FlextLdapConstantsEnums.SearchScope.SUBTREE: (
+            FlextLdapConstantsEnums.SearchScopeValue.SUBTREE
+        ),
     })
 
     DEFAULT_TYPE: Final[FlextLdifConstants.Ldif.ServerTypes] = (
@@ -185,13 +192,13 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
     ROOT_DSE_VENDOR_EXCLUDED_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
         MappingProxyType({
             FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({
-                "unified directory"
-            })
+                "unified directory",
+            }),
         })
     )
 
     ROOT_DSE_VENDOR_MAX_TOKENS: Final[t.MappingKV[str, int]] = MappingProxyType({
-        FlextLdifConstants.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS
+        FlextLdifConstants.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS,
     })
 
 

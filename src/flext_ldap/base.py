@@ -27,7 +27,7 @@ from flext_ldap import (
 
 class FlextLdapService[
     TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload]
+    | t.SequenceOf[t.JsonPayload],
 ](s[TResult]):
     """Base class for all flext-ldap services.
 

@@ -1,9 +1,10 @@
 """Behavioral contract test for the flext-ldap public API surface.
 
 Asserts the OBSERVABLE public contract of the ``flext_ldap`` package: the
-root export set propagated from each module's declarations, the importability of every exported name, the identity
-of the canonical single-letter aliases, and the operations the ``FlextLdap``
-facade promises its callers. It deliberately avoids internal implementation
+root export set propagated from each module's declarations, the
+importability of every exported name, the identity of the canonical
+single-letter aliases, and the operations the ``FlextLdap`` facade
+promises its callers. It deliberately avoids internal implementation
 details (MRO ordering, private attributes, adapter modules).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -67,7 +68,8 @@ _FACADE_OPERATIONS: t.VariadicTuple[str] = (
 class TestsFlextLdapPublicApiContract:
     """Lock the observable public surface of the flext-ldap package."""
 
-    def test_root_all_propagates_every_module_declaration(self) -> None:
+    @staticmethod
+    def test_root_all_propagates_every_module_declaration() -> None:
         """Verify root exports every name its top-level modules declare.
 
         The owner of each public name is the module that lists it in its own
@@ -84,7 +86,8 @@ class TestsFlextLdapPublicApiContract:
         tm.that(declared - frozenset(flext_ldap.__all__), empty=True)
 
     @pytest.mark.parametrize("name", sorted(flext_ldap.__all__))
-    def test_every_declared_export_is_importable(self, name: str) -> None:
+    @staticmethod
+    def test_every_declared_export_is_importable(name: str) -> None:
         """Verify every declared export is importable."""
         tm.that(
             hasattr(flext_ldap, name),
@@ -92,26 +95,31 @@ class TestsFlextLdapPublicApiContract:
             msg=f"declared in __all__ but not importable: {name}",
         )
 
-    def test_declared_exports_are_unique(self) -> None:
+    @staticmethod
+    def test_declared_exports_are_unique() -> None:
         """Verify declared exports are unique."""
         names: t.VariadicTuple[str] = flext_ldap.__all__
         tm.that(len(names), eq=len(set(names)))
 
     @pytest.mark.parametrize(("alias", "facade"), _ALIAS_FACADE_CASES)
+    @staticmethod
     def test_canonical_alias_resolves_to_domain_facade(
-        self, alias: str, facade: type
+        alias: str,
+        facade: type,
     ) -> None:
         """Verify canonical alias resolves to domain facade."""
         tm.that(getattr(flext_ldap, alias) is facade, eq=True)
 
-    def test_ldap_facade_is_a_service(self) -> None:
+    @staticmethod
+    def test_ldap_facade_is_a_service() -> None:
         """Verify ldap facade is a service."""
         # FlextLdapService is exported as the service base; the public facade
         # honouring that relationship is part of the contract.
         tm.that(FlextLdapService in FlextLdap.__mro__, eq=True)
 
     @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
-    def test_facade_exposes_documented_operation(self, operation: str) -> None:
+    @staticmethod
+    def test_facade_exposes_documented_operation(operation: str) -> None:
         """Verify facade exposes documented operation."""
         member = getattr(FlextLdap, operation, None)
         tm.that(member, none=False)
@@ -121,11 +129,13 @@ class TestsFlextLdapPublicApiContract:
             msg=f"facade operation is not callable: {operation}",
         )
 
-    def test_global_ldap_is_public_facade_instance(self) -> None:
+    @staticmethod
+    def test_global_ldap_is_public_facade_instance() -> None:
         """Verify global ldap is public facade instance."""
         tm.that(flext_ldap.ldap, is_=FlextLdap)
 
-    def test_fetch_global_returns_shared_singleton(self) -> None:
+    @staticmethod
+    def test_fetch_global_returns_shared_singleton() -> None:
         """Verify fetch global returns shared singleton."""
         # The module-level ``ldap`` is produced by ``FlextLdap.fetch_global()``;
         # repeated resolution must yield the same shared instance (idempotence).

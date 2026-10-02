@@ -82,10 +82,13 @@ class FlextLdapUpsertHandler:
 
         The ``changetype`` attribute wins; the entry's own ``changetype``
         field is the fallback carrier when the attribute is absent.
+
+        Returns:
+            The resulting ``bool``.
         """
         attrs = u.Ldap.extract_entry_attributes(entry)
         changetype_val: t.StrSequence = list(
-            attrs.get(c.Ldap.AttributeName.CHANGETYPE, [])
+            attrs.get(c.Ldap.AttributeName.CHANGETYPE, []),
         )
         changetype = (
             u.Ldap.norm_str(changetype_val[0], case="lower") if changetype_val else ""
@@ -100,6 +103,9 @@ class FlextLdapUpsertHandler:
 
         Change operations are the carrier; the legacy ``add:`` attribute
         form is read only when no add operation carries values.
+
+        Returns:
+            The resulting ``list[tuple[str, t.StrSequence]]``.
         """
         additions: list[tuple[str, t.StrSequence]] = []
         for change_operation in entry_model.change_operations:
@@ -122,7 +128,8 @@ class FlextLdapUpsertHandler:
         return additions
 
     def handle_existing_entry(
-        self, entry: p.Ldif.Entry
+        self,
+        entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Handle an upsert when the entry already exists in LDAP.
 
@@ -161,19 +168,20 @@ class FlextLdapUpsertHandler:
                 if retry_result.success:
                     result = r[m.Ldap.LdapOperationResult].ok(
                         m.Ldap.LdapOperationResult(
-                            operation=c.Ldap.UpsertOperation.ADDED
-                        )
+                            operation=c.Ldap.UpsertOperation.ADDED,
+                        ),
                     )
                 else:
                     result = r[m.Ldap.LdapOperationResult].fail(
-                        u.to_str(retry_result.error)
+                        u.to_str(retry_result.error),
                     )
             else:
                 existing_entry = existing_entries[0]
                 changes_result = u.Ldap.compare_entries(existing_entry, entry)
                 if changes_result.failure:
                     result = r[m.Ldap.LdapOperationResult].fail_op(
-                        "Entry comparison", changes_result.error
+                        "Entry comparison",
+                        changes_result.error,
                     )
                 else:
                     empty_changes: t.Ldap.OperationChanges = {}
@@ -181,25 +189,26 @@ class FlextLdapUpsertHandler:
                     if not changes:
                         result = r[m.Ldap.LdapOperationResult].ok(
                             m.Ldap.LdapOperationResult(
-                                operation=c.Ldap.UpsertOperation.SKIPPED
-                            )
+                                operation=c.Ldap.UpsertOperation.SKIPPED,
+                            ),
                         )
                     else:
                         modify_result = self._ops.modify(entry_dn, changes)
                         result = modify_result.fold(
                             on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(
-                                u.to_str(e)
+                                u.to_str(e),
                             ),
                             on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
                                 m.Ldap.LdapOperationResult(
-                                    operation=c.Ldap.UpsertOperation.MODIFIED
-                                )
+                                    operation=c.Ldap.UpsertOperation.MODIFIED,
+                                ),
                             ),
                         )
         return result
 
     def handle_regular_add(
-        self, entry: p.Ldif.Entry
+        self,
+        entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Add a standard entry or fall back to existing-entry handling.
 
@@ -223,20 +232,21 @@ class FlextLdapUpsertHandler:
             .add(entry_for_add)
             .map(
                 lambda _: m.Ldap.LdapOperationResult(
-                    operation=c.Ldap.UpsertOperation.ADDED
-                )
+                    operation=c.Ldap.UpsertOperation.ADDED,
+                ),
             )
             .lash(
                 lambda e: (
                     self.handle_existing_entry(entry)
                     if self._ops.already_exists_error(u.to_str(e))
                     else r[m.Ldap.LdapOperationResult].fail(u.to_str(e))
-                )
+                ),
             )
         )
 
     def handle_schema_modify(
-        self, entry: p.Ldif.Entry
+        self,
+        entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Apply a schema modification entry (supports multiple add operations).
 
@@ -262,19 +272,19 @@ class FlextLdapUpsertHandler:
         schema_additions = self._modify_additions(entry_model)
         if not schema_additions:
             return r[m.Ldap.LdapOperationResult].fail(
-                c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS
+                c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS,
             )
         for attr_type, filtered in schema_additions:
             changes: t.Ldap.OperationChanges = {
-                attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)]
+                attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
             }
             modified = self._ops.modify(dn_str, changes)
             if modified.failure:
                 return r[m.Ldap.LdapOperationResult].fail(
-                    u.to_str(modified.error) or c.Ldap.ErrorMessage.UNKNOWN_ERROR
+                    u.to_str(modified.error) or c.Ldap.ErrorMessage.UNKNOWN_ERROR,
                 )
         return r[m.Ldap.LdapOperationResult].ok(
-            m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.MODIFIED)
+            m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.MODIFIED),
         )
 
     def plan(self, entries: t.SequenceOf[p.Ldif.Entry]) -> p.Result[m.Ldap.UpsertPlan]:
@@ -310,14 +320,15 @@ class FlextLdapUpsertHandler:
             if self._is_modify(entry):
                 if not self._modify_additions(u.Ldif.as_entry(entry)):
                     return r[m.Ldap.UpsertPlan].fail(
-                        c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS
+                        c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS,
                     )
                 modifies += 1
                 continue
             found = self._ops.find_entry(entry.dn.value)
             if found.failure:
                 return r[m.Ldap.UpsertPlan].fail_op(
-                    "Plan search for existing entry", found.error
+                    "Plan search for existing entry",
+                    found.error,
                 )
             existing_entries: t.SequenceOf[m.Ldif.Entry] = list(found.value.entries)
             if not existing_entries:
@@ -326,7 +337,8 @@ class FlextLdapUpsertHandler:
             changes_result = u.Ldap.compare_entries(existing_entries[0], entry)
             if changes_result.failure:
                 return r[m.Ldap.UpsertPlan].fail_op(
-                    "Plan entry comparison", changes_result.error
+                    "Plan entry comparison",
+                    changes_result.error,
                 )
             empty_changes: t.Ldap.OperationChanges = {}
             changes = changes_result.unwrap_or(empty_changes)
@@ -335,5 +347,5 @@ class FlextLdapUpsertHandler:
             else:
                 unchanged += 1
         return r[m.Ldap.UpsertPlan].ok(
-            m.Ldap.UpsertPlan(adds=adds, modifies=modifies, unchanged=unchanged)
+            m.Ldap.UpsertPlan(adds=adds, modifies=modifies, unchanged=unchanged),
         )
