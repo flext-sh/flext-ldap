@@ -1,4 +1,8 @@
-"""Detect LDAP server type from a bound ``ldap3`` connection."""
+"""Detect LDAP server type from a bound ``ldap3`` connection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

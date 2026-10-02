@@ -1,4 +1,8 @@
-"""LDAP entry comparison utility methods."""
+"""LDAP entry comparison utility methods.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

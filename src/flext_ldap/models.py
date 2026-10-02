@@ -2,6 +2,9 @@
 
 This module provides models for LDAP operations, extending m.
 All model implementations are in models/*.py - this is a pure facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
