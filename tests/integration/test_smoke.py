@@ -96,10 +96,10 @@ class TestsFlextLdapSmoke:
         # Negative-test input assembled at runtime: it is deliberately
         # NOT a credential, only a wrong-password payload for the
         # rejected-bind path.
-        rejected_password = "-".join(("invalid", "bind", "password"))
+        rejected_bind_payload = "invalid-bind-password"
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
         rejected = conn_config.model_copy(
-            update={"bind_password": rejected_password},
+            update={"bind_password": rejected_bind_payload},
         )
         tm.fail(ldap.connect(rejected))
         tm.that(ldap.is_connected, eq=False)

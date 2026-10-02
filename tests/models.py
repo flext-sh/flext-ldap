@@ -37,7 +37,7 @@ class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
 
                 @override
                 def execute(self) -> p.Result[bool]:
-                    return r[bool].ok(True)
+                    return r[bool].ok(value=True)
 
             class FailService(TestsFlextLdapServiceBase[bool]):
                 """Test service that always fails."""
