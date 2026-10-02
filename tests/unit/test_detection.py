@@ -50,7 +50,7 @@ class TestsFlextLdapDetection:
         """Structural double for one ldap3 rootDSE entry (external boundary)."""
 
         def __init__(
-            self, attributes: t.MappingKV[str, t.Ldap.Ldap3EntryValue]
+            self, attributes: t.MappingKV[str, t.Ldap.Ldap3EntryValue],
         ) -> None:
             self._attributes = attributes
 
@@ -97,7 +97,7 @@ class TestsFlextLdapDetection:
 
     @staticmethod
     def _connection_for(
-        vendor_name: str | None, vendor_version: str | None
+        vendor_name: str | None, vendor_version: str | None,
     ) -> p.Ldif.RootDseConnection:
         """Build a bound connection double advertising the given vendor metadata."""
         attributes: dict[str, t.Ldap.Ldap3EntryValue] = {}
@@ -129,10 +129,10 @@ class TestsFlextLdapDetection:
         tm.that(str(result.error), has=error_substring)
 
     @pytest.mark.parametrize(
-        ("attrs", "key", "expected"), c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS
+        ("attrs", "key", "expected"), c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS,
     )
     def test_get_first_attribute_value_returns_first_truthy_value(
-        self, attrs: t.MappingKV[str, t.StrSequence], key: str, expected: str | None
+        self, attrs: t.MappingKV[str, t.StrSequence], key: str, expected: str | None,
     ) -> None:
         """The rootDSE helper returns the first non-empty value, else ``None``."""
         value = u.Ldap.resolve_first_attribute_value(dict(attrs), key)
@@ -173,7 +173,7 @@ class TestsFlextLdapDetection:
         ],
     )
     def test_detect_from_connection_returns_detected_server_type(
-        self, vendor_name: str | None, vendor_version: str | None, expected: str
+        self, vendor_name: str | None, vendor_version: str | None, expected: str,
     ) -> None:
         """A bound connection yields the server type read from its rootDSE."""
         detector = FlextLdapServerDetector()
@@ -214,7 +214,7 @@ class TestsFlextLdapDetection:
         """A failed rootDSE read surfaces as a failed detection result."""
         detector = FlextLdapServerDetector()
         connection = TestsFlextLdapDetection._ConnectionDouble(
-            entries=entries, searchable=searchable, search_succeeds=search_succeeds
+            entries=entries, searchable=searchable, search_succeeds=search_succeeds,
         )
 
         result = detector.detect_from_connection(connection)

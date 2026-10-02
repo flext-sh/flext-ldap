@@ -235,7 +235,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             ] = (
                 (
                     MappingProxyType({
-                        "vendorName": ("Oracle Corporation", "Version 2")
+                        "vendorName": ("Oracle Corporation", "Version 2"),
                     }),
                     "vendorName",
                     "Oracle Corporation",
@@ -332,7 +332,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
                 AttrToStrListCase.LIST: MappingProxyType({"cn": LIST_ABC}),
                 AttrToStrListCase.LIST_BYTES: MappingProxyType({
-                    "key": ("bytes", "str")
+                    "key": ("bytes", "str"),
                 }),
                 AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
             })
@@ -427,7 +427,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             SYNC_BATCH_STATS_SKIPPED: Final[int] = 10
 
             SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = str(
-                Path(gettempdir()) / "flext-ldap-sync-missing.ldif"
+                Path(gettempdir()) / "flext-ldap-sync-missing.ldif",
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
             SYNC_FACADE_MISSING_FILE_PHASES: Final[t.VariadicTuple[PhaseName]] = (

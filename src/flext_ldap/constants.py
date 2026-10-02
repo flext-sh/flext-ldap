@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdifConstants
 
-from ._constants.base import FlextLdapConstantsBase
+from flext_ldap._constants.base import FlextLdapConstantsBase
 
 
 class FlextLdapConstants(FlextLdifConstants):

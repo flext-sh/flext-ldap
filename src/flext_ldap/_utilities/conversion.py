@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
     from flext_ldap import p
 
-from .normalization import FlextLdapUtilitiesNormalization
+from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -38,7 +38,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def search_entry_to_ldif_entry(
-        cls, entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue]
+        cls, entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
     ) -> p.Result[m.Ldif.Entry]:
         """Convert LDAP search-result mappings into canonical LDIF entries."""
         raw_entry = dict(entry)
@@ -82,7 +82,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         if not updates:
             return conversion_metadata
         updated: m.Ldap.ConversionMetadata = conversion_metadata.model_copy(
-            update=updates
+            update=updates,
         )
         return updated
 
@@ -115,12 +115,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
     def resolve_entry_category(cls, entry: p.Ldif.Entry) -> str:
         """Get the category (first objectclass, lowercased) of an LDIF entry."""
         return cls.extract_objectclass_category(
-            cls.extract_attrs_dict_from_entry(entry)
+            cls.extract_attrs_dict_from_entry(entry),
         )
 
     @classmethod
     def group_entries_by_objectclass(
-        cls, entries: t.SequenceOf[m.Ldif.Entry]
+        cls, entries: t.SequenceOf[m.Ldif.Entry],
     ) -> m.Ldif.FlexibleCategories:
         """Group LDIF entries by their objectclass category."""
         result = m.Ldif.FlexibleCategories()

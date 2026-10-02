@@ -9,9 +9,8 @@ from __future__ import annotations
 from flext_ldif import r
 
 from flext_ldap import c, m, p, t
-
-from .result_converter import FlextLdapLdap3ResultConverter
-from .wrappers import FlextLdapLdap3Wrappers
+from flext_ldap.adapters._ldap3.result_converter import FlextLdapLdap3ResultConverter
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 
 class FlextLdapLdap3SearchExecutor:
@@ -39,7 +38,7 @@ class FlextLdapLdap3SearchExecutor:
             error_msg = conn_result.get("message", "LDAP search failed")
             error_desc = conn_result.get("description", "unknown")
             return r[t.SequenceOf[m.Ldif.Entry]].fail(
-                f"LDAP search failed: {error_desc} - {error_msg}"
+                f"LDAP search failed: {error_desc} - {error_msg}",
             )
         try:
             server_type_enum = (
@@ -49,7 +48,7 @@ class FlextLdapLdap3SearchExecutor:
             )
         except ValueError:
             return r[t.SequenceOf[m.Ldif.Entry]].fail(
-                f"Unsupported server type: {server_type}"
+                f"Unsupported server type: {server_type}",
             )
         _ = server_type_enum
         ldap3_results = FlextLdapLdap3ResultConverter.convert_ldap3_results(connection)

@@ -127,7 +127,7 @@ class TestsFlextLdapBase:
         instance = m.Ldap.Tests.SuccessService()
 
         tm.that(
-            instance.settings is m.Ldap.Tests.SuccessService.fetch_settings(), eq=True
+            instance.settings is m.Ldap.Tests.SuccessService.fetch_settings(), eq=True,
         )
 
     # ── independence across instances ──────────────────────────────────

@@ -12,8 +12,7 @@ from __future__ import annotations
 from flext_ldif import r
 
 from flext_ldap import m, p, t
-
-from .result_extract import FlextLdapLdap3ResultExtract
+from flext_ldap.adapters._ldap3.result_extract import FlextLdapLdap3ResultExtract
 
 
 class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
@@ -44,7 +43,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
         for entry in entries:
             dn = entry.entry_dn or ""
             attrs_dict = FlextLdapLdap3ResultConverter.extract_attrs_dict(
-                entry.entry_attributes_as_dict
+                entry.entry_attributes_as_dict,
             )
             results.append((dn, attrs_dict))
         return results
@@ -71,12 +70,12 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
                 m.Ldif.Entry(
                     dn=FlextLdapLdap3ResultConverter.extract_dn(entry_raw),
                     attributes=FlextLdapLdap3ResultConverter.extract_attributes(
-                        entry_raw
+                        entry_raw,
                     ),
                     changetype=None,
                     metadata=FlextLdapLdap3ResultConverter.extract_metadata(entry_raw),
                     validation_metadata=None,
-                )
+                ),
             )
         return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
 

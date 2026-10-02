@@ -45,7 +45,7 @@ class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
                 @override
                 def execute(self) -> p.Result[bool]:
                     return r[bool].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE
+                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
                     )
 
 

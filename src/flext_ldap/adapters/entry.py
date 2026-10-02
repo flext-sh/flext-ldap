@@ -71,7 +71,7 @@ class FlextLdapEntryAdapter(s[bool]):
     ) -> m.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation."""
         return u.Ldap.build_conversion_metadata(
-            removed_attrs, base64_attrs, original_attrs_dict, original_dn
+            removed_attrs, base64_attrs, original_attrs_dict, original_dn,
         )
 
     @staticmethod
@@ -119,7 +119,7 @@ class FlextLdapEntryAdapter(s[bool]):
         return r[bool].ok(value=True)
 
     def ldap3_to_ldif_entry(
-        self, ldap3_entry: p.Ldif.Ldap3Entry
+        self, ldap3_entry: p.Ldif.Ldap3Entry,
     ) -> p.Result[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Ldif.Entry.
 
@@ -167,7 +167,7 @@ class FlextLdapEntryAdapter(s[bool]):
             return e.fail_operation("create Entry", exc)
 
     def _build_ldif_entry_from_ldap3(
-        self, ldap3_entry: p.Ldif.Ldap3Entry
+        self, ldap3_entry: p.Ldif.Ldap3Entry,
     ) -> p.Result[m.Ldif.Entry]:
         """Build an LDIF entry from an ldap3 entry without exception handling."""
         dn_str = str(ldap3_entry.entry_dn)
@@ -179,25 +179,25 @@ class FlextLdapEntryAdapter(s[bool]):
         for key, raw_value in attrs_dict.items():
             ldif_attrs[key] = list(
                 self._convert_ldap3_value_to_list(
-                    raw_value, key, base64_attrs, removed_attrs
-                )
+                    raw_value, key, base64_attrs, removed_attrs,
+                ),
             )
         conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
-            removed_attrs, base64_attrs, original_attrs_dict, dn_str
+            removed_attrs, base64_attrs, original_attrs_dict, dn_str,
         )
         conversion_metadata = FlextLdapEntryAdapter._track_conversion_differences(
-            conversion_metadata, dn_str, dn_str, original_attrs_dict, ldif_attrs
+            conversion_metadata, dn_str, dn_str, original_attrs_dict, ldif_attrs,
         )
         metadata_obj = m.Ldif.ServerMetadata(
             server_type=c.Ldif.ServerTypes(self._server_type),
             extensions=conversion_metadata.model_dump(exclude_defaults=False),
         )
         return m.Ldif.Entry.create(
-            dn=dn_str, attributes=ldif_attrs, metadata=metadata_obj
+            dn=dn_str, attributes=ldif_attrs, metadata=metadata_obj,
         )
 
     def ldif_entry_to_ldap3_attributes(
-        self, entry: m.Ldif.Entry
+        self, entry: m.Ldif.Entry,
     ) -> p.Result[t.Ldap.OperationAttributes]:
         """Convert p.Ldif.Entry to ldap3 attributes format.
 

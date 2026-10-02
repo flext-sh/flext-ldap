@@ -33,7 +33,7 @@ class FlextLdapUtilitiesNormalization:
 
     @classmethod
     def norm_join(
-        cls, values: t.StrSequence | t.VariadicTuple[str], *, case: str | None = None
+        cls, values: t.StrSequence | t.VariadicTuple[str], *, case: str | None = None,
     ) -> str:
         """Normalize and join string values."""
         values_list: t.StrSequence
@@ -112,7 +112,7 @@ class FlextLdapUtilitiesNormalization:
 
     @classmethod
     def normalize_original_attr_value(
-        cls, value: t.Ldap.Ldap3EntryValue | None
+        cls, value: t.Ldap.Ldap3EntryValue | None,
     ) -> t.StrSequence:
         """Normalize original ldap3 values while preserving list semantics."""
         return cls.ldap3_value_to_strings(value)

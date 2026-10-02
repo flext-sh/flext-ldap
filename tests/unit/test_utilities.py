@@ -134,7 +134,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     # --- create_server ---
     @pytest.mark.parametrize(
-        "case", [c.Ldap.Tests.Ldap3ServerCase.PLAIN, c.Ldap.Tests.Ldap3ServerCase.SSL]
+        "case", [c.Ldap.Tests.Ldap3ServerCase.PLAIN, c.Ldap.Tests.Ldap3ServerCase.SSL],
     )
     def test_create_server_modes(self, case: c.Ldap.Tests.Ldap3ServerCase) -> None:
         """Verify create server modes."""
@@ -179,7 +179,7 @@ class TestsFlextLdapUtilitiesUnit:
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.AttrToStrListCase)
     def test_attr_to_str_list_scenarios(
-        self, case: c.Ldap.Tests.AttrToStrListCase
+        self, case: c.Ldap.Tests.AttrToStrListCase,
     ) -> None:
         """Verify attr to str list scenarios."""
         expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
@@ -193,7 +193,7 @@ class TestsFlextLdapUtilitiesUnit:
                 result = u.Ldap.attr_to_str_list({"cn": list(c.Ldap.Tests.LIST_ABC)})
             case c.Ldap.Tests.AttrToStrListCase.LIST_BYTES:
                 list_bytes: t.MappingKV[str, t.Ldap.Ldap3AttributeValue] = {
-                    "key": [b"bytes", "str"]
+                    "key": [b"bytes", "str"],
                 }
                 result = u.Ldap.attr_to_str_list(list_bytes)
             case c.Ldap.Tests.AttrToStrListCase.INT:
@@ -207,7 +207,7 @@ class TestsFlextLdapUtilitiesUnit:
     # --- ldap3_value_to_strings ---
     @pytest.mark.parametrize("case", c.Ldap.Tests.LdapValueCase)
     def test_ldap3_value_to_strings_scenarios(
-        self, case: c.Ldap.Tests.LdapValueCase
+        self, case: c.Ldap.Tests.LdapValueCase,
     ) -> None:
         """Verify ldap3 value to strings scenarios."""
         value, expected = c.Ldap.Tests.LDAP3_VALUE_TO_STRINGS_SCENARIOS[case]
@@ -303,14 +303,14 @@ class TestsFlextLdapUtilitiesUnit:
     def test_process_new_attributes_with_change(self) -> None:
         """Verify process new attributes with change."""
         changes, _processed = u.Ldap.process_new_attributes(
-            {"cn": ["newval"]}, {"cn": ["oldval"]}, frozenset()
+            {"cn": ["newval"]}, {"cn": ["oldval"]}, frozenset(),
         )
         tm.that(changes, has="cn")
 
     def test_process_new_attributes_no_change(self) -> None:
         """Verify process new attributes no change."""
         changes, _processed = u.Ldap.process_new_attributes(
-            {"cn": ["same"]}, {"cn": ["same"]}, frozenset()
+            {"cn": ["same"]}, {"cn": ["same"]}, frozenset(),
         )
         tm.that(changes, lacks="cn")
 
@@ -327,7 +327,7 @@ class TestsFlextLdapUtilitiesUnit:
         """Verify process new attributes ignored."""
         existing_attrs: dict[str, list[str]] = {}
         changes, _processed = u.Ldap.process_new_attributes(
-            {"cn": ["val"]}, existing_attrs, frozenset(["cn"])
+            {"cn": ["val"]}, existing_attrs, frozenset(["cn"]),
         )
         tm.that(changes, lacks="cn")
 
@@ -641,14 +641,14 @@ class TestsFlextLdapUtilitiesUnit:
     def test_when_safe_safe_then_true_with_none(self) -> None:
         """Verify when safe safe then true with none."""
         result = u.Ldap.when_safe(
-            condition=True, then_value=None, else_value="fallback", safe_then=True
+            condition=True, then_value=None, else_value="fallback", safe_then=True,
         )
         u.Ldap.Tests.that(result, eq="fallback")
 
     def test_when_safe_safe_then_true_non_none(self) -> None:
         """Verify when safe safe then true non none."""
         result = u.Ldap.when_safe(
-            condition=True, then_value="value", else_value="fallback", safe_then=True
+            condition=True, then_value="value", else_value="fallback", safe_then=True,
         )
         u.Ldap.Tests.that(result, eq="value")
 

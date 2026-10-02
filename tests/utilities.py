@@ -41,7 +41,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: object
+                result: p.Result[TResult], **kwargs: object,
             ) -> str:
                 """Provide fail."""
                 failure_message: str = tm.fail(result, **kwargs)
@@ -68,13 +68,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Create an ldap3 server from container metadata."""
                 server_url = ldap_container["server_url"]
                 server: p.Ldif.Ldap3Server = u.Ldap.create_server_from_url(
-                    str(server_url)
+                    str(server_url),
                 )
                 return server
 
             @staticmethod
             def create_ldap3_connection(
-                server: p.Ldif.Ldap3Server, ldap_container: t.MappingKV[str, t.Scalar]
+                server: p.Ldif.Ldap3Server, ldap_container: t.MappingKV[str, t.Scalar],
             ) -> p.Ldap.Ldap3Connection:
                 """Create an ldap3 connection from container metadata."""
                 connection: p.Ldap.Ldap3Connection = u.Ldap.create_connection(
@@ -119,7 +119,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             def assert_connection_bound(connection: p.Ldap.Ldap3Connection) -> None:
                 """Assert that an LDAP connection is bound."""
                 tm.that(
-                    connection.bound, eq=True, msg="LDAP server not responding to bind"
+                    connection.bound, eq=True, msg="LDAP server not responding to bind",
                 )
 
             @staticmethod
@@ -178,7 +178,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def _admin_credentials_from_candidate(
-                candidate_dn: str, candidate_password: str
+                candidate_dn: str, candidate_password: str,
             ) -> p.Result[tuple[str, str]]:
                 try:
                     server = u.Ldap.create_server_from_url(
@@ -194,7 +194,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     )
                     if not connection.bound:
                         return r[tuple[str, str]].fail(
-                            f"candidate bind failed for {candidate_dn}"
+                            f"candidate bind failed for {candidate_dn}",
                         )
                     connection.unbind()
                 except (
@@ -227,7 +227,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 ])
                 for candidate_dn, candidate_password in candidates:
                     resolved = cls._admin_credentials_from_candidate(
-                        candidate_dn, candidate_password
+                        candidate_dn, candidate_password,
                     )
                     if resolved.failure:
                         continue
@@ -259,7 +259,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     for ou_name in c.Ldap.Tests.DOCKER_OU_NAMES:
                         dn = f"ou={ou_name},{c.Ldap.Tests.DOCKER_BASE_DN}"
                         created = connection.add(
-                            dn, ["top", "organizationalUnit"], {"ou": ou_name}
+                            dn, ["top", "organizationalUnit"], {"ou": ou_name},
                         )
                         if created:
                             continue
@@ -277,13 +277,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def single_phase_cb(
-                _a: int, _b: int, _c: str, _d: p.Ldap.LdapBatchStats
+                _a: int, _b: int, _c: str, _d: p.Ldap.LdapBatchStats,
             ) -> None:
                 """Test callback with 4 parameters."""
 
             @staticmethod
             def multi_phase_cb(
-                _a: str, _b: int, _c: int, _d: str, _e: p.Ldap.LdapBatchStats
+                _a: str, _b: int, _c: int, _d: str, _e: p.Ldap.LdapBatchStats,
             ) -> None:
                 """Test callback with 5 parameters."""
 

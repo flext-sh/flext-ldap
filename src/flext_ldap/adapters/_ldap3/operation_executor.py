@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING
 from flext_ldif import r
 
 from flext_ldap import c, m, p, t, u
-
-from .wrappers import FlextLdapLdap3Wrappers
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -35,7 +34,7 @@ class FlextLdapLdap3OperationExecutor:
         @u.field_validator("description", mode="before")
         @classmethod
         def normalize_description(
-            cls, value: t.Scalar | t.JsonList | t.JsonMapping | None
+            cls, value: t.Scalar | t.JsonList | t.JsonMapping | None,
         ) -> str | None:
             """Normalize ldap3 JSON descriptions into the operation message text."""
             if value is None:
@@ -59,24 +58,24 @@ class FlextLdapLdap3OperationExecutor:
                         operation_type=operation_type,
                         message=c.Ldap.OPERATION_SUCCESS_MESSAGES[operation_type],
                         entries_affected=1,
-                    )
+                    ),
                 )
         except c.EXC_BROAD_IO_TYPE as exc:
             return r[m.Ldap.OperationResult].fail_op(failure_prefix, exc)
         return FlextLdapLdap3OperationExecutor._extract_error_result(
-            connection, failure_prefix
+            connection, failure_prefix,
         )
 
     @staticmethod
     def _extract_error_result(
-        connection: p.Ldap.Ldap3Connection, prefix: str
+        connection: p.Ldap.Ldap3Connection, prefix: str,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Build ``r.fail`` from ``connection.result.description`` when present."""
         error_msg = f"{prefix}: LDAP operation returned failure status"
         result_payload = connection.result
         if result_payload is not None:
             payload = FlextLdapLdap3OperationExecutor.ResultPayload.model_validate(
-                result_payload
+                result_payload,
             )
             description = payload.description
             if description is not None:
@@ -101,7 +100,7 @@ class FlextLdapLdap3OperationExecutor:
 
     @staticmethod
     def execute_delete(
-        connection: p.Ldap.Ldap3Connection, dn: str | m.Ldif.DN
+        connection: p.Ldap.Ldap3Connection, dn: str | m.Ldif.DN,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Execute LDAP delete via ``Connection.delete`` and return ``r``."""
         dn_str = u.Ldif.get_dn_value(dn)

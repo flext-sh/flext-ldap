@@ -69,20 +69,20 @@ class TestsFlextLdapModelsUnit:
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.ConnectionSecurityCase)
     def test_connection_config_accepts_single_security_mode(
-        self, case: c.Ldap.Tests.ConnectionSecurityCase
+        self, case: c.Ldap.Tests.ConnectionSecurityCase,
     ) -> None:
         """Verify connection config accepts single security mode."""
         use_ssl, use_tls = c.Ldap.Tests.MODELS_ALLOWED_SECURITY_COMBOS[case]
 
         settings = m.Ldap.ConnectionConfig(
-            port=c.Ldap.PORT, use_ssl=use_ssl, use_tls=use_tls
+            port=c.Ldap.PORT, use_ssl=use_ssl, use_tls=use_tls,
         )
 
         u.Ldap.Tests.that(settings.use_ssl, eq=use_ssl)
         u.Ldap.Tests.that(settings.use_tls, eq=use_tls)
 
     @pytest.mark.parametrize(
-        "port", [c.Ldap.Tests.CONFIG_PORT_MIN, c.Ldap.Tests.CONFIG_PORT_MAX]
+        "port", [c.Ldap.Tests.CONFIG_PORT_MIN, c.Ldap.Tests.CONFIG_PORT_MAX],
     )
     def test_connection_config_accepts_boundary_ports(self, port: int) -> None:
         """Verify connection config accepts boundary ports."""
@@ -92,7 +92,7 @@ class TestsFlextLdapModelsUnit:
 
     @pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
     def test_connection_config_rejects_out_of_range_ports(
-        self, invalid_port: int
+        self, invalid_port: int,
     ) -> None:
         """Verify connection config rejects out of range ports."""
         with pytest.raises(c.ValidationError):

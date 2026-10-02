@@ -44,7 +44,7 @@ class TestsFlextLdapSubtreeDelete:
 
         @override
         def search(
-            self, search_options: p.Ldap.SearchOptions, server_type: str = "rfc"
+            self, search_options: p.Ldap.SearchOptions, server_type: str = "rfc",
         ) -> p.Result[m.Ldap.SearchResult]:
             _ = server_type
             if search_options.scope == c.Ldap.SearchScope.BASE:
@@ -55,12 +55,12 @@ class TestsFlextLdapSubtreeDelete:
                 ]
                 if not matched:
                     return r[m.Ldap.SearchResult].fail(
-                        f"LDAP search failed: noSuchObject - {search_options.base_dn}"
+                        f"LDAP search failed: noSuchObject - {search_options.base_dn}",
                     )
             else:
                 matched = list(self._subtree_entries)
             return r[m.Ldap.SearchResult].ok(
-                m.Ldap.SearchResult(entries=matched, search_options=search_options)
+                m.Ldap.SearchResult(entries=matched, search_options=search_options),
             )
 
         @override
@@ -69,7 +69,7 @@ class TestsFlextLdapSubtreeDelete:
             self._write_calls.append(f"delete:{dn_value}")
             if self._fail_on_dn is not None and dn_value == self._fail_on_dn:
                 return r[m.Ldap.OperationResult].fail(
-                    f"simulated failure on {dn_value}"
+                    f"simulated failure on {dn_value}",
                 )
             self._deleted_dns.append(dn_value)
             return r[m.Ldap.OperationResult].ok(m.Ldap.OperationResult(success=True))
@@ -81,7 +81,7 @@ class TestsFlextLdapSubtreeDelete:
 
         @override
         def modify(
-            self, dn: str | p.Ldif.DN, changes: t.Ldap.LdapModifyChanges
+            self, dn: str | p.Ldif.DN, changes: t.Ldap.LdapModifyChanges,
         ) -> p.Result[m.Ldap.OperationResult]:
             dn_value = dn if isinstance(dn, str) else dn.value
             self._write_calls.append(f"modify:{dn_value}")
@@ -104,7 +104,7 @@ class TestsFlextLdapSubtreeDelete:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": [cn]}, attribute_metadata={}
+                attributes={"cn": [cn]}, attribute_metadata={},
             ),
         )
 
@@ -140,7 +140,7 @@ class TestsFlextLdapSubtreeDelete:
         u.Ldap.Tests.that(result.value.deleted_count, eq=3)
         u.Ldap.Tests.that(result.value.base_dn, eq=self.BASE_DN)
         u.Ldap.Tests.that(
-            operations.deleted_order(), eq=[self.LEAF_DN, self.CHILD_DN, self.BASE_DN]
+            operations.deleted_order(), eq=[self.LEAF_DN, self.CHILD_DN, self.BASE_DN],
         )
 
     def test_first_failure_stops_and_reports_progress(self) -> None:
@@ -180,7 +180,7 @@ class TestsFlextLdapPlanUpsert:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(
-                attributes={"cn": [cn], "sn": [sn]}, attribute_metadata={}
+                attributes={"cn": [cn], "sn": [sn]}, attribute_metadata={},
             ),
         )
 
@@ -213,7 +213,7 @@ class TestsFlextLdapPlanUpsert:
         entry = m.Ldif.Entry(
             dn=None,
             attributes=m.Ldif.Attributes(
-                attributes={"cn": ["orphan"]}, attribute_metadata={}
+                attributes={"cn": ["orphan"]}, attribute_metadata={},
             ),
         )
         plan_result = operations.plan_upsert([entry])
@@ -246,7 +246,7 @@ class TestsFlextLdapPlanUpsert:
         """
         operations = FlextLdapOperations()
         plan_result = operations.plan_upsert([
-            self._modify_entry(self.EXISTS_DN, additions={"description": "added"})
+            self._modify_entry(self.EXISTS_DN, additions={"description": "added"}),
         ])
         u.Ldap.Tests.ok(plan_result)
         plan = plan_result.value

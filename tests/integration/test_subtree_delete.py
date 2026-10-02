@@ -92,7 +92,7 @@ class TestsFlextLdapSubtreeDeleteIntegration:
     """Subtree deletion through the public facade against a real directory."""
 
     def test_removes_children_first_and_reports_count(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self, ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A three-level tree is deleted deepest-first with deleted_count=3."""
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
@@ -121,7 +121,7 @@ class TestsFlextLdapSubtreeDeleteIntegration:
                     filter_str=f"(ou={token})",
                     scope=c.Ldap.SearchScope.SUBTREE,
                     attributes=["ou"],
-                )
+                ),
             )
             tm.ok(residue)
             tm.that(len(residue.value.entries), eq=0)
@@ -130,7 +130,7 @@ class TestsFlextLdapSubtreeDeleteIntegration:
             ldap.disconnect()
 
     def test_absent_base_returns_typed_failure(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self, ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """Deleting a subtree whose base does not exist fails naming the DN."""
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
@@ -149,7 +149,7 @@ class TestsFlextLdapPlanUpsertIntegration:
     """Dry-run planning through the public facade against a real directory."""
 
     def test_plan_counts_and_directory_stays_unchanged(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self, ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """Plans 1 add / 1 modify / 1 unchanged and writes nothing."""
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
@@ -179,12 +179,12 @@ class TestsFlextLdapPlanUpsertIntegration:
                     filter_str=f"(uid={identifier})",
                     scope=c.Ldap.SearchScope.BASE,
                     attributes=["cn"],
-                )
+                ),
             )
             tm.ok(stored_now)
             tm.that(len(stored_now.value.entries), eq=1)
             cn_values = tm.not_none(
-                stored_now.value.entries[0].attributes
+                stored_now.value.entries[0].attributes,
             ).attributes.get("cn", [])
             tm.that("Stored Name" in cn_values, eq=True)
 
@@ -194,7 +194,7 @@ class TestsFlextLdapPlanUpsertIntegration:
                     filter_str=f"(uid=planned-{identifier})",
                     scope=c.Ldap.SearchScope.SUBTREE,
                     attributes=["cn"],
-                )
+                ),
             )
             tm.ok(fresh_now)
             tm.that(len(fresh_now.value.entries), eq=0)
@@ -203,7 +203,7 @@ class TestsFlextLdapPlanUpsertIntegration:
             ldap.disconnect()
 
     def test_modify_entries_plan_as_the_write_path_applies_them(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self, ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A modify-add entry plans as one modify; applying the batch matches the plan."""
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
@@ -248,7 +248,7 @@ class TestsFlextLdapFindEntryIntegration:
     """Absence-aware single-entry reads against a real directory."""
 
     def test_absent_entry_is_an_empty_result(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self, ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A DN that does not exist reads as a successful empty result."""
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
@@ -263,7 +263,7 @@ class TestsFlextLdapFindEntryIntegration:
             ldap.disconnect()
 
     def test_present_entry_reads_the_requested_attributes(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self, ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A present entry is returned with the attributes asked for."""
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     # every import of the api facade.
     from flext_ldap import p
 
-from .normalization import FlextLdapUtilitiesNormalization
+from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 
 
 class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
@@ -22,7 +22,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def extract_entry_attributes(
-        cls, entry: p.Ldif.Entry
+        cls, entry: p.Ldif.Entry,
     ) -> t.MappingKV[str, t.StrSequence]:
         """Normalize entry attributes to the canonical LDAP comparison mapping."""
         attrs = entry.attributes
@@ -32,7 +32,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def find_existing_values(
-        cls, attr_name: str, existing_attrs: t.MappingKV[str, t.StrSequence]
+        cls, attr_name: str, existing_attrs: t.MappingKV[str, t.StrSequence],
     ) -> t.StrSequence | None:
         """Resolve attribute values by case-insensitive LDAP name matching."""
         normalized_target = cls.norm_str(attr_name, case="lower")
@@ -95,7 +95,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         components = FlextLdifUtilities.Ldif.split(entry.dn.value)
         if not components:
             return r[frozenset[str]].fail(
-                f"Entry DN has no RDN components: '{entry.dn.value}'"
+                f"Entry DN has no RDN components: '{entry.dn.value}'",
             )
         parsed = FlextLdifUtilities.Ldif.parse_rdn(components[0])
         if parsed.failure:
@@ -103,12 +103,12 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         return parsed.map(
             lambda pairs: frozenset(
                 cls.norm_str(attr_name, case="lower") for attr_name, _value in pairs
-            )
+            ),
         )
 
     @classmethod
     def compare_entries(
-        cls, existing_entry: p.Ldif.Entry, new_entry: p.Ldif.Entry
+        cls, existing_entry: p.Ldif.Entry, new_entry: p.Ldif.Entry,
     ) -> p.Result[t.Ldap.OperationChanges]:
         """Compare canonical LDIF entries and return LDAP modify operations.
 
@@ -118,12 +118,12 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         existing_rdn_result = cls.rdn_attribute_names(existing_entry)
         if existing_rdn_result.failure:
             return r[t.Ldap.OperationChanges].fail_op(
-                "Existing entry DN RDN parse", existing_rdn_result.error
+                "Existing entry DN RDN parse", existing_rdn_result.error,
             )
         new_rdn_result = cls.rdn_attribute_names(new_entry)
         if new_rdn_result.failure:
             return r[t.Ldap.OperationChanges].fail_op(
-                "New entry DN RDN parse", new_rdn_result.error
+                "New entry DN RDN parse", new_rdn_result.error,
             )
         ignore = (
             c.Ldif.OperationalAttributes.IGNORE_SET
@@ -133,18 +133,18 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         existing_attrs = cls.extract_entry_attributes(existing_entry)
         if not existing_attrs:
             return r[t.Ldap.OperationChanges].fail(
-                "Existing entry has no attributes to compare"
+                "Existing entry has no attributes to compare",
             )
         new_attrs = cls.extract_entry_attributes(new_entry)
         if not new_attrs:
             return r[t.Ldap.OperationChanges].fail(
-                "New entry has no attributes to compare"
+                "New entry has no attributes to compare",
             )
         changes, processed = cls.process_new_attributes(
-            new_attrs, existing_attrs, ignore
+            new_attrs, existing_attrs, ignore,
         )
         changes.update(
-            cls.process_deleted_attributes(existing_attrs, ignore, processed)
+            cls.process_deleted_attributes(existing_attrs, ignore, processed),
         )
         return r[t.Ldap.OperationChanges].ok(changes)
 

@@ -69,10 +69,10 @@ class TestsFlextLdapModelsSync:
             failed=c.Ldap.Tests.SYNC_UPSERT_BATCH_FAILED,
         )
         u.Ldap.Tests.that(
-            result.total_processed, eq=c.Ldap.Tests.SYNC_UPSERT_BATCH_TOTAL
+            result.total_processed, eq=c.Ldap.Tests.SYNC_UPSERT_BATCH_TOTAL,
         )
         u.Ldap.Tests.that(
-            result.successful, eq=c.Ldap.Tests.SYNC_UPSERT_BATCH_SUCCESSFUL
+            result.successful, eq=c.Ldap.Tests.SYNC_UPSERT_BATCH_SUCCESSFUL,
         )
         u.Ldap.Tests.that(result.failed, eq=c.Ldap.Tests.SYNC_UPSERT_BATCH_FAILED)
 
@@ -81,7 +81,7 @@ class TestsFlextLdapModelsSync:
         [(100, 90, 0.9), (10, 10, 1.0), (4, 1, 0.25), (0, 0, 0.0)],
     )
     def test_batch_upsert_success_rate_is_successful_over_total(
-        self, total: int, successful: int, expected_rate: float
+        self, total: int, successful: int, expected_rate: float,
     ) -> None:
         """Verify batch upsert success rate is successful over total."""
         result = m.Ldap.BatchUpsertResult(total_processed=total, successful=successful)
@@ -100,8 +100,8 @@ class TestsFlextLdapModelsSync:
                     "success": True,
                     "dn": c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
                     "operation": c.Ldap.OperationType.ADD,
-                }
-            ]
+                },
+            ],
         })
         u.Ldap.Tests.that(result.results[0], is_=m.Ldap.UpsertResult)
         u.Ldap.Tests.that(result.results[0].operation, eq=c.Ldap.OperationType.ADD)
@@ -204,7 +204,7 @@ class TestsFlextLdapModelsSync:
             overall_success=True,
         )
         u.Ldap.Tests.that(
-            result.total_synced, eq=c.Ldap.Tests.SYNC_MULTI_PHASE_TOTAL_SYNCED
+            result.total_synced, eq=c.Ldap.Tests.SYNC_MULTI_PHASE_TOTAL_SYNCED,
         )
         u.Ldap.Tests.that(result.overall_success, eq=True)
 
@@ -227,7 +227,7 @@ class TestsFlextLdapModelsSync:
             success_rate=c.Ldap.Tests.SYNC_PHASE_RESULTS_SUCCESS_RATE,
         )
         result = m.Ldap.MultiPhaseSyncResult(
-            phase_results={c.Ldap.Tests.SYNC_PHASE_NAME: phase}
+            phase_results={c.Ldap.Tests.SYNC_PHASE_NAME: phase},
         )
         u.Ldap.Tests.that(result.phase_results, keys=[c.Ldap.Tests.SYNC_PHASE_NAME])
         stored = result.phase_results[c.Ldap.Tests.SYNC_PHASE_NAME]
@@ -246,13 +246,13 @@ class TestsFlextLdapModelsSync:
                     "skipped": c.Ldap.Tests.SYNC_PHASE_RESULTS_SKIPPED,
                     "duration_seconds": c.Ldap.Tests.SYNC_PHASE_RESULTS_DURATION,
                     "success_rate": c.Ldap.Tests.SYNC_PHASE_RESULTS_SUCCESS_RATE,
-                }
-            }
+                },
+            },
         })
         phase_result = result.phase_results[c.Ldap.Tests.SYNC_PHASE_NAME]
         u.Ldap.Tests.that(phase_result, is_=m.Ldap.PhaseSyncResult)
         u.Ldap.Tests.that(
-            phase_result.synced, eq=c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED
+            phase_result.synced, eq=c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED,
         )
 
     # ── LdapOperationResult: field + factory contract ──────────────────

@@ -94,7 +94,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
                         base_dn=c.Ldap.EXAMPLE_BASE_DN,
                         filter_str=c.Ldap.ALL_ENTRIES_FILTER,
                     ),
-                )
+                ),
             )
         return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 

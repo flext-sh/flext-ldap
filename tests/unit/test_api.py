@@ -58,7 +58,7 @@ class TestsFlextLdapApi:
     ) -> t.Ldap.ProgressCallbackUnion | None:
         """Return the callback payload for one callback-guard case."""
         callbacks: dict[
-            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None
+            c.Ldap.Tests.CallbackGuardCase, t.Ldap.ProgressCallbackUnion | None,
         ] = {
             c.Ldap.Tests.CallbackGuardCase.NONE: None,
             c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
@@ -68,7 +68,7 @@ class TestsFlextLdapApi:
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_multi_phase_callback(
-        self, case: c.Ldap.Tests.CallbackGuardCase
+        self, case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
         """Verify is multi phase callback."""
         callback = self._callback_for_case(case)
@@ -77,7 +77,7 @@ class TestsFlextLdapApi:
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_single_phase_callback(
-        self, case: c.Ldap.Tests.CallbackGuardCase
+        self, case: c.Ldap.Tests.CallbackGuardCase,
     ) -> None:
         """Verify is single phase callback."""
         callback = self._callback_for_case(case)
@@ -97,5 +97,5 @@ class TestsFlextLdapApi:
         """Verify execute without connection reports not connected."""
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
-            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
+            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
