@@ -29,6 +29,6 @@ This section is generated from public exports and real docstrings.
 
 - Primary facades: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
   `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols` (+5 more)
-- Generated module pages: `12`
+- Generated module pages: `8`
 
 Back to [project docs](../index.md).

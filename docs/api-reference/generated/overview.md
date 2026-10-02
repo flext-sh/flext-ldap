@@ -28,7 +28,7 @@
   `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
   `FlextLdapSettings`, `FlextLdapSync`, `FlextLdapTypes` (+5 more)
 - Exported module shortcuts: `adapters`, `services`
-- Generated module pages: `12`
+- Generated module pages: `8`
 
 ## Next Pages
 
