@@ -189,6 +189,25 @@ class TestsFlextLdapModelsSearch:
     # OperationResult — value + immutability contract
     # ------------------------------------------------------------------ #
 
+
+class TestsFlextLdapModelsSearchResults:
+    """Test group."""
+
+    @staticmethod
+    def _entry(dn: str, attributes: dict[str, list[str]] | None = None) -> m.Ldif.Entry:
+        """Build an LDIF entry on the given DN (canonical test DN by default).
+
+        Returns:
+            The resulting ``m.Ldif.Entry`` value.
+
+        """
+        return m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes.model_validate({
+                "attributes": attributes or {},
+            }),
+        )
+
     @staticmethod
     def test_operation_result_exposes_provided_values() -> None:
         """Verify operation result exposes provided values."""
@@ -288,7 +307,12 @@ class TestsFlextLdapModelsSearch:
     def test_extract_objectclass_category_maps_expected(
         case: c.Ldap.Tests.SearchCategoryCase,
     ) -> None:
-        """Verify extract objectclass category maps expected."""
+        """Verify extract objectclass category maps expected.
+
+        Raises:
+            ValueError: If the value is invalid.
+
+        """
         attrs: dict[str, list[str] | str]
         case_obj: object = case
         match case_obj:

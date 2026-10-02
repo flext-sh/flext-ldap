@@ -27,7 +27,12 @@ def _entry(
     attributes: t.MappingKV[str, t.StrSequence] | None,
     dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
 ) -> m.Ldif.Entry:
-    """Build an LDIF entry on the given DN (canonical test DN by default)."""
+    """Build an LDIF entry on the given DN (canonical test DN by default).
+
+    Returns:
+        The resulting ``m.Ldif.Entry`` value.
+
+    """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=(
@@ -201,7 +206,12 @@ class TestsFlextLdapUtilitiesUnit:
     def test_attr_to_str_list_scenarios(
         case: c.Ldap.Tests.AttrToStrListCase,
     ) -> None:
-        """Verify attr to str list scenarios."""
+        """Verify attr to str list scenarios.
+
+        Raises:
+            ValueError: If a case value cannot be normalized.
+
+        """
         expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
         case_obj: object = case
         match case_obj:
@@ -234,6 +244,12 @@ class TestsFlextLdapUtilitiesUnit:
         value, expected = c.Ldap.Tests.LDAP3_VALUE_TO_STRINGS_SCENARIOS[case]
         result = u.Ldap.ldap3_value_to_strings(value)
         u.Ldap.Tests.that(tuple(result), eq=expected)
+
+    # --- search_entry_to_ldif_entry ---
+
+
+class TestsFlextLdapUtilitiesUnitConversion:
+    """Test group."""
 
     # --- search_entry_to_ldif_entry ---
     @staticmethod
@@ -382,6 +398,11 @@ class TestsFlextLdapUtilitiesUnit:
         tm.that(changes, lacks="cn")
 
     # --- compare_entries ---
+
+
+class TestsFlextLdapUtilitiesUnitCompare:
+    """Test group."""
+
     @staticmethod
     def test_compare_entries_success() -> None:
         """Verify compare entries produces changes for a non-RDN difference."""
@@ -511,6 +532,10 @@ class TestsFlextLdapUtilitiesUnit:
         result = u.Ldap.norm_str(c.Ldap.Tests.STRING_SIMPLE)
         u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_SIMPLE)
 
+
+class TestsFlextLdapUtilitiesUnitDetection:
+    """Test group."""
+
     # --- detect_from_extensions ---
     @staticmethod
     def test_detect_from_extensions_openldap() -> None:
@@ -591,6 +616,10 @@ class TestsFlextLdapUtilitiesUnit:
             supported_extensions=(),
         )
         u.Ldap.Tests.that(result, eq=c.Ldif.ServerTypes.RFC.value)
+
+
+class TestsFlextLdapUtilitiesUnitRootDse:
+    """Test group."""
 
     # --- query_root_dse ---
     @staticmethod

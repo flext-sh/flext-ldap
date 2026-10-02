@@ -260,6 +260,10 @@ class TestsFlextLdapModelsSync:
         u.Ldap.Tests.that(stored, is_=m.Ldap.PhaseSyncResult)
         u.Ldap.Tests.that(stored.synced, eq=c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED)
 
+
+class TestsFlextLdapModelsSyncBatchStats:
+    """Test group."""
+
     @staticmethod
     def test_multi_phase_coerces_dict_payloads_to_phase_models() -> None:
         """Verify multi phase coerces dict payloads to phase models."""
