@@ -670,10 +670,10 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		mise_receipt_log="$$scratch/$$1"; shift; \
 		mise_checked_stdout "$$mise_receipt_log.stdout" "$$mise_receipt_log.stderr" mise_exec no-config "$$1" --version; \
 		receipt_output=$$(cat "$$mise_receipt_log.stdout"); \
-		case "$$receipt_output" in \
-			'mise '*) receipt_release=$${receipt_output#mise }; receipt_release=$${receipt_release%% *} ;; \
-			*) receipt_release=$${receipt_output%% *} ;; \
-		esac; \
+		receipt_release=$$(printf '%s\n' "$$receipt_output" | grep -E '^(mise )?[0-9]+\.[0-9]+\.[0-9]+$$' | tail -1 | sed 's/^mise //'); \
+		if [ -z "$$receipt_release" ]; then \
+			receipt_release=$${receipt_output%% *}; \
+		fi; \
 		if ! printf '%s\n' "$$receipt_release" | grep -Eq '^[0-9]+(\.[0-9]+){2}$$'; then \
 			printf 'ERROR: Mise receipt returned invalid version: %s\n' "$$receipt_output" >&2; return 2; \
 		fi; \
@@ -719,10 +719,22 @@ caller_mise_version=; \
 		# backup copy exists. \
 		lock_stage="$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-lock-stage.XXXXXX")"; \
 		cp "$$project_root/.mise.toml" "$$lock_stage/.mise.toml"; \
-		if [ -f "$$project_root/mise.lock" ]; then cp "$$project_root/mise.lock" "$$lock_stage/mise.lock"; fi; \
-		if [ -d "$$project_root/.mise/locks" ]; then mkdir -p "$$lock_stage/.mise"; cp -R "$$project_root/.mise/locks" "$$lock_stage/.mise/locks"; fi; \
+		# The resolver (TOOL_BOOTSTRAP_RESOLVE, the first half of upg) locks \
+		# from the declared manifest alone; every other lock pass bumps the \
+		# committed lock and its sidecars. \
+		if [ "$(TOOL_BOOTSTRAP_RESOLVE)" != "1" ]; then \
+			if [ -f "$$project_root/mise.lock" ]; then cp "$$project_root/mise.lock" "$$lock_stage/mise.lock"; fi; \
+			if [ -d "$$project_root/.mise/locks" ]; then mkdir -p "$$lock_stage/.mise"; cp -R "$$project_root/.mise/locks" "$$lock_stage/.mise/locks"; fi; \
+		fi; \
 		mise_trusted_config_paths="$$lock_stage"; \
-		mise_checked "$$scratch/lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock --bump; \
+		if mise_checked "$$scratch/lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock --bump; then \
+			:; \
+		elif grep -q "refusing to replace locked version" "$$scratch/lock.log"; then \
+			printf 'INFO: kept the current mise.lock: the newest release was refused for missing platform assets; retry the bump when the release regains full platform coverage\n' >&2; \
+		else \
+			cat "$$scratch/lock.log" >&2; \
+			exit 2; \
+		fi; \
 		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" install --yes; \
 		mise_checked "$$scratch/staged-python.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" which python; \
 		staged_python=$$(cat "$$scratch/staged-python.log"); \
@@ -731,7 +743,31 @@ caller_mise_version=; \
 		mise_trusted_config_paths="$$project_root"; \
 	else \
 		# ``locked`` mode installs exactly what the committed mise.lock pins. \
-		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$project_root" install --yes; \
+		# A manifest ahead of the lock (a previous upg committed the rendered \
+		# .mise.toml and died before its lock transaction) self-heals here \
+		# through the same staged transaction upg uses: adopt, install, and \
+		# publish by one rename. A manifest that cannot still resolve fails \
+		# loud inside that transaction; every other install failure escapes \
+		# unchanged. \
+		if mise_exec project "$$pinned_mise" -C "$$project_root" install --yes >"$$scratch/install.log" 2>&1; then \
+			:; \
+		elif grep -q "not in the lockfile" "$$scratch/install.log"; then \
+			lock_stage="$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-lock-stage.XXXXXX")"; \
+			cp "$$project_root/.mise.toml" "$$lock_stage/.mise.toml"; \
+			if [ -f "$$project_root/mise.lock" ]; then cp "$$project_root/mise.lock" "$$lock_stage/mise.lock"; fi; \
+			if [ -d "$$project_root/.mise/locks" ]; then mkdir -p "$$lock_stage/.mise"; cp -R "$$project_root/.mise/locks" "$$lock_stage/.mise/locks"; fi; \
+			mise_trusted_config_paths="$$lock_stage"; \
+			mise_checked "$$scratch/adopt-lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock --bump; \
+			mise_checked "$$scratch/adopt-install.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" install --yes; \
+			mise_checked "$$scratch/staged-python.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" which python; \
+			staged_python=$$(cat "$$scratch/staged-python.log"); \
+			if [ ! -x "$$staged_python" ]; then printf 'ERROR: staged Mise Python is not executable: %s\n' "$$staged_python" >&2; exit 2; fi; \
+			mise_checked "$$scratch/publish-lock.log" "$$staged_python" "$$project_root/bin/mise-lock-transaction.py" publish "$$project_root" "$$lock_stage"; \
+			mise_trusted_config_paths="$$project_root"; \
+		else \
+			cat "$$scratch/install.log" >&2; \
+			exit 2; \
+		fi; \
 	fi; \
 	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_exec project "$$pinned_mise" -C "$$project_root" exec -- ast-grep --version; \
 	if [ -s "$$scratch/ast-grep-version.stderr" ]; then \
@@ -1225,14 +1261,17 @@ _activated-sonarcloud-sync: _builtin_require_environment
 setup: _bootstrap_setup_tools
 
 # `upg` builds the environment from the locks it writes, so like `setup` it
-# must not require an existing environment. Its first half resolves the Mise
-# release and installs from the committed mise.lock only: locking here would
-# resolve against the manifest the old generator rendered, before the uv lock
-# brings the new generator, so a toolchain policy change (for example the
-# fleet cooldown) could never reach a consumer. mise.lock is written once, in
-# `_upg_relock`, from the .mise.toml `gen` just rendered.
+# must not require an existing environment, and as the only resolver it must
+# not require a readable committed mise.lock either. A lock written by a newer
+# Mise than the pinned release ("unsupported lockfile version 3") or one that
+# no longer covers the manifest would otherwise stop the very verb that
+# rewrites it. Its first half therefore resolves the toolchain afresh, in a
+# private stage that never reads the committed lock. `_upg_relock` then bumps
+# that lock against the .mise.toml `gen` just rendered, so toolchain policy
+# changes (for example the fleet cooldown) still reach every consumer.
 upg: TOOL_BOOTSTRAP_LIFECYCLE := _upg_lifecycle
 upg: TOOL_BOOTSTRAP_RESOLVE := 1
+upg: TOOL_BOOTSTRAP_LOCK := 1
 upg: _builtin_require_runtime_root _bootstrap_setup_tools
 
 # Only the runtime root resolves the Mise release. An attached member's pin and
