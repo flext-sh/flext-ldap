@@ -11,8 +11,6 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core import build_lazy_import_map, install_lazy_exports
-
-
 from flext_ldap.__version__ import (
     __author__,
     __author_email__,
@@ -25,8 +23,6 @@ from flext_ldap.__version__ import (
 )
 
 if TYPE_CHECKING:
-    from flext_ldif import d, e, h, r, x
-
     from flext_ldap import adapters, services
     from flext_ldap._config import FlextLdapConfig, config
     from flext_ldap._settings import FlextLdapSettings, settings
@@ -40,6 +36,7 @@ if TYPE_CHECKING:
     from flext_ldap.services.sync import FlextLdapSync
     from flext_ldap.typings import FlextLdapTypes, t
     from flext_ldap.utilities import FlextLdapUtilities, u
+    from flext_ldif import d, e, h, r, x
 
 
 __all__: tuple[str, ...] = (
