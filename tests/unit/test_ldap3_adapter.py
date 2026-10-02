@@ -42,12 +42,13 @@ class TestsFlextLdapLdap3Adapter:
         SEARCH = "search"
 
     @pytest.fixture
-    def adapter(self) -> FlextLdapLdap3Adapter:
+    @staticmethod
+    def adapter() -> FlextLdapLdap3Adapter:
         """Return a freshly constructed, never-connected adapter."""
         return FlextLdapLdap3Adapter()
 
+    @staticmethod
     def test_fresh_adapter_reports_not_connected(
-        self,
         adapter: FlextLdapLdap3Adapter,
     ) -> None:
         """Verify fresh adapter reports not connected."""
@@ -92,8 +93,8 @@ class TestsFlextLdapLdap3Adapter:
                 )
                 u.Ldap.Tests.fail(adapter.search(options), has=needle)
 
+    @staticmethod
     def test_disconnect_is_idempotent_and_keeps_state_unbound(
-        self,
         adapter: FlextLdapLdap3Adapter,
     ) -> None:
         """Verify disconnect is idempotent and keeps state unbound."""
@@ -105,8 +106,8 @@ class TestsFlextLdapLdap3Adapter:
         u.Ldap.Tests.that(adapter.connection, eq=None)
 
     @pytest.mark.parametrize("case", list(c.Ldap.Tests.Ldap3ServerCase))
+    @staticmethod
     def test_create_server_configures_host_and_port(
-        self,
         case: c.Ldap.Tests.Ldap3ServerCase,
     ) -> None:
         """Verify create server configures host and port."""
@@ -138,7 +139,8 @@ class TestsFlextLdapLdap3Adapter:
             eq=port,
         )
 
-    def test_adapter_host_reports_unbound_before_use(self) -> None:
+    @staticmethod
+    def test_adapter_host_reports_unbound_before_use() -> None:
         """Verify adapter host reports unbound before use."""
         # FlextLdapAdapterHost exposes is_connected without eagerly building
         # an adapter; before any use it must observe an unbound state.

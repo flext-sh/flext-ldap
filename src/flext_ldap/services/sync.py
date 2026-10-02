@@ -164,7 +164,8 @@ class FlextLdapSync(FlextLdapOperations):
         )
         if not overall_success:
             return r[m.Ldap.MultiPhaseSyncResult].fail(
-                f"Multi-phase sync completed with failures: {total_failed} entries failed",
+                f"Multi-phase sync completed with failures: "
+                f"{total_failed} entries failed",
             )
         return r[m.Ldap.MultiPhaseSyncResult].ok(sync_result)
 
@@ -236,8 +237,8 @@ class FlextLdapSync(FlextLdapOperations):
             ),
         )
 
+    @staticmethod
     def _prepare_phase_callback(
-        self,
         phase_name: str,
         settings: m.Ldap.SyncPhaseConfig,
     ) -> t.Ldap.LdapProgressCallback | None:

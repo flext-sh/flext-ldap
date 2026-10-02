@@ -121,7 +121,8 @@ class TestsFlextLdapSubtreeDelete:
             ),
         )
 
-    def test_missing_base_dn_fails_typed(self) -> None:
+    @staticmethod
+    def test_missing_base_dn_fails_typed() -> None:
         """An empty base DN is rejected without touching the directory."""
         operations = FlextLdapOperations()
         result = operations.delete_subtree("   ")
@@ -222,7 +223,8 @@ class TestsFlextLdapPlanUpsert:
         u.Ldap.Tests.that(plan_result.value.unchanged, eq=1)
         u.Ldap.Tests.that(operations.write_log(), eq=[])
 
-    def test_plan_missing_dn_fails_typed(self) -> None:
+    @staticmethod
+    def test_plan_missing_dn_fails_typed() -> None:
         """An entry without a DN aborts the plan with a typed failure."""
         operations = TestsFlextLdapSubtreeDelete.SubtreeOperations([])
         entry = m.Ldif.Entry(

@@ -107,8 +107,8 @@ def _attribute_values(dn: str, attribute: str) -> t.StrSequence:
 class TestsFlextLdapSubtreeDeleteIntegration:
     """Subtree deletion through the public facade against a real directory."""
 
+    @staticmethod
     def test_removes_children_first_and_reports_count(
-        self,
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A three-level tree is deleted deepest-first with deleted_count=3."""
@@ -146,8 +146,8 @@ class TestsFlextLdapSubtreeDeleteIntegration:
             _ = ldap.delete_subtree(root_dn)
             ldap.disconnect()
 
+    @staticmethod
     def test_absent_base_returns_typed_failure(
-        self,
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """Deleting a subtree whose base does not exist fails naming the DN."""
@@ -166,8 +166,8 @@ class TestsFlextLdapSubtreeDeleteIntegration:
 class TestsFlextLdapPlanUpsertIntegration:
     """Dry-run planning through the public facade against a real directory."""
 
+    @staticmethod
     def test_plan_counts_and_directory_stays_unchanged(
-        self,
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """Plans 1 add / 1 modify / 1 unchanged and writes nothing."""
@@ -221,11 +221,14 @@ class TestsFlextLdapPlanUpsertIntegration:
             _ = ldap.delete(stored_dn)
             ldap.disconnect()
 
+    @staticmethod
     def test_modify_entries_plan_as_the_write_path_applies_them(
-        self,
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
-        """A modify-add entry plans as one modify; applying the batch matches the plan."""
+        """A modify-add entry plans as one modify.
+
+        Applying the batch matches the plan.
+        """
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"pm-{uuid4().hex[:8]}"
@@ -267,8 +270,8 @@ class TestsFlextLdapPlanUpsertIntegration:
 class TestsFlextLdapFindEntryIntegration:
     """Absence-aware single-entry reads against a real directory."""
 
+    @staticmethod
     def test_absent_entry_is_an_empty_result(
-        self,
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A DN that does not exist reads as a successful empty result."""
@@ -283,8 +286,8 @@ class TestsFlextLdapFindEntryIntegration:
         finally:
             ldap.disconnect()
 
+    @staticmethod
     def test_present_entry_reads_the_requested_attributes(
-        self,
         ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A present entry is returned with the attributes asked for."""

@@ -92,7 +92,8 @@ class TestsFlextLdapEntryAdapter:
     # execute() — s protocol contract
     # ------------------------------------------------------------------
 
-    def test_execute_reports_adapter_ready(self) -> None:
+    @staticmethod
+    def test_execute_reports_adapter_ready() -> None:
         """Verify execute reports adapter ready."""
         adapter = FlextLdapEntryAdapter()
 

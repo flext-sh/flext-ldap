@@ -118,8 +118,8 @@ class TestsFlextLdapDetection:
         ("kwargs", "expect_failure", "error_substring"),
         c.Ldap.Tests.DETECTION_EXECUTE_SCENARIOS,
     )
+    @staticmethod
     def test_execute_reports_failure_for_invalid_connection_argument(
-        self,
         kwargs: t.MappingKV[str, bool | float | str | None] | None,
         *,
         expect_failure: bool,
@@ -138,8 +138,8 @@ class TestsFlextLdapDetection:
         ("attrs", "key", "expected"),
         c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS,
     )
+    @staticmethod
     def test_get_first_attribute_value_returns_first_truthy_value(
-        self,
         attrs: t.MappingKV[str, t.StrSequence],
         key: str,
         expected: str | None,
@@ -153,8 +153,8 @@ class TestsFlextLdapDetection:
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
         c.Ldap.Tests.DETECTION_FROM_ATTRIBUTES_SCENARIOS,
     )
+    @staticmethod
     def test_detect_server_type_classifies_vendor_metadata(
-        self,
         vendor_name: str | None,
         vendor_version: str | None,
         supported_controls: t.StrSequence,
@@ -216,8 +216,8 @@ class TestsFlextLdapDetection:
             (True, True, [], "no entries"),
         ],
     )
+    @staticmethod
     def test_detect_from_connection_propagates_rootdse_failure(
-        self,
         *,
         searchable: bool,
         search_succeeds: bool,

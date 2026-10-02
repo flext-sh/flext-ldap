@@ -103,7 +103,8 @@ class FlextLdapEntryAdapter(s[bool]):
         )
 
     @override
-    def execute(self) -> p.Result[bool]:
+    @staticmethod
+    def execute() -> p.Result[bool]:
         """Execute method required by s.
 
         Business Rules:
@@ -139,7 +140,8 @@ class FlextLdapEntryAdapter(s[bool]):
             - DN is extracted from entry.entry_dn (string conversion)
             - Attributes are extracted from entry.entry_attributes_as_dict
             - Attribute values are normalized to t.StrSequence format
-            - Base64 encoding detection uses ASCII threshold (127) for non-printable chars
+            - Base64 encoding detection uses ASCII threshold (127) for non-printable
+            chars
             - Removed attributes (None values) are tracked in conversion metadata
             - Conversion metadata includes source DN, removed attrs, base64 attrs
             - Server type from adapter instance is stored in ServerMetadata
@@ -287,8 +289,8 @@ class FlextLdapEntryAdapter(s[bool]):
             )
             return e.fail_operation("convert attributes to ldap3 format", exc)
 
+    @staticmethod
     def _convert_ldap3_value_to_list(
-        self,
         value: t.Ldap.Ldap3EntryValue | None,
         key: str,
         base64_attrs: t.MutableSequenceOf[str],

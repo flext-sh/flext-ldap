@@ -49,8 +49,8 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
             ),
         )
 
+    @staticmethod
     def detect_from_connection(
-        self,
         connection: p.Ldap.Ldap3Connection | p.Ldif.RootDseConnection,
     ) -> p.Result[str]:
         """Detect the effective LDAP server type from an active connection.
