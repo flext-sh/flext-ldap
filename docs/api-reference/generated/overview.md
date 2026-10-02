@@ -8,14 +8,29 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
+- Package: `flext_ldap`
 - Version: `0.12.0`
 - Description: Enterprise LDAP Operations Library for FLEXT Framework
-- Governed projects: `0`
-- Project classes: _none_
-
-Generated from workspace discovery, `pyproject.toml`, public exports, and docstrings.
+- Doc summary: Flext Ldap package.
+- Classifiers: Development Status :: 3 - Alpha, Intended Audience :: Developers,
+  Operating System :: OS Independent, Programming Language :: Python :: 3 :: Only,
+  Programming Language :: Python :: 3.13, Topic :: Software Development :: Libraries ::
+  Python Modules, Topic :: System :: Systems Administration :: Authentication/Directory
+  :: LDAP, Typing :: Typed
+- Project class: `domain`
+- Keywords: `adapter`, `clean-architecture`, `ddd`, `enterprise`, `flext`,
+  `integration`, `ldap`, `typed`
+- Main facades: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
+  `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
+  `FlextLdapSettings` (+3 more)
+- Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
+- Public symbol exports: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
+  `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
+  `FlextLdapSettings`, `FlextLdapSync`, `FlextLdapTypes` (+5 more)
+- Exported module shortcuts: `adapters`, `services`
+- Generated module pages: `12`
 
 ## Next Pages
 
-- [Workspace Module Pages](projects/index.md)
-- [Project Catalog](../../projects/generated/catalog.md)
+- [Public API](public-api.md)
+- [Module Index](modules/index.md)
