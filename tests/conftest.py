@@ -68,20 +68,28 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 
 @pytest.fixture(scope="session")
 def worker_id(request: pytest.FixtureRequest) -> str:
-    """Provide worker id."""
+    """Provide worker id.
+
+    Returns:
+        The resulting ``str``.
+    """
     return _get_worker_id(request.config)
 
 
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
-    """Provide ldap container."""
+    """Provide ldap container.
+
+    Returns:
+        The resulting ``t.MappingKV[str, t.Scalar]``.
+    """
     if not _docker_compose_available():
         pytest.skip(
             "LDAP smoke tests require the Docker compose file; skipping because "
-            "it is unavailable in this environment."
+            "it is unavailable in this environment.",
         )
     lock = u.Ldap.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock"
+        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
     )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:

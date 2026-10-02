@@ -1,4 +1,8 @@
-"""Runtime mixin used by the public LDAP API facade."""
+"""Runtime mixin used by the public LDAP API facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -12,7 +16,11 @@ class FlextLdapApiRuntime:
     """Context manager behavior composed by the public LDAP facade."""
 
     def __enter__(self) -> Self:
-        """Context manager entry."""
+        """Context manager entry.
+
+        Returns:
+            The resulting ``Self``.
+        """
         return self
 
     def __exit__(

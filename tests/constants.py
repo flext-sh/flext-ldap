@@ -26,17 +26,29 @@ if TYPE_CHECKING:
 
 
 def _docker_admin_password() -> str:
-    """Resolve the test OpenLDAP admin password (env override allowed)."""
+    """Resolve the test OpenLDAP admin password (env override allowed).
+
+    Returns:
+        The resulting ``str``.
+    """
     return os.getenv("FLEXT_LDAP_TEST_DOCKER_ADMIN_PASSWORD", "") or "admin123"
 
 
 def _docker_legacy_admin_password() -> str:
-    """Resolve the legacy test OpenLDAP admin password (env override allowed)."""
+    """Resolve the legacy test OpenLDAP admin password (env override allowed).
+
+    Returns:
+        The resulting ``str``.
+    """
     return os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "") or "admin123"
 
 
 def _bind_admin_password() -> str:
-    """Resolve the test bind admin password (env override allowed)."""
+    """Resolve the test bind admin password (env override allowed).
+
+    Returns:
+        The resulting ``str``.
+    """
     return os.getenv("FLEXT_LDAP_TEST_BIND_ADMIN_PASSWORD", "") or "secret"
 
 
@@ -235,7 +247,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             ] = (
                 (
                     MappingProxyType({
-                        "vendorName": ("Oracle Corporation", "Version 2")
+                        "vendorName": ("Oracle Corporation", "Version 2"),
                     }),
                     "vendorName",
                     "Oracle Corporation",
@@ -332,7 +344,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
                 AttrToStrListCase.LIST: MappingProxyType({"cn": LIST_ABC}),
                 AttrToStrListCase.LIST_BYTES: MappingProxyType({
-                    "key": ("bytes", "str")
+                    "key": ("bytes", "str"),
                 }),
                 AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
             })
@@ -427,7 +439,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             SYNC_BATCH_STATS_SKIPPED: Final[int] = 10
 
             SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = str(
-                Path(gettempdir()) / "flext-ldap-sync-missing.ldif"
+                Path(gettempdir()) / "flext-ldap-sync-missing.ldif",
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
             SYNC_FACADE_MISSING_FILE_PHASES: Final[t.VariadicTuple[PhaseName]] = (

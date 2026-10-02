@@ -99,7 +99,9 @@ class TestsFlextLdapPublicApiContract:
 
     @pytest.mark.parametrize(("alias", "facade"), _ALIAS_FACADE_CASES)
     def test_canonical_alias_resolves_to_domain_facade(
-        self, alias: str, facade: type
+        self,
+        alias: str,
+        facade: type,
     ) -> None:
         """Verify canonical alias resolves to domain facade."""
         tm.that(getattr(flext_ldap, alias) is facade, eq=True)
