@@ -153,7 +153,7 @@ omit = [
 ]
 
 [tool.deptry]
-known_first_party = ["flext_core", "flext_ldap"]
+known_first_party = ["flext", "flext_core", "flext_ldap"]
 pep621_dev_dependency_groups = ["dev"]
 
 [tool.flext.docs]
@@ -456,7 +456,7 @@ msg = "Use cli.create_app_with_common_params / cli.register_command from flext_c
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = ["flext_core", "flext_ldap"]
+known-first-party = ["flext", "flext_core", "flext_ldap"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
@@ -519,6 +519,11 @@ split-on-trailing-comma = false
   "used-dummy-variable",
   "verbose-raise",
   "write-whole-file",
+]
+"scripts/**/*.py" = [
+  "commented-out-code",
+  "line-too-long",
+  "typing-only-first-party-import",
 ]
 "tests/**/*.py" = ["assert"]
 
