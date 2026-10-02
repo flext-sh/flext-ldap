@@ -44,7 +44,12 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 result: p.Result[TResult],
                 **kwargs: object,
             ) -> str:
-                """Provide fail."""
+                """Provide fail.
+
+                Returns:
+                    The resulting ``str`` value.
+
+                """
                 failure_message: str = tm.fail(result, **kwargs)
                 return failure_message
 
@@ -52,21 +57,36 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             def ok[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
             ) -> TResult:
-                """Provide ok."""
+                """Provide ok.
+
+                Returns:
+                    The resulting ``TResult`` value.
+
+                """
                 return tm.ok(result)
 
             @staticmethod
             def check[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
             ) -> m.Tests.Chain[TResult]:
-                """Provide check."""
+                """Provide check.
+
+                Returns:
+                    The resulting ``m.Tests.Chain[TResult]`` value.
+
+                """
                 return tm.check(result)
 
             @staticmethod
             def create_ldap3_server(
                 ldap_container: t.MappingKV[str, t.Scalar],
             ) -> p.Ldif.Ldap3Server:
-                """Create an ldap3 server from container metadata."""
+                """Create an ldap3 server from container metadata.
+
+                Returns:
+                    The resulting ``p.Ldif.Ldap3Server`` value.
+
+                """
                 server_url = ldap_container["server_url"]
                 server: p.Ldif.Ldap3Server = u.Ldap.create_server_from_url(
                     str(server_url),
@@ -78,7 +98,12 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 server: p.Ldif.Ldap3Server,
                 ldap_container: t.MappingKV[str, t.Scalar],
             ) -> p.Ldap.Ldap3Connection:
-                """Create an ldap3 connection from container metadata."""
+                """Create an ldap3 connection from container metadata.
+
+                Returns:
+                    The resulting ``p.Ldap.Ldap3Connection`` value.
+
+                """
                 connection: p.Ldap.Ldap3Connection = u.Ldap.create_connection(
                     server,
                     user=str(ldap_container["bind_dn"]),
@@ -90,7 +115,15 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             def create_connection_config(
                 ldap_container: t.MappingKV[str, t.Scalar],
             ) -> m.Ldap.ConnectionConfig:
-                """Build a typed connection settings from container metadata."""
+                """Build a typed connection settings from container metadata.
+
+                Returns:
+                    The resulting ``m.Ldap.ConnectionConfig`` value.
+
+                Raises:
+                    TypeError: If the container port has an unsupported type.
+
+                """
                 port = ldap_container["port"]
                 port_value = (
                     port
@@ -155,6 +188,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 standalone (submodule checkout without the shared compose) it
                 returns the submodule root, where the compose is absent so the
                 container fixture skips instead of faking the service.
+
+                Returns:
+                    The resulting ``Path`` value.
+
                 """
                 rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
                 here: Path = Path(__file__).resolve()
@@ -167,7 +204,12 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             def get_docker_control(
                 _worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
             ) -> tk:
-                """Create Docker test infrastructure controller."""
+                """Create Docker test infrastructure controller.
+
+                Returns:
+                    The resulting ``tk`` value.
+
+                """
                 return tk.compose(
                     compose_file=c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL,
                     target=m.Tests.ContainerConfig(
@@ -214,7 +256,16 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @classmethod
             def get_admin_credentials(cls) -> tuple[str, str]:
-                """Resolve working LDAP admin credentials."""
+                """Resolve working LDAP admin credentials.
+
+                Returns:
+                    The resulting ``tuple[str, str]`` value.
+
+                Raises:
+                    RuntimeError: If no valid LDAP admin credential can be
+                        resolved.
+
+                """
                 cache = cls._resolved_admin_credentials
                 if cache[0] is not None:
                     return cache[0]
@@ -249,7 +300,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @classmethod
             def ensure_basic_ldap_structure(cls) -> None:
-                """Ensure the base organizational units exist for smoke tests."""
+                """Ensure the base organizational units exist for smoke tests.
+
+                Raises:
+                    RuntimeError: If an organizational unit entry cannot be
+                        created.
+
+                """
                 admin_dn, admin_password = cls.get_admin_credentials()
                 connection = u.Ldap.create_connection(
                     u.Ldap.create_server_from_url(

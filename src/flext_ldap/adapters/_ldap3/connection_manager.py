@@ -42,6 +42,9 @@ class FlextLdapLdap3ConnectionManager:
         Returns:
             ldap3 p.Ldap.Ldap3Connection t.JsonValue, initially unbound.
 
+        Raises:
+            TypeError: If the value is invalid.
+
         """
         if not isinstance(server, Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"

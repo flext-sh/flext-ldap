@@ -32,7 +32,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         original_attrs_dict: t.MappingKV[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
-        """Create canonical conversion metadata for LDAP entry adaptation."""
+        """Create canonical conversion metadata for LDAP entry adaptation.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata`` value.
+
+        """
         return m.Ldap.ConversionMetadata(
             source_attributes=list(dict(original_attrs_dict).keys()),
             source_dn=original_dn,
@@ -45,7 +50,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         cls,
         entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
     ) -> p.Result[m.Ldif.Entry]:
-        """Convert LDAP search-result mappings into canonical LDIF entries."""
+        """Convert LDAP search-result mappings into canonical LDIF entries.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]`` value.
+
+        """
         raw_entry = dict(entry)
         dn_raw = raw_entry.get("dn")
         dn_values = cls.ldap3_value_to_strings(dn_raw)
@@ -69,7 +79,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: t.MappingKV[str, t.StrSequence],
     ) -> m.Ldap.ConversionMetadata:
-        """Record DN and attribute changes observed during entry conversion."""
+        """Record DN and attribute changes observed during entry conversion.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata`` value.
+
+        """
         updates: MutableMapping[str, bool | str | t.StrSequence] = {}
         if converted_dn != original_dn:
             updates["dn_changed"] = True
@@ -99,7 +114,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
     def extract_attrs_dict_from_entry(
         entry: p.Ldif.Entry,
     ) -> t.MutableStrSequenceMapping:
-        """Extract the plain attributes mapping from an LDIF entry."""
+        """Extract the plain attributes mapping from an LDIF entry.
+
+        Returns:
+            The resulting ``t.MutableStrSequenceMapping`` value.
+
+        """
         attributes = entry.attributes
         if attributes is None:
             return {}
@@ -107,7 +127,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @staticmethod
     def extract_objectclass_category(attrs: t.AttributeMapping) -> str:
-        """Extract the lowercase objectclass category from an attribute mapping."""
+        """Extract the lowercase objectclass category from an attribute mapping.
+
+        Returns:
+            The resulting ``str`` value.
+
+        """
         unknown: str = c.Ldap.UNKNOWN_CATEGORY
         if not attrs:
             return unknown
@@ -119,7 +144,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def resolve_entry_category(cls, entry: p.Ldif.Entry) -> str:
-        """Get the category (first objectclass, lowercased) of an LDIF entry."""
+        """Get the category (first objectclass, lowercased) of an LDIF entry.
+
+        Returns:
+            The resulting ``str`` value.
+
+        """
         return cls.extract_objectclass_category(
             cls.extract_attrs_dict_from_entry(entry),
         )
@@ -129,7 +159,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         cls,
         entries: t.SequenceOf[m.Ldif.Entry],
     ) -> m.Ldif.FlexibleCategories:
-        """Group LDIF entries by their objectclass category."""
+        """Group LDIF entries by their objectclass category.
+
+        Returns:
+            The resulting ``m.Ldif.FlexibleCategories`` value.
+
+        """
         result = m.Ldif.FlexibleCategories()
         for entry in entries:
             result[cls.resolve_entry_category(entry)].append(entry)

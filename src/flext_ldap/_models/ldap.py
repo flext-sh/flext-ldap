@@ -17,7 +17,12 @@ from flext_ldap import c, t
 
 
 def _empty_phase_results() -> t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]:
-    """Build an immutable, precisely typed empty phase result mapping."""
+    """Build an immutable, precisely typed empty phase result mapping.
+
+    Returns:
+        The resulting ``t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]`` value.
+
+    """
     return MappingProxyType({})
 
 
@@ -55,7 +60,15 @@ class FlextLdapModelsLdap:
 
         @u.model_validator(mode="after")
         def validate_ssl_tls_exclusion(self) -> Self:
-            """Validate that SSL and TLS are mutually exclusive."""
+            """Validate that SSL and TLS are mutually exclusive.
+
+            Returns:
+                The resulting ``Self`` value.
+
+            Raises:
+                ValueError: If both ``use_ssl`` and ``use_tls`` are enabled.
+
+            """
             if self.use_ssl and self.use_tls:
                 msg = "use_ssl and use_tls are mutually exclusive"
                 raise ValueError(msg)
@@ -118,6 +131,10 @@ class FlextLdapModelsLdap:
             Base-scope lookups target a single known DN to read that entry (e.g.
             the upsert existence check), so the entry's user attributes must be
             returned for a meaningful comparison — ldap3 omits them unless asked.
+
+            Returns:
+                The resulting ``Self`` value.
+
             """
             return cls(
                 base_dn=base_dn,

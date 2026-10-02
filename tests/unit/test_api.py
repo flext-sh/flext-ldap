@@ -39,7 +39,12 @@ class TestsFlextLdapApi:
 
     @staticmethod
     def test_context_manager_does_not_suppress_exceptions() -> None:
-        """Verify context manager does not suppress exceptions."""
+        """Verify context manager does not suppress exceptions.
+
+        Raises:
+            RuntimeError: If the value is invalid.
+
+        """
         with pytest.raises(RuntimeError), ldap:
             raise RuntimeError(c.Ldap.Tests.RFC_DEFAULT_FILTER)
 

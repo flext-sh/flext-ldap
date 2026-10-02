@@ -107,7 +107,12 @@ class FlextLdapSubtreeDeleteHandler:
         )
 
     def _collect_subtree_dns(self, base_dn: str) -> p.Result[t.SequenceOf[str]]:
-        """Enumerate every DN under (and including) the base, attributes omitted."""
+        """Enumerate every DN under (and including) the base, attributes omitted.
+
+        Returns:
+            The resulting ``p.Result[t.SequenceOf[str]]`` value.
+
+        """
         search_options = m.Ldap.SearchOptions(
             base_dn=base_dn,
             scope=c.Ldap.SearchScope.SUBTREE,
@@ -135,5 +140,10 @@ class FlextLdapSubtreeDeleteHandler:
 
     @staticmethod
     def _dn_depth(dn: str) -> int:
-        """Depth of a DN as its RDN separator count (parent-safe ordering)."""
+        """Depth of a DN as its RDN separator count (parent-safe ordering).
+
+        Returns:
+            The resulting ``int`` value.
+
+        """
         return dn.count(",")

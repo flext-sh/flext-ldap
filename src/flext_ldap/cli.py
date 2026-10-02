@@ -6,11 +6,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import t
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_ldap import t
 
 
 def main(args: t.StrSequence | None = None) -> int:
-    """Console-script entry point — commands are not implemented yet."""
+    """Console-script entry point — commands are not implemented yet.
+
+    Returns:
+        The resulting ``int`` value.
+
+    """
     _ = args
     return 0
 

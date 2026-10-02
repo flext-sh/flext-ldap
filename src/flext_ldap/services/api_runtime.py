@@ -16,7 +16,12 @@ class FlextLdapApiRuntime:
     """Context manager behavior composed by the public LDAP facade."""
 
     def __enter__(self) -> Self:
-        """Context manager entry."""
+        """Context manager entry.
+
+        Returns:
+            The resulting ``Self`` value.
+
+        """
         return self
 
     def __exit__(

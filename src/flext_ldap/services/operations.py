@@ -330,7 +330,12 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
     def _fold_operation_result(
         result: p.Result[m.Ldap.OperationResult],
     ) -> p.Result[m.Ldap.OperationResult]:
-        """Fold an adapter operation outcome into the canonical result surface."""
+        """Fold an adapter operation outcome into the canonical result surface.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.OperationResult]`` value.
+
+        """
         folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
@@ -341,7 +346,12 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
     @staticmethod
     def _normalized_dn(dn: str | p.Ldif.DN, op_name: str) -> p.Result[m.Ldif.DN]:
-        """Normalize a str-or-DN input into a validated DN model."""
+        """Normalize a str-or-DN input into a validated DN model.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.DN]`` value.
+
+        """
         return u.try_(
             lambda: (
                 m.Ldif.DN(value=u.Ldif.get_dn_value(dn))
@@ -652,7 +662,12 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         entry_index: int,
         total_entries: int,
     ) -> bool:
-        """Process one batch entry and report whether stop-on-error should halt."""
+        """Process one batch entry and report whether stop-on-error should halt.
+
+        Returns:
+            The resulting ``bool`` value.
+
+        """
         entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
         upsert_result = self.upsert(
             entry,

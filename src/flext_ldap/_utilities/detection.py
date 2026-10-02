@@ -21,7 +21,12 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         supported_extensions: t.StrSequence,
         naming_contexts: t.StrSequence,
     ) -> str:
-        """Infer server type from rootDSE extensions and naming contexts."""
+        """Infer server type from rootDSE extensions and naming contexts.
+
+        Returns:
+            The resulting ``str`` value.
+
+        """
         ext_str = str(cls.map_str(supported_extensions, case="lower", join=" "))
         context_str = cls.norm_join(naming_contexts, case="lower")
         for server_name in c.Ldap.ROOT_DSE_DETECTION_ORDER:
@@ -52,7 +57,12 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def _matches_vendor_rule(cls, vendor_info: str, server_name: str) -> bool:
-        """Evaluate declarative vendor-detection markers for one server type."""
+        """Evaluate declarative vendor-detection markers for one server type.
+
+        Returns:
+            The resulting ``bool`` value.
+
+        """
         required_markers = c.Ldap.ROOT_DSE_VENDOR_REQUIRED_MARKERS.get(
             server_name,
             frozenset(),
@@ -79,7 +89,12 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         vendor_name: str | None,
         vendor_version: str | None,
     ) -> str | None:
-        """Infer server type from vendor metadata when available."""
+        """Infer server type from vendor metadata when available.
+
+        Returns:
+            The resulting ``str | None`` value.
+
+        """
         vendor_parts = [
             u.to_str(value)
             for value in (vendor_name, vendor_version)
@@ -105,7 +120,12 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         naming_contexts: t.StrSequence,
         supported_extensions: t.StrSequence,
     ) -> str:
-        """Resolve the effective server type from rootDSE metadata."""
+        """Resolve the effective server type from rootDSE metadata.
+
+        Returns:
+            The resulting ``str`` value.
+
+        """
         return cls.detect_from_vendor(
             vendor_name,
             vendor_version,

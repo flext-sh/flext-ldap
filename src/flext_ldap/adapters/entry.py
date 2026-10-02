@@ -69,7 +69,12 @@ class FlextLdapEntryAdapter(s[bool]):
         original_attrs_dict: t.MappingKV[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
     ) -> m.Ldap.ConversionMetadata:
-        """Build conversion metadata tracking ldap3 to LDIF transformation."""
+        """Build conversion metadata tracking ldap3 to LDIF transformation.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata`` value.
+
+        """
         return u.Ldap.build_conversion_metadata(
             removed_attrs,
             base64_attrs,
@@ -85,7 +90,12 @@ class FlextLdapEntryAdapter(s[bool]):
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: t.MappingKV[str, t.StrSequence],
     ) -> m.Ldap.ConversionMetadata:
-        """Track DN and attribute differences in conversion metadata."""
+        """Track DN and attribute differences in conversion metadata.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata`` value.
+
+        """
         return u.Ldap.track_conversion_differences(
             conversion_metadata,
             original_dn=original_dn,
@@ -175,7 +185,12 @@ class FlextLdapEntryAdapter(s[bool]):
         self,
         ldap3_entry: p.Ldif.Ldap3Entry,
     ) -> p.Result[m.Ldif.Entry]:
-        """Build an LDIF entry from an ldap3 entry without exception handling."""
+        """Build an LDIF entry from an ldap3 entry without exception handling.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]`` value.
+
+        """
         dn_str = str(ldap3_entry.entry_dn)
         attrs_dict: t.Ldap.Ldap3AttributeDict = ldap3_entry.entry_attributes_as_dict
         original_attrs_dict: t.Ldap.Ldap3AttributeDict = attrs_dict

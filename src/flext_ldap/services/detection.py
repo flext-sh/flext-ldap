@@ -18,7 +18,12 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
 
     @staticmethod
     def _get_first_value(attrs: t.Ldap.OperationAttributes, key: str) -> str | None:
-        """Compatibility shim for unit tests and older callers."""
+        """Compatibility shim for unit tests and older callers.
+
+        Returns:
+            The resulting ``str | None`` value.
+
+        """
         value: str | None = u.Ldap.resolve_first_attribute_value(attrs, key)
         return value
 
@@ -30,7 +35,12 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
         supported_controls: t.StrSequence,
         supported_extensions: t.StrSequence,
     ) -> p.Result[str]:
-        """Compatibility shim that delegates heuristic detection to utilities."""
+        """Compatibility shim that delegates heuristic detection to utilities.
+
+        Returns:
+            The resulting ``p.Result[str]`` value.
+
+        """
         _ = supported_controls
         return r[str].ok(
             u.Ldap.detect_server_type(
@@ -51,7 +61,12 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
 
     @override
     def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
-        """Detect server type using the provided ``connection`` keyword argument."""
+        """Detect server type using the provided ``connection`` keyword argument.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.Response]`` value.
+
+        """
         connection_raw = kwargs.get("connection")
         if connection_raw is None:
             return e.fail_validation("connection", error="parameter required")

@@ -34,7 +34,12 @@ class TestsFlextLdapConnection:
 
     @staticmethod
     def _invalid_config() -> m.Ldap.ConnectionConfig:
-        """Build a typed config pointing at an unreachable host."""
+        """Build a typed config pointing at an unreachable host.
+
+        Returns:
+            The resulting ``m.Ldap.ConnectionConfig`` value.
+
+        """
         return m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.CONFIG_INVALID_HOST,
             port=c.Ldap.PORT,

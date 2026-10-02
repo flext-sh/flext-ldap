@@ -37,6 +37,11 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
 
         None values become empty lists; single values become ``[value]``;
         multi-values stay as lists. Type information is normalized to strings.
+
+        Returns:
+            The resulting
+            ``t.SequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]]`` value.
+
         """
         results: t.MutableSequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]] = []
         entries: t.SequenceOf[p.Ldif.Ldap3Entry] = getattr(connection, "entries", [])
@@ -57,6 +62,10 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
         Pre-validated ``m.Ldif.Entry`` instances pass through unchanged;
         protocol-typed entries are reconstructed via ``extract_dn``,
         ``extract_attributes``, ``extract_metadata``.
+
+        Returns:
+            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]`` value.
+
         """
         entries_raw = parse_response.entries
         if not entries_raw:

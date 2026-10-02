@@ -82,6 +82,10 @@ class FlextLdapUpsertHandler:
 
         The ``changetype`` attribute wins; the entry's own ``changetype``
         field is the fallback carrier when the attribute is absent.
+
+        Returns:
+            The resulting ``bool`` value.
+
         """
         attrs = u.Ldap.extract_entry_attributes(entry)
         changetype_val: t.StrSequence = list(
@@ -100,6 +104,10 @@ class FlextLdapUpsertHandler:
 
         Change operations are the carrier; the legacy ``add:`` attribute
         form is read only when no add operation carries values.
+
+        Returns:
+            The resulting ``list[tuple[str, t.StrSequence]]`` value.
+
         """
         additions: list[tuple[str, t.StrSequence]] = []
         for change_operation in entry_model.change_operations:

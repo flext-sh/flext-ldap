@@ -480,8 +480,10 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
         @runtime_checkable
         class HasConfigAttribute(Protocol):
-            """Protocol for objects exposing configuration
-            (duck typing for settings)."""
+            """Protocol for objects exposing configuration.
+
+            (duck typing for settings).
+            """
 
             @property
             def settings(self) -> None:
@@ -490,8 +492,11 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
         @runtime_checkable
         class HasDynamicAttribute(Protocol):
-            """Protocol for objects with dynamic attributes accessible
-            via __getattr__."""
+            """Protocol for objects with dynamic attributes.
+
+            Accessible via ``__getattr__``.
+
+            """
 
             def __getattr__(self, name: str) -> None:
                 """Get dynamic attribute."""
@@ -507,8 +512,11 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             @property
             def attributes(self) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
-                """The attributes property - covariant Mapping for
-                structural compatibility."""
+                """The attributes property - covariant Mapping.
+
+                Structural compatibility across result payloads.
+
+                """
                 ...
 
 

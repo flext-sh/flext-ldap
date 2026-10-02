@@ -92,11 +92,21 @@ class TestsFlextLdapSubtreeDelete:
             return r[m.Ldap.OperationResult].fail("planning must not modify")
 
         def deleted_order(self) -> list[str]:
-            """Public read of the deletion order the double observed."""
+            """Public read of the deletion order the double observed.
+
+            Returns:
+                The resulting ``list[str]`` value.
+
+            """
             return list(self._deleted_dns)
 
         def write_log(self) -> list[str]:
-            """Public read of every write attempt the double observed."""
+            """Public read of every write attempt the double observed.
+
+            Returns:
+                The resulting ``list[str]`` value.
+
+            """
             return list(self._write_calls)
 
     BASE_DN = "ou=flext-tests,dc=flext,dc=local"

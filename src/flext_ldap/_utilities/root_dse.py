@@ -31,7 +31,12 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
         cls,
         connection: p.Ldif.RootDseConnection,
     ) -> p.Result[t.Ldap.OperationAttributes]:
-        """Read rootDSE data from a bound ldap3-compatible connection."""
+        """Read rootDSE data from a bound ldap3-compatible connection.
+
+        Returns:
+            The resulting ``p.Result[t.Ldap.OperationAttributes]`` value.
+
+        """
         result: p.Result[t.Ldap.OperationAttributes]
         search_method = getattr(connection, "search", None)
         if not callable(search_method):
@@ -84,7 +89,12 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
         cls,
         connection: p.Ldif.RootDseConnection,
     ) -> p.Result[str]:
-        """Detect LDAP server type from rootDSE on an active connection."""
+        """Detect LDAP server type from rootDSE on an active connection.
+
+        Returns:
+            The resulting ``p.Result[str]`` value.
+
+        """
         root_dse_result = cls.query_root_dse(connection)
         if root_dse_result.failure:
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")

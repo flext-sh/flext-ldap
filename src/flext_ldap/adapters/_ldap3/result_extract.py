@@ -22,6 +22,10 @@ class FlextLdapLdap3ResultExtract:
 
         Delegates to ``u.Ldif.get_dn_value()`` for normalization. Returns
         canonical empty DN via ``m.Ldif.DN.empty()`` when extraction fails.
+
+        Returns:
+            The resulting ``m.Ldif.DN`` value.
+
         """
         if parsed is None:
             return m.Ldif.DN.empty()
@@ -41,7 +45,12 @@ class FlextLdapLdap3ResultExtract:
     def extract_attributes(
         parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.Attributes:
-        """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model."""
+        """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model.
+
+        Returns:
+            The resulting ``m.Ldif.Attributes`` value.
+
+        """
         empty = m.Ldif.Attributes(attributes={}, attribute_metadata={}, metadata=None)
         if parsed is None:
             return empty
@@ -67,7 +76,12 @@ class FlextLdapLdap3ResultExtract:
         | m.BaseModel
         | t.JsonValue,
     ) -> t.Ldap.OperationAttributes:
-        """Normalize input formats to ``t.Ldap.OperationAttributes``."""
+        """Normalize input formats to ``t.Ldap.OperationAttributes``.
+
+        Returns:
+            The resulting ``t.Ldap.OperationAttributes`` value.
+
+        """
         if isinstance(attrs, p.Ldap.HasAttributesProperty):
             return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
@@ -87,7 +101,12 @@ class FlextLdapLdap3ResultExtract:
     def extract_metadata(
         parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.ServerMetadata | None:
-        """Extract server metadata from LDAP entry, returning ``None`` when absent."""
+        """Extract server metadata from LDAP entry, returning ``None`` when absent.
+
+        Returns:
+            The resulting ``m.Ldif.ServerMetadata | None`` value.
+
+        """
         match parsed:
             case None:
                 result = None
@@ -127,7 +146,12 @@ class FlextLdapLdap3ResultExtract:
         ]
         | None,
     ) -> t.Ldap.OperationAttributes:
-        """Normalize attribute values to ``t.StrSequence`` format."""
+        """Normalize attribute values to ``t.StrSequence`` format.
+
+        Returns:
+            The resulting ``t.Ldap.OperationAttributes`` value.
+
+        """
         if attrs_dict is None:
             return {}
         result: t.MutableStrSequenceMapping = {}
@@ -147,7 +171,12 @@ class FlextLdapLdap3ResultExtract:
     def _normalize_metadata(
         metadata: t.MappingKV[str, t.Scalar | None] | None,
     ) -> t.MappingKV[str, t.Scalar | t.ScalarList] | None:
-        """Filter metadata to ``ServerMetadata``-compatible primitive values."""
+        """Filter metadata to ``ServerMetadata``-compatible primitive values.
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.Scalar | t.ScalarList] | None`` value.
+
+        """
         if not metadata:
             return None
         metadata_dict: t.MutableMappingKV[str, t.Scalar | t.ScalarList] = {}

@@ -75,7 +75,12 @@ class TestsFlextLdapEntryAdapter:
 
     @staticmethod
     def _ldif_entry(attributes: t.MappingKV[str, t.StrSequence]) -> m.Ldif.Entry:
-        """Build an ``m.Ldif.Entry`` via the public model API."""
+        """Build an ``m.Ldif.Entry`` via the public model API.
+
+        Returns:
+            The resulting ``m.Ldif.Entry`` value.
+
+        """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE),
             attributes=m.Ldif.Attributes(
