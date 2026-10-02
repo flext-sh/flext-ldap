@@ -66,7 +66,8 @@ class TestsFlextLdapEntryAdapter:
             return self._attributes
 
         def __getitem__(
-            self, attribute_name: str,
+            self,
+            attribute_name: str,
         ) -> TestsFlextLdapEntryAdapter._Ldap3Attribute:
             return TestsFlextLdapEntryAdapter._Ldap3Attribute(
                 self._attributes[attribute_name] or (),
@@ -87,7 +88,8 @@ class TestsFlextLdapEntryAdapter:
     # execute() — s protocol contract
     # ------------------------------------------------------------------
 
-    def test_execute_reports_adapter_ready(self) -> None:
+    @staticmethod
+    def test_execute_reports_adapter_ready() -> None:
         """Verify execute reports adapter ready."""
         adapter = FlextLdapEntryAdapter()
 
@@ -108,7 +110,8 @@ class TestsFlextLdapEntryAdapter:
         ],
     )
     def test_ldif_to_ldap3_attributes_preserves_names_and_values(
-        self, attributes: t.MappingKV[str, t.StrSequence],
+        self,
+        attributes: t.MappingKV[str, t.StrSequence],
     ) -> None:
         """Verify ldif to ldap3 attributes preserves names and values."""
         adapter = FlextLdapEntryAdapter()
@@ -131,10 +134,12 @@ class TestsFlextLdapEntryAdapter:
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
 
         err = u.Ldap.Tests.fail(
-            result, has=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
+            result,
+            has=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
         )
         u.Ldap.Tests.that(
-            err.lower(), contains=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
+            err.lower(),
+            contains=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
         )
 
     # ------------------------------------------------------------------
@@ -161,7 +166,8 @@ class TestsFlextLdapEntryAdapter:
         """Verify ldap3 to ldif tracks base64 attributes for non ascii."""
         adapter = FlextLdapEntryAdapter()
         source = self._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE, attributes={"cn": ["naïve"]},
+            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+            attributes={"cn": ["naïve"]},
         )
 
         result = adapter.ldap3_to_ldif_entry(source)
@@ -174,7 +180,8 @@ class TestsFlextLdapEntryAdapter:
     def _source_entry() -> TestsFlextLdapEntryAdapter._Ldap3Entry:
         """Return the canonical ldap3 source entry for conversion tests."""
         return TestsFlextLdapEntryAdapter._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE, attributes={"cn": ["user"]},
+            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+            attributes={"cn": ["user"]},
         )
 
     @pytest.mark.parametrize(
@@ -182,7 +189,8 @@ class TestsFlextLdapEntryAdapter:
         [c.Ldif.ServerTypes.RFC, c.Ldif.ServerTypes.OPENLDAP, c.Ldif.ServerTypes.OUD],
     )
     def test_ldap3_to_ldif_records_configured_server_type(
-        self, server_type: str,
+        self,
+        server_type: str,
     ) -> None:
         """Verify ldap3 to ldif records configured server type."""
         adapter = FlextLdapEntryAdapter(server_type=server_type)
@@ -210,7 +218,8 @@ class TestsFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
         original = {"cn": ["user"], "sn": ["Doe"]}
         source = self._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE, attributes=original,
+            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+            attributes=original,
         )
 
         ldif_entry = u.Ldap.Tests.ok(adapter.ldap3_to_ldif_entry(source))

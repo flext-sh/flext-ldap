@@ -155,7 +155,9 @@ class FlextLdapLdap3Adapter(s[bool]):
         return r[bool].ok(value=True)
 
     def modify(
-        self, dn: str | m.Ldif.DN, changes: t.Ldap.OperationChanges,
+        self,
+        dn: str | m.Ldif.DN,
+        changes: t.Ldap.OperationChanges,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Modify LDAP entry via railway: connection → execute_modify."""
         return self._get_connection().flat_map(
@@ -191,7 +193,8 @@ class FlextLdapLdap3Adapter(s[bool]):
             )
             .map(
                 lambda entries: m.Ldap.SearchResult(
-                    entries=entries, search_options=search_options,
+                    entries=entries,
+                    search_options=search_options,
                 ),
             )
         )
@@ -203,7 +206,8 @@ class FlextLdapLdap3Adapter(s[bool]):
         return r[p.Ldap.Ldap3Connection].ok(self._connection)
 
     def _create_connection(
-        self, settings: m.Ldap.ConnectionConfig,
+        self,
+        settings: m.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
         """Create and store the ldap3 server and connection pair."""
         self._server = self.ConnectionManager.create_server(settings)

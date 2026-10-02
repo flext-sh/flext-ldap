@@ -52,7 +52,9 @@ class FlextLdapLdap3ResultExtract:
                 parsed.entry_attributes_as_dict,
             )
             return m.Ldif.Attributes(
-                attributes=attrs_dict, attribute_metadata={}, metadata=None,
+                attributes=attrs_dict,
+                attribute_metadata={},
+                metadata=None,
             )
         return empty
 
@@ -70,7 +72,9 @@ class FlextLdapLdap3ResultExtract:
             return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
             model_attrs: t.MappingKV[str, t.Ldap.Ldap3EntryValue] | None = getattr(
-                attrs, "attributes", None,
+                attrs,
+                "attributes",
+                None,
             )
             if model_attrs is not None:
                 return FlextLdapLdap3ResultExtract._normalize_attr_values(model_attrs)
@@ -101,7 +105,8 @@ class FlextLdapLdap3ResultExtract:
                             metadata_attr,
                         )
                         if normalized and isinstance(
-                            normalized.get("server_type"), str,
+                            normalized.get("server_type"),
+                            str,
                         ):
                             result = m.Ldif.ServerMetadata(
                                 server_type=c.Ldif.ServerTypes(
@@ -117,7 +122,8 @@ class FlextLdapLdap3ResultExtract:
     @staticmethod
     def _normalize_attr_values(
         attrs_dict: t.MappingKV[
-            str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
+            str,
+            t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
         ]
         | None,
     ) -> t.Ldap.OperationAttributes:

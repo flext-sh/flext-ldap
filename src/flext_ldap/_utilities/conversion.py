@@ -38,7 +38,8 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def search_entry_to_ldif_entry(
-        cls, entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
+        cls,
+        entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
     ) -> p.Result[m.Ldif.Entry]:
         """Convert LDAP search-result mappings into canonical LDIF entries."""
         raw_entry = dict(entry)
@@ -120,7 +121,8 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def group_entries_by_objectclass(
-        cls, entries: t.SequenceOf[m.Ldif.Entry],
+        cls,
+        entries: t.SequenceOf[m.Ldif.Entry],
     ) -> m.Ldif.FlexibleCategories:
         """Group LDIF entries by their objectclass category."""
         result = m.Ldif.FlexibleCategories()

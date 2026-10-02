@@ -24,7 +24,8 @@ class FlextLdapSync(FlextLdapOperations):
 
     @staticmethod
     def _callback_expects_parameters(
-        callback: t.Ldap.ProgressCallbackUnion | None, expected_count: int,
+        callback: t.Ldap.ProgressCallbackUnion | None,
+        expected_count: int,
     ) -> bool:
         """Return ``True`` when the callback declares ``expected_count`` parameters."""
         if callback is None:
@@ -41,19 +42,22 @@ class FlextLdapSync(FlextLdapOperations):
     def multi_phase_callback(callback: t.Ldap.ProgressCallbackUnion | None) -> bool:
         """Return ``True`` when callback expects the multi-phase signature."""
         return FlextLdapSync._callback_expects_parameters(
-            callback, c.Ldap.MULTI_PHASE_PARAM_COUNT,
+            callback,
+            c.Ldap.MULTI_PHASE_PARAM_COUNT,
         )
 
     @staticmethod
     def single_phase_callback(callback: t.Ldap.ProgressCallbackUnion | None) -> bool:
         """Return ``True`` when callback expects the single-phase signature."""
         return FlextLdapSync._callback_expects_parameters(
-            callback, c.Ldap.SINGLE_PHASE_PARAM_COUNT,
+            callback,
+            c.Ldap.SINGLE_PHASE_PARAM_COUNT,
         )
 
     @staticmethod
     def _make_phase_progress_callback(
-        phase: str, settings: m.Ldap.SyncPhaseConfig,
+        phase: str,
+        settings: m.Ldap.SyncPhaseConfig,
     ) -> t.Ldap.LdapProgressCallback | None:
         """Normalize configured callbacks to the single-phase protocol."""
         callback = settings.progress_callback
@@ -62,7 +66,10 @@ class FlextLdapSync(FlextLdapOperations):
         if FlextLdapSync.multi_phase_callback(callback):
 
             def progress_callback(
-                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats,
+                current: int,
+                total: int,
+                dn: str,
+                stats: p.Ldap.LdapBatchStats,
             ) -> None:
                 callback(phase, current, total, dn, stats)
 
@@ -102,11 +109,15 @@ class FlextLdapSync(FlextLdapOperations):
                     f"Phase file not found: {phase_file}",
                 )
             phase_result = self._process_single_phase(
-                phase_name, phase_file, sync_config,
+                phase_name,
+                phase_file,
+                sync_config,
             )
             if phase_result.failure:
                 self.logger.error(
-                    "Phase sync failed", phase=phase_name, error=str(phase_result.error),
+                    "Phase sync failed",
+                    phase=phase_name,
+                    error=str(phase_result.error),
                 )
                 if sync_config.stop_on_error:
                     return r[m.Ldap.MultiPhaseSyncResult].fail(
@@ -153,7 +164,8 @@ class FlextLdapSync(FlextLdapOperations):
         sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = u.now()
         parse_result = self._ldif.parse_ldif_file(
-            ldif_file_path, server_type=sync_config.server_type,
+            ldif_file_path,
+            server_type=sync_config.server_type,
         )
         if parse_result.failure:
             error_msg = parse_result.error or "Unknown error"
@@ -205,9 +217,11 @@ class FlextLdapSync(FlextLdapOperations):
             ),
         )
 
+    @staticmethod
     def _prepare_phase_callback(
-        self, phase_name: str, settings: m.Ldap.SyncPhaseConfig,
-    ) -> t.Ldap.LdapProgressCallback | None:
+        phase_name: str,
+        settings: m.Ldap.SyncPhaseConfig,
+    ) -> None:
         """Prepare a phase-aware callback from the configured sync callback."""
         phase_callback = (
             FlextLdapSync._make_phase_progress_callback(phase_name, settings)
@@ -220,7 +234,10 @@ class FlextLdapSync(FlextLdapOperations):
         if FlextLdapSync.multi_phase_callback(phase_callback):
 
             def wrapped_callback(
-                current: int, total: int, dn: str, stats: p.Ldap.LdapBatchStats,
+                current: int,
+                total: int,
+                dn: str,
+                stats: p.Ldap.LdapBatchStats,
             ) -> None:
                 phase_callback(phase_name, current, total, dn, stats)
 
@@ -242,7 +259,10 @@ class FlextLdapSync(FlextLdapOperations):
         raise TypeError(msg)
 
     def _process_single_phase(
-        self, phase_name: str, ldif_path: Path, settings: m.Ldap.SyncPhaseConfig,
+        self,
+        phase_name: str,
+        ldif_path: Path,
+        settings: m.Ldap.SyncPhaseConfig,
     ) -> p.Result[m.Ldap.PhaseSyncResult]:
         """Process one phase file with a callback normalized for that phase."""
         phase_callback = self._prepare_phase_callback(phase_name, settings)

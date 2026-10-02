@@ -175,7 +175,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def add(
-                self, entry: FlextLdifProtocols.Ldif.Entry,
+                self,
+                entry: FlextLdifProtocols.Ldif.Entry,
             ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry.
 
@@ -201,19 +202,24 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def delete_subtree(
-                self, dn: str | FlextLdifProtocols.Ldif.DN,
+                self,
+                dn: str | FlextLdifProtocols.Ldif.DN,
             ) -> FlextLdifProtocols.Result[lm.Ldap.SubtreeDeleteResult]:
                 """Delete an entry and its descendants, deepest-first."""
                 ...
 
             def plan_upsert(
-                self, entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
+                self,
+                entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
             ) -> FlextLdifProtocols.Result[lm.Ldap.UpsertPlan]:
                 """Classify entries for upsert without writing (dry plan)."""
                 ...
 
             def find_entry(
-                self, dn: str, *, attributes: t.StrSequence | None = None,
+                self,
+                dn: str,
+                *,
+                attributes: t.StrSequence | None = None,
             ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
                 """Read one entry by DN; an absent entry is an empty result."""
                 ...
@@ -263,7 +269,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def delete(
-                self, dn: str | FlextLdifProtocols.Ldif.DN,
+                self,
+                dn: str | FlextLdifProtocols.Ldif.DN,
             ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
@@ -277,7 +284,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def execute(
-                self, **kwargs: t.Scalar,
+                self,
+                **kwargs: t.Scalar,
             ) -> FlextLdifProtocols.Result[lm.Ldap.Response]:
                 """Execute health check or default operation.
 
@@ -345,7 +353,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def connect(
-                self, settings: lm.Ldap.ConnectionConfig,
+                self,
+                settings: lm.Ldap.ConnectionConfig,
             ) -> FlextLdifProtocols.Result[bool]:
                 """Establish the ldap3 server/connection pair and verify bind."""
                 ...
@@ -355,25 +364,31 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 ...
 
             def add(
-                self, entry: lm.Ldif.Entry,
+                self,
+                entry: lm.Ldif.Entry,
             ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry, returning the operation result."""
                 ...
 
             def delete(
-                self, dn: str | lm.Ldif.DN,
+                self,
+                dn: str | lm.Ldif.DN,
             ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry, returning the operation result."""
                 ...
 
             def modify(
-                self, dn: str | lm.Ldif.DN, changes: t.Ldap.OperationChanges,
+                self,
+                dn: str | lm.Ldif.DN,
+                changes: t.Ldap.OperationChanges,
             ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Modify LDAP entry, returning the operation result."""
                 ...
 
             def search(
-                self, search_options: lm.Ldap.SearchOptions, server_type: str = "rfc",
+                self,
+                search_options: lm.Ldap.SearchOptions,
+                server_type: str = "rfc",
             ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
                 """Perform LDAP search, returning the search result."""
                 ...

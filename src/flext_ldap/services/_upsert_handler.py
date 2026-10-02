@@ -122,7 +122,8 @@ class FlextLdapUpsertHandler:
         return additions
 
     def handle_existing_entry(
-        self, entry: p.Ldif.Entry,
+        self,
+        entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Handle an upsert when the entry already exists in LDAP.
 
@@ -173,7 +174,8 @@ class FlextLdapUpsertHandler:
                 changes_result = u.Ldap.compare_entries(existing_entry, entry)
                 if changes_result.failure:
                     result = r[m.Ldap.LdapOperationResult].fail_op(
-                        "Entry comparison", changes_result.error,
+                        "Entry comparison",
+                        changes_result.error,
                     )
                 else:
                     empty_changes: t.Ldap.OperationChanges = {}
@@ -199,7 +201,8 @@ class FlextLdapUpsertHandler:
         return result
 
     def handle_regular_add(
-        self, entry: p.Ldif.Entry,
+        self,
+        entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Add a standard entry or fall back to existing-entry handling.
 
@@ -236,7 +239,8 @@ class FlextLdapUpsertHandler:
         )
 
     def handle_schema_modify(
-        self, entry: p.Ldif.Entry,
+        self,
+        entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Apply a schema modification entry (supports multiple add operations).
 
@@ -317,7 +321,8 @@ class FlextLdapUpsertHandler:
             found = self._ops.find_entry(entry.dn.value)
             if found.failure:
                 return r[m.Ldap.UpsertPlan].fail_op(
-                    "Plan search for existing entry", found.error,
+                    "Plan search for existing entry",
+                    found.error,
                 )
             existing_entries: t.SequenceOf[m.Ldif.Entry] = list(found.value.entries)
             if not existing_entries:
@@ -326,7 +331,8 @@ class FlextLdapUpsertHandler:
             changes_result = u.Ldap.compare_entries(existing_entries[0], entry)
             if changes_result.failure:
                 return r[m.Ldap.UpsertPlan].fail_op(
-                    "Plan entry comparison", changes_result.error,
+                    "Plan entry comparison",
+                    changes_result.error,
                 )
             empty_changes: t.Ldap.OperationChanges = {}
             changes = changes_result.unwrap_or(empty_changes)

@@ -13,7 +13,8 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
 
     @staticmethod
     def resolve_first_attribute_value(
-        attrs: t.Ldap.OperationAttributes, key: str,
+        attrs: t.Ldap.OperationAttributes,
+        key: str,
     ) -> str | None:
         """Return the first normalized value for a rootDSE attribute."""
         values = attrs.get(key)
@@ -23,7 +24,8 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
 
     @classmethod
     def query_root_dse(
-        cls, connection: p.Ldif.RootDseConnection,
+        cls,
+        connection: p.Ldif.RootDseConnection,
     ) -> p.Result[t.Ldap.OperationAttributes]:
         """Read rootDSE data from a bound ldap3-compatible connection."""
         result: p.Result[t.Ldap.OperationAttributes]
@@ -54,7 +56,8 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
             else:
                 if not search_ok:
                     result = r[t.Ldap.OperationAttributes].fail_op(
-                        "rootDSE query", str(connection.result),
+                        "rootDSE query",
+                        str(connection.result),
                     )
                 elif not getattr(connection, "entries", []):
                     result = r[t.Ldap.OperationAttributes].fail(
@@ -74,7 +77,8 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
 
     @classmethod
     def detect_from_connection(
-        cls, connection: p.Ldif.RootDseConnection,
+        cls,
+        connection: p.Ldif.RootDseConnection,
     ) -> p.Result[str]:
         """Detect LDAP server type from rootDSE on an active connection."""
         root_dse_result = cls.query_root_dse(connection)
@@ -84,16 +88,20 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
         return r[str].ok(
             cls.detect_server_type(
                 vendor_name=cls.resolve_first_attribute_value(
-                    root_dse_attrs, c.Ldap.RootDseAttribute.VENDOR_NAME,
+                    root_dse_attrs,
+                    c.Ldap.RootDseAttribute.VENDOR_NAME,
                 ),
                 vendor_version=cls.resolve_first_attribute_value(
-                    root_dse_attrs, c.Ldap.RootDseAttribute.VENDOR_VERSION,
+                    root_dse_attrs,
+                    c.Ldap.RootDseAttribute.VENDOR_VERSION,
                 ),
                 naming_contexts=root_dse_attrs.get(
-                    c.Ldap.RootDseAttribute.NAMING_CONTEXTS, [],
+                    c.Ldap.RootDseAttribute.NAMING_CONTEXTS,
+                    [],
                 ),
                 supported_extensions=root_dse_attrs.get(
-                    c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS, [],
+                    c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS,
+                    [],
                 ),
             ),
         )
