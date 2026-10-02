@@ -4,7 +4,7 @@ Composes ``FlextLdapLdap3ResultExtract`` for DN/attribute/metadata extraction
 and exposes the public ``convert_*`` API consumed by ``FlextLdapLdap3SearchExecutor``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier=MIT
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

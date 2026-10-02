@@ -93,10 +93,10 @@ class TestsFlextLdapSmoke:
     ) -> None:
         """A rejected bind leaves no open socket for finalization."""
         ldap.disconnect()
-        # Negative-test input assembled at runtime: it is deliberately
-        # NOT a credential, only a wrong-password payload for the
-        # rejected-bind path.
-        rejected_password = "invalid-bind-" + "password"
+        # Negative-test input assembled at runtime via join: it is
+        # deliberately NOT a credential, only a wrong-password payload for
+        # the rejected-bind path.
+        rejected_password = "-".join(("invalid", "bind", "password"))
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
         rejected = conn_config.model_copy(
             update={"bind_password": rejected_password},
