@@ -1,40 +1,45 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Ldap package."""
+"""Flext Ldap package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core import build_lazy_import_map, install_lazy_exports
 
-from .__version__ import (
-    __author__ as __author__,
-    __author_email__ as __author_email__,
-    __description__ as __description__,
-    __license__ as __license__,
-    __title__ as __title__,
-    __url__ as __url__,
-    __version__ as __version__,
-    __version_info__ as __version_info__,
+
+from flext_ldap.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
 )
 
 if TYPE_CHECKING:
     from flext_ldif import d, e, h, r, x
 
-    from . import adapters, services
-    from ._config import FlextLdapConfig, config
-    from ._settings import FlextLdapSettings, settings
-    from .api import FlextLdap, ldap
-    from .base import FlextLdapService, s
-    from .cli import main
-    from .constants import FlextLdapConstants, FlextLdapConstants as c
-    from .models import FlextLdapModels, FlextLdapModels as m
-    from .protocols import FlextLdapProtocols, FlextLdapProtocols as p
-    from .services.api_runtime import FlextLdapApiRuntime
-    from .services.sync import FlextLdapSync
-    from .typings import FlextLdapTypes, FlextLdapTypes as t
-    from .utilities import FlextLdapUtilities, FlextLdapUtilities as u
+    from flext_ldap import adapters, services
+    from flext_ldap._config import FlextLdapConfig, config
+    from flext_ldap._settings import FlextLdapSettings, settings
+    from flext_ldap.api import FlextLdap, ldap
+    from flext_ldap.base import FlextLdapService, s
+    from flext_ldap.cli import main
+    from flext_ldap.constants import FlextLdapConstants, c
+    from flext_ldap.models import FlextLdapModels, m
+    from flext_ldap.protocols import FlextLdapProtocols, p
+    from flext_ldap.services.api_runtime import FlextLdapApiRuntime
+    from flext_ldap.services.sync import FlextLdapSync
+    from flext_ldap.typings import FlextLdapTypes, t
+    from flext_ldap.utilities import FlextLdapUtilities, u
 
 
 __all__: tuple[str, ...] = (
@@ -97,7 +102,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
