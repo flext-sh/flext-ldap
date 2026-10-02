@@ -65,22 +65,24 @@ class FlextLdapSubtreeDeleteHandler:
         """
         if not dn or not dn.strip():
             return r[m.Ldap.SubtreeDeleteResult].fail(
-                "Subtree delete requires a non-empty base DN"
+                "Subtree delete requires a non-empty base DN",
             )
         base_dn = dn.strip()
         existence_result = self._ops.find_entry(base_dn)
         if existence_result.failure:
             return r[m.Ldap.SubtreeDeleteResult].fail_op(
-                "Subtree delete existence check", existence_result.error
+                "Subtree delete existence check",
+                existence_result.error,
             )
         if not existence_result.value.entries:
             return r[m.Ldap.SubtreeDeleteResult].fail(
-                f"Subtree delete base does not exist: {base_dn}"
+                f"Subtree delete base does not exist: {base_dn}",
             )
         collect_result = self._collect_subtree_dns(base_dn)
         if collect_result.failure:
             return r[m.Ldap.SubtreeDeleteResult].fail_op(
-                "Subtree delete enumeration", collect_result.error
+                "Subtree delete enumeration",
+                collect_result.error,
             )
         subtree_dns = collect_result.unwrap()
         ordered_dns = sorted(subtree_dns, key=self._dn_depth, reverse=True)
@@ -91,7 +93,7 @@ class FlextLdapSubtreeDeleteHandler:
                 cause = u.to_str(delete_result.error, default="Unknown error")
                 return r[m.Ldap.SubtreeDeleteResult].fail(
                     f"Subtree delete stopped at dn={entry_dn} "
-                    f"(deleted_count={deleted_count}, base_dn={base_dn}): {cause}"
+                    f"(deleted_count={deleted_count}, base_dn={base_dn}): {cause}",
                 )
             deleted_count += 1
         self._ops.logger.info(
@@ -101,11 +103,15 @@ class FlextLdapSubtreeDeleteHandler:
             deleted_count=deleted_count,
         )
         return r[m.Ldap.SubtreeDeleteResult].ok(
-            m.Ldap.SubtreeDeleteResult(base_dn=base_dn, deleted_count=deleted_count)
+            m.Ldap.SubtreeDeleteResult(base_dn=base_dn, deleted_count=deleted_count),
         )
 
     def _collect_subtree_dns(self, base_dn: str) -> p.Result[t.SequenceOf[str]]:
-        """Enumerate every DN under (and including) the base, attributes omitted."""
+        """Enumerate every DN under (and including) the base, attributes omitted.
+
+        Returns:
+            The resulting ``p.Result[t.SequenceOf[str]]``.
+        """
         search_options = m.Ldap.SearchOptions(
             base_dn=base_dn,
             scope=c.Ldap.SearchScope.SUBTREE,
@@ -115,7 +121,8 @@ class FlextLdapSubtreeDeleteHandler:
         search_result = self._ops.search(search_options)
         if search_result.failure:
             return r[t.SequenceOf[str]].fail_op(
-                "Subtree enumeration search", search_result.error
+                "Subtree enumeration search",
+                search_result.error,
             )
         search_data = search_result.map_or(None)
         entries: t.SequenceOf[m.Ldif.Entry] = (
@@ -132,5 +139,9 @@ class FlextLdapSubtreeDeleteHandler:
 
     @staticmethod
     def _dn_depth(dn: str) -> int:
-        """Depth of a DN as its RDN separator count (parent-safe ordering)."""
+        """Depth of a DN as its RDN separator count (parent-safe ordering).
+
+        Returns:
+            The resulting ``int``.
+        """
         return dn.count(",")

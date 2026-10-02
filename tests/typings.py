@@ -25,7 +25,8 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             """
 
             type LdapContainerDict = FlextLdapTypes.MappingKV[
-                str, FlextLdapTypes.Scalar
+                str,
+                FlextLdapTypes.Scalar,
             ]
 
 

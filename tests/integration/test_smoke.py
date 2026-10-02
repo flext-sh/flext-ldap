@@ -34,7 +34,8 @@ class TestsFlextLdapSmoke:
     """Smoke tests asserting the public behaviour of ``flext_ldap.ldap``."""
 
     def test_container_reachable_through_ldap3_boundary(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self,
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """The real LDAP container binds and exposes server info (precondition)."""
         # Arrange
@@ -51,7 +52,8 @@ class TestsFlextLdapSmoke:
             connection.unbind()
 
     def test_connect_succeeds_and_toggles_public_connected_state(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self,
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
@@ -85,7 +87,8 @@ class TestsFlextLdapSmoke:
         tm.that(ldap.is_connected, eq=False)
 
     def test_rejected_bind_releases_socket(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self,
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A rejected bind leaves no open socket for finalization."""
         ldap.disconnect()
@@ -95,7 +98,7 @@ class TestsFlextLdapSmoke:
         rejected_password = "-".join(("invalid", "bind", "password"))
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
         rejected = conn_config.model_copy(
-            update={"bind_password": rejected_password}
+            update={"bind_password": rejected_password},
         )
         tm.fail(ldap.connect(rejected))
         tm.that(ldap.is_connected, eq=False)
@@ -112,7 +115,8 @@ class TestsFlextLdapMultivalueAdd:
     """
 
     def test_add_persists_full_objectclass_chain(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        self,
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """A multi-class entry adds and reads back with every class."""
         # Arrange - real runtime connection and a unique leaf entry

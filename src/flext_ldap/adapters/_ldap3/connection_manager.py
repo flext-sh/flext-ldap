@@ -10,8 +10,7 @@ from flext_ldif import e, r
 from ldap3 import Connection, Server
 
 from flext_ldap import c, m, p
-
-from .wrappers import FlextLdapLdap3Wrappers
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 
 class FlextLdapLdap3ConnectionManager:
@@ -19,7 +18,8 @@ class FlextLdapLdap3ConnectionManager:
 
     @staticmethod
     def create_connection(
-        server: p.Ldif.Ldap3Server, settings: m.Ldap.ConnectionConfig
+        server: p.Ldif.Ldap3Server,
+        settings: m.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
         """Create ldap3 p.Ldap.Ldap3Connection t.JsonValue.
 
@@ -42,6 +42,8 @@ class FlextLdapLdap3ConnectionManager:
         Returns:
             ldap3 p.Ldap.Ldap3Connection t.JsonValue, initially unbound.
 
+        Raises:
+            TypeError: If Expected ldap3.Server, got.
         """
         if not isinstance(server, Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"
@@ -86,12 +88,15 @@ class FlextLdapLdap3ConnectionManager:
                 connect_timeout=settings.timeout,
             )
         return Server(
-            host=settings.host, port=settings.port, connect_timeout=settings.timeout
+            host=settings.host,
+            port=settings.port,
+            connect_timeout=settings.timeout,
         )
 
     @staticmethod
     def handle_tls(
-        connection: p.Ldap.Ldap3Connection, settings: m.Ldap.ConnectionConfig
+        connection: p.Ldap.Ldap3Connection,
+        settings: m.Ldap.ConnectionConfig,
     ) -> p.Result[bool]:
         """Handle STARTTLS if requested.
 

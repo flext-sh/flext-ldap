@@ -25,7 +25,8 @@ class FlextLdapSettings(FlextLdifSettings):
     """LDAP runtime settings."""
 
     model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
-        env_prefix="FLEXT_LDAP_", extra="ignore"
+        env_prefix="FLEXT_LDAP_",
+        extra="ignore",
     )
 
     class LdapSettings(m.BaseModel):
@@ -33,7 +34,8 @@ class FlextLdapSettings(FlextLdifSettings):
 
         host: Annotated[str, m.Field(description="LDAP server host")] = "localhost"
         port: Annotated[
-            int, m.Field(ge=1, le=65535, description="LDAP server port")
+            int,
+            m.Field(ge=1, le=65535, description="LDAP server port"),
         ] = 389
         use_ssl: Annotated[bool, m.Field(description="Enable LDAPS")] = False
         use_tls: Annotated[bool, m.Field(description="Enable STARTTLS")] = False
@@ -42,17 +44,21 @@ class FlextLdapSettings(FlextLdifSettings):
         )
         bind_password: Annotated[str, m.Field(description="LDAP bind password")] = ""
         timeout: Annotated[
-            int, m.Field(ge=1, description="LDAP operation timeout in seconds")
+            int,
+            m.Field(ge=1, description="LDAP operation timeout in seconds"),
         ] = 30
         auto_bind: Annotated[
-            bool, m.Field(description="Auto-bind connection after connect")
+            bool,
+            m.Field(description="Auto-bind connection after connect"),
         ] = True
         auto_range: Annotated[
-            bool, m.Field(description="Enable LDAP range retrieval")
+            bool,
+            m.Field(description="Enable LDAP range retrieval"),
         ] = True
 
     Ldap: LdapSettings = m.Field(
-        default_factory=LdapSettings, description="Namespaced LDAP settings branch."
+        default_factory=LdapSettings,
+        description="Namespaced LDAP settings branch.",
     )
 
 
