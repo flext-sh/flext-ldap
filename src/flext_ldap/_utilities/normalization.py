@@ -106,7 +106,7 @@ class FlextLdapUtilitiesNormalization:
                 return [str(value)]
 
     @staticmethod
-    def is_base64_encoded(value: str, threshold: int = c.Ldif.ASCII_THRESHOLD) -> bool:
+    def base64_encoded(value: str, threshold: int = c.Ldif.ASCII_THRESHOLD) -> bool:
         """Return True when a value requires LDIF base64 encoding."""
         return value.startswith("::") or any(ord(char) > threshold for char in value)
 

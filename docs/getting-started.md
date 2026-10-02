@@ -19,8 +19,12 @@
   - [User Authentication](#user-authentication)
 - [Universal LDAP Interface](#universal-ldap-interface)
   - [Server-Specific Operations](#server-specific-operations)
+  - [Entry Conversion (ldap3 ↔ ldif)](#entry-conversion-ldap3-ldif)
   - [Schema Discovery](#schema-discovery)
+  - [ACL Management](#acl-management)
   - [Paged Search](#paged-search)
+- [Development Environment](#development-environment)
+  - [Test LDAP Server Setup](#test-ldap-server-setup)
   - [Run Tests](#run-tests)
   - [Development Workflow](#development-workflow)
 - [Next Steps](#next-steps)
@@ -154,7 +158,7 @@ export FLEXT_LDAP_USE_SSL=true
 export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 
 # Authentication
-export FLEXT_LDAP_BIND_DN="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+export FLEXT_LDAP_BIND_DN="cn=admin,dc=example,dc=com"
 export FLEXT_LDAP_BIND_PASSWORD="your-password"
 
 # Connection settings
@@ -174,7 +178,7 @@ settings = FlextLdapSettings(
     port=636,
     use_ssl=True,
     base_dn="dc=example,dc=com",
-    bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    bind_dn="cn=admin,dc=example,dc=com",
     bind_password="your-password",
     timeout=30,
     pool_size=5,
@@ -278,6 +282,7 @@ FLEXT-LDAP provides server-specific implementations with automatic server detect
 from __future__ import annotations
 
 import ldap3
+
 from flext_ldap import (
     FlextLdapEntryAdapter,
     FlextLdapServersAdapter,
@@ -291,7 +296,7 @@ def server_specific_operations():
     # Connect to LDAP server
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -341,8 +346,9 @@ run(server_specific_operations())
 Convert between ldap3 and ldif entry formats:
 
 ```python
-from flext_ldap import FlextLdapEntryAdapter
 from flext_ldif import FlextLdifModels
+
+from flext_ldap import FlextLdapEntryAdapter
 
 adapter = FlextLdapEntryAdapter()
 
@@ -376,6 +382,7 @@ Discover schema from different LDAP server types:
 from __future__ import annotations
 
 import ldap3
+
 from flext_ldap import OpenLDAP2Operations
 
 
@@ -385,7 +392,7 @@ def discover_schema():
 
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -410,8 +417,9 @@ Manage server-specific ACLs:
 ```python
 from __future__ import annotations
 
-from flext_ldap import OpenLDAP2Operations
 import ldap3
+
+from flext_ldap import OpenLDAP2Operations
 
 
 def manage_acls():
@@ -420,7 +428,7 @@ def manage_acls():
 
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -435,7 +443,7 @@ def manage_acls():
 
         # Set new ACLs
         new_acls = [
-            {"raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD" write'},
+            {"raw": '{0}to * by dn="cn=admin" write'},
             {"raw": "{1}to * by self write by anonymous auth"},
         ]
 
@@ -455,6 +463,7 @@ Execute paged searches with automatic pagination:
 from __future__ import annotations
 
 import ldap3
+
 from flext_ldap import OpenLDAP2Operations
 
 
@@ -464,7 +473,7 @@ def paged_search():
 
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )

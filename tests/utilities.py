@@ -30,9 +30,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
 
             @staticmethod
-            def that(value: t.Tests.Testobject, **kwargs: object) -> None:
+            def that(
+                value: t.Tests.Testobject,
+                *,
+                owned_payload: bool = False,
+                **kwargs: p.AttributeProbe,
+            ) -> None:
                 """Provide that."""
-                tm.that(value, **kwargs)
+                tm.that(value, owned_payload=owned_payload, **kwargs)
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
@@ -165,7 +170,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                         container_name=c.Ldap.Tests.DOCKER_CONTAINER_NAME,
                         service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
                         host=c.LOCALHOST,
-                        port=c.Ldap.Tests.DOCKER_PORT,
+                        port=c.Ldap.Tests.DOCKER_CONTAINER_PORT,
                         startup_timeout=c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT,
                     ),
                     repository_root=TestsFlextLdapUtilities.Ldap.Tests.repository_root(),

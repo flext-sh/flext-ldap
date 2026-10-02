@@ -1,4 +1,4 @@
-"""LDAP3 adapter — ResultConverter extract helpers.
+"""LDAP3 adapter — FlextLdapLdap3ResultConverter extract helpers.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,7 +14,7 @@ from flext_ldap import c, m, p, t
 from .wrappers import FlextLdapLdap3Wrappers
 
 
-class ResultConverterExtractMixin:
+class FlextLdapLdap3ResultExtract:
     """Extraction helpers for DN, attributes, and metadata from LDAP entries."""
 
     @staticmethod
@@ -49,7 +49,7 @@ class ResultConverterExtractMixin:
         if isinstance(parsed, m.Ldif.Entry):
             return parsed.attributes if parsed.attributes is not None else empty
         if isinstance(parsed, p.Ldif.Ldap3Entry):
-            attrs_dict = ResultConverterExtractMixin.extract_attrs_dict(
+            attrs_dict = FlextLdapLdap3ResultExtract.extract_attrs_dict(
                 parsed.entry_attributes_as_dict
             )
             return m.Ldif.Attributes(
@@ -68,16 +68,16 @@ class ResultConverterExtractMixin:
     ) -> t.Ldap.OperationAttributes:
         """Normalize input formats to ``t.Ldap.OperationAttributes``."""
         if isinstance(attrs, p.Ldap.HasAttributesProperty):
-            return ResultConverterExtractMixin._normalize_attr_values(attrs.attributes)
+            return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
             model_attrs: t.MappingKV[str, t.Ldap.Ldap3EntryValue] | None = getattr(
                 attrs, "attributes", None
             )
             if model_attrs is not None:
-                return ResultConverterExtractMixin._normalize_attr_values(model_attrs)
+                return FlextLdapLdap3ResultExtract._normalize_attr_values(model_attrs)
             return {}
         if isinstance(attrs, Mapping):
-            return ResultConverterExtractMixin._normalize_attr_values(attrs)
+            return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs)
         return {}
 
     @staticmethod
@@ -98,7 +98,7 @@ class ResultConverterExtractMixin:
                     case m.Ldif.ServerMetadata():
                         result = metadata_attr
                     case Mapping():
-                        normalized = ResultConverterExtractMixin._normalize_metadata(
+                        normalized = FlextLdapLdap3ResultExtract._normalize_metadata(
                             metadata_attr
                         )
                         if normalized and isinstance(
@@ -147,9 +147,9 @@ class ResultConverterExtractMixin:
             return None
         metadata_dict: t.MutableMappingKV[str, t.Scalar | t.ScalarList] = {}
         for raw_key, raw_value in metadata.items():
-            if isinstance(raw_value, t.PRIMITIVES_TYPES):
+            if isinstance(raw_value, c.PRIMITIVES_TYPES):
                 metadata_dict[raw_key] = raw_value
         return metadata_dict or None
 
 
-__all__: list[str] = ["ResultConverterExtractMixin"]
+__all__: list[str] = ["FlextLdapLdap3ResultExtract"]

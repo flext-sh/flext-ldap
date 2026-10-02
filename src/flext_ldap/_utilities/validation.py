@@ -11,7 +11,7 @@ class FlextLdapUtilitiesValidation:
     """LDAP validation helpers."""
 
     @staticmethod
-    def is_valid_status(value: str | t.JsonValue) -> TypeIs[str]:
+    def valid_status(value: str | t.JsonValue) -> TypeIs[str]:
         """Return whether a value is a valid LDAP status."""
         if isinstance(value, c.Ldap.Status):
             return True

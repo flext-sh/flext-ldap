@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldap import c, p, t, u
+from flext_ldap import c, m, p, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -43,12 +43,18 @@ class FlextLdapLdap3Wrappers:
         object_class: t.StrSequence | str | None,
         attributes: t.MappingKV[str, t.StrSequence],
     ) -> bool:
-        """Type-safe wrapper for untyped ldap3 Connection.add()."""
-        normalized_attributes = {
-            key: values[0] if values else "" for key, values in attributes.items()
-        }
+        """Type-safe wrapper for untyped ldap3 Connection.add().
+
+        Attribute values are forwarded verbatim: ldap3 accepts sequence
+        values natively and the directory server enforces each attribute's
+        single-valued syntax. Collapsing sequences to their first element
+        silently dropped entry data — an ``objectClass`` chain of
+        ``["top", "inetOrgPerson", "person"]`` reached the wire as
+        ``"top"`` and the add failed server-side schema validation with
+        ``objectClassViolation``.
+        """
         add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
-        return add_fn(dn, object_class, normalized_attributes)
+        return add_fn(dn, object_class, dict(attributes))
 
     @staticmethod
     def delete(connection: p.Ldap.Ldap3Connection, dn: str) -> bool:
@@ -57,10 +63,16 @@ class FlextLdapLdap3Wrappers:
         return delete_fn(dn)
 
     @staticmethod
-    def is_bound(connection: p.Ldap.Ldap3Connection) -> bool:
+    def bound(connection: p.Ldap.Ldap3Connection) -> bool:
         """Safely read ldap3 bound state from dynamic connection objects."""
         bound_state: bool = getattr(connection, "bound", False)
         return bound_state
+
+    @staticmethod
+    def bind(connection: p.Ldap.Ldap3Connection) -> bool:
+        """Bind only after the adapter owns the connection for cleanup."""
+        bind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "bind")
+        return bind_fn()
 
     @staticmethod
     def modify(
@@ -71,42 +83,21 @@ class FlextLdapLdap3Wrappers:
         return modify_fn(dn, changes)
 
     @staticmethod
-    def search(
-        connection: p.Ldap.Ldap3Connection,
-        *,
-        search_base: str,
-        search_filter: str,
-        search_scope: int | str,
-        attributes: t.StrSequence | str,
-        size_limit: int,
-        time_limit: int,
-    ) -> bool:
+    def search(connection: p.Ldap.Ldap3Connection, params: m.Ldap.SearchParams) -> bool:
         """Safely invoke ldap3 search on dynamic connection objects."""
-        normalized_scope: c.Ldap.Ldap3SearchScope
-        if isinstance(search_scope, int):
-            scope_map: t.MappingKV[int, c.Ldap.Ldap3SearchScope] = {
-                c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
-                c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
-                c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
-            }
-            normalized_scope = scope_map[search_scope]
-        else:
-            scope_str_map: t.MappingKV[str, c.Ldap.Ldap3SearchScope] = {
-                c.Ldap.Ldap3SearchScope.BASE: c.Ldap.Ldap3SearchScope.BASE,
-                c.Ldap.Ldap3SearchScope.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
-                c.Ldap.Ldap3SearchScope.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
-            }
-            normalized_scope = scope_str_map[search_scope.upper()]
+        scope_map: t.MappingKV[int, c.Ldap.Ldap3SearchScope] = {
+            c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
+            c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
+            c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,
+        }
         search_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "search")
         return search_fn(
-            search_base=search_base,
-            search_filter=search_filter,
-            search_scope=normalized_scope,
-            attributes=list(attributes)
-            if not isinstance(attributes, str)
-            else attributes,
-            size_limit=size_limit,
-            time_limit=time_limit,
+            search_base=params.base_dn,
+            search_filter=params.filter_str,
+            search_scope=scope_map[params.ldap_scope],
+            attributes=list(params.search_attributes),
+            size_limit=params.size_limit,
+            time_limit=params.time_limit,
         )
 
     @staticmethod

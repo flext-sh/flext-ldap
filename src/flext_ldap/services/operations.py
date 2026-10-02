@@ -35,16 +35,18 @@ from typing import override
 from flext_ldif import ldif, r
 
 from flext_ldap import c, m, p, t, u
-from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost
+from flext_ldap.adapters.host import FlextLdapAdapterHost
 
+from ._subtree_delete import FlextLdapSubtreeDeleteHandler
 from ._upsert_handler import FlextLdapUpsertHandler
 
 
 class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
     """Coordinate LDAP operations on an active connection.
 
-    Protocol calls are delegated to :class:`~flext.adapters.ldap3.Ldap3Adapter`
-    so this layer can concentrate on typed arguments, predictable
+    Protocol calls are delegated to
+    :class:`~flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter` so this layer can
+    concentrate on typed arguments, predictable
     :class:`flext_core` responses, and shared comparison helpers.
 
     Business Rules:
@@ -81,12 +83,23 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         default_factory=lambda: None
     )
 
+    _subtree_delete_handler_instance: FlextLdapSubtreeDeleteHandler | None = (
+        u.PrivateAttr(default_factory=lambda: None)
+    )
+
     @property
     def _upsert_handler(self) -> FlextLdapUpsertHandler:
         """Lazy-init upsert handler."""
         if self._upsert_handler_instance is None:
             self._upsert_handler_instance = FlextLdapUpsertHandler(self)
         return self._upsert_handler_instance
+
+    @property
+    def _subtree_delete_handler(self) -> FlextLdapSubtreeDeleteHandler:
+        """Lazy-init subtree-delete handler."""
+        if self._subtree_delete_handler_instance is None:
+            self._subtree_delete_handler_instance = FlextLdapSubtreeDeleteHandler(self)
+        return self._subtree_delete_handler_instance
 
     @staticmethod
     def already_exists_error(error_message: str) -> bool:
@@ -110,6 +123,43 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         """
         return bool(c.Ldap.ENTRY_ALREADY_EXISTS_RE.search(error_message))
+
+    @staticmethod
+    def no_such_object_error(error_message: str) -> bool:
+        """Return ``True`` when the error reports an absent entry (LDAP 32).
+
+        The single classifier of ``noSuchObject``: every absence-aware read
+        goes through :meth:`find_entry` instead of matching error text.
+        """
+        return bool(c.Ldap.NO_SUCH_OBJECT_RE.search(error_message))
+
+    def find_entry(
+        self, dn: str, *, attributes: t.StrSequence | None = None
+    ) -> p.Result[m.Ldap.SearchResult]:
+        """Read one entry by DN; an absent entry is an empty result, not a failure.
+
+        Business Rules:
+            - Base-scope search on ``dn``, restricted to ``attributes`` when
+              given (operational attributes such as ``aci`` must be named)
+            - noSuchObject (LDAP 32) is the legal absence of the entry: the
+              result succeeds with no entries
+            - Every other search failure propagates unchanged
+
+        Returns:
+            r with a SearchResult holding the entry, or no entries when absent.
+
+        """
+        options = m.Ldap.SearchOptions.base_scope(dn)
+        if attributes is not None:
+            options = options.model_copy(update={"attributes": list(attributes)})
+        found = self.search(options)
+        if found.failure and self.no_such_object_error(
+            u.to_str(found.error, default="")
+        ):
+            return r[m.Ldap.SearchResult].ok(
+                m.Ldap.SearchResult(entries=[], search_options=options)
+            )
+        return found
 
     def add(self, entry: p.Ldif.Entry) -> p.Result[m.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
@@ -319,6 +369,56 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             return r[m.Ldap.OperationResult].from_failure(dn_build)
         dn_model: m.Ldif.DN = dn_build.unwrap()
         return self._fold_operation_result(self._ensure_adapter().delete(dn_model))
+
+    def delete_subtree(
+        self, dn: str | p.Ldif.DN
+    ) -> p.Result[m.Ldap.SubtreeDeleteResult]:
+        """Delete an entry and everything below it, deepest-first.
+
+        Business Rules:
+            - Base entry must exist (typed failure when absent)
+            - Subtree enumeration uses a DN-only search (attributes ``1.1``)
+            - Children are always deleted before their parents (no LDAP 66)
+            - The first failed deletion stops the run and reports progress
+              (base DN, deleted count, failed DN, cause) as a typed failure
+
+        Audit Implications:
+            - deleted_count on success; on failure the message carries the
+              exact stop point for forensic analysis
+
+        Args:
+            dn: Distinguished name of the subtree root (string or DN model)
+
+        Returns:
+            r containing SubtreeDeleteResult with base_dn and deleted_count.
+
+        """
+        subtree_root: str
+        subtree_root = dn if isinstance(dn, str) else m.Ldif.DN.model_validate(dn).value
+        return self._subtree_delete_handler.run(subtree_root)
+
+    def plan_upsert(
+        self, entries: t.SequenceOf[p.Ldif.Entry]
+    ) -> p.Result[m.Ldap.UpsertPlan]:
+        """Classify entries for upsert without writing (dry plan).
+
+        Business Rules:
+            - Delegates to FlextLdapUpsertHandler.plan (the owner of the
+              upsert compare semantics owns "what would change")
+            - Routes each entry like the write path: a ``changetype: modify``
+              entry with add operations is a modify (no search); any other
+              entry is classified against the live directory as
+              add/modify/unchanged
+            - Zero writes are issued
+
+        Args:
+            entries: Entries to classify against the directory
+
+        Returns:
+            r containing UpsertPlan with add/modify/unchanged counts.
+
+        """
+        return self._upsert_handler.plan(entries)
 
     @override
     def execute(self) -> p.Result[m.Ldap.Response]:

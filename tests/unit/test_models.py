@@ -120,6 +120,3 @@ class TestsFlextLdapModelsUnit:
         restored = m.Ldap.ConnectionConfig.model_validate(original.model_dump())
 
         u.Ldap.Tests.that(restored, eq=original)
-
-
-__all__: list[str] = ["TestsFlextLdapModelsUnit"]

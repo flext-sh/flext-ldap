@@ -1,7 +1,7 @@
-"""LDAP3 adapter — ResultConverter.
+"""LDAP3 adapter — FlextLdapLdap3ResultConverter.
 
-Composes ``ResultConverterExtractMixin`` for DN/attribute/metadata extraction
-and exposes the public ``convert_*`` API consumed by ``SearchExecutor``.
+Composes ``FlextLdapLdap3ResultExtract`` for DN/attribute/metadata extraction
+and exposes the public ``convert_*`` API consumed by ``FlextLdapLdap3SearchExecutor``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier=MIT
@@ -13,10 +13,10 @@ from flext_ldif import r
 
 from flext_ldap import m, p, t
 
-from .result_extract import ResultConverterExtractMixin
+from .result_extract import FlextLdapLdap3ResultExtract
 
 
-class ResultConverter(ResultConverterExtractMixin):
+class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
     """LDAP3 result conversion (SRP).
 
     Public API:
@@ -26,7 +26,7 @@ class ResultConverter(ResultConverterExtractMixin):
           ``FlextLdifParser`` into ``r[t.SequenceOf[m.Ldif.Entry]]``.
 
     Internal helpers (DN/attribute/metadata extraction + value normalization)
-    are inherited via ``ResultConverterExtractMixin`` per AGENTS.md §2.3
+    are inherited via ``FlextLdapLdap3ResultExtract`` per AGENTS.md §2.3
     MRO Composition + §3.1 200-LOC cap.
     """
 
@@ -43,7 +43,7 @@ class ResultConverter(ResultConverterExtractMixin):
         entries: t.SequenceOf[p.Ldif.Ldap3Entry] = getattr(connection, "entries", [])
         for entry in entries:
             dn = entry.entry_dn or ""
-            attrs_dict = ResultConverter.extract_attrs_dict(
+            attrs_dict = FlextLdapLdap3ResultConverter.extract_attrs_dict(
                 entry.entry_attributes_as_dict
             )
             results.append((dn, attrs_dict))
@@ -69,14 +69,16 @@ class ResultConverter(ResultConverterExtractMixin):
                 continue
             entries.append(
                 m.Ldif.Entry(
-                    dn=ResultConverter.extract_dn(entry_raw),
-                    attributes=ResultConverter.extract_attributes(entry_raw),
+                    dn=FlextLdapLdap3ResultConverter.extract_dn(entry_raw),
+                    attributes=FlextLdapLdap3ResultConverter.extract_attributes(
+                        entry_raw
+                    ),
                     changetype=None,
-                    metadata=ResultConverter.extract_metadata(entry_raw),
+                    metadata=FlextLdapLdap3ResultConverter.extract_metadata(entry_raw),
                     validation_metadata=None,
                 )
             )
         return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
 
 
-__all__: list[str] = ["ResultConverter"]
+__all__: list[str] = ["FlextLdapLdap3ResultConverter"]

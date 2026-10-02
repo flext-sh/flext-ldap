@@ -99,6 +99,3 @@ class TestsFlextLdapConnection:
         u.Ldap.Tests.that(
             error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
         )
-
-
-__all__: list[str] = ["TestsFlextLdapConnection"]

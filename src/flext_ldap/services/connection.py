@@ -16,7 +16,7 @@ from typing import override
 from flext_ldif import r
 
 from flext_ldap import c, m, p, t, u
-from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost
+from flext_ldap.adapters.host import FlextLdapAdapterHost
 from flext_ldap.services.detection import FlextLdapServerDetector
 
 

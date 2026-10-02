@@ -63,9 +63,9 @@ docker exec -it flext-ldap-test-server ldapsearch \
 
 #### 1. Unit Tests (`tests/unit/`)
 
-**Purpose**: Individual component testing without external dependencies. **Current
-Status**: 14 test files, primary test category. **Coverage Focus**: Domain logic, value
-objects, entities, adapter behaviour.
+**Purpose**: Individual component testing without external dependencies.
+**Current Status**: 14 test files, primary test category. **Coverage Focus**: Domain
+logic, value objects, entities, adapter behaviour.
 
 #### 2. Integration Tests (`tests/integration/`)
 

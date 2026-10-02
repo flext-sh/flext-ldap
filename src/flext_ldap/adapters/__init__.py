@@ -10,21 +10,21 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from . import _ldap3
-    from ._ldap3.connection_manager import ConnectionManager
-    from ._ldap3.operation_executor import OperationExecutor
-    from ._ldap3.result_converter import ResultConverter
-    from ._ldap3.result_extract import ResultConverterExtractMixin
-    from ._ldap3.search_executor import SearchExecutor
+    from ._ldap3.connection_manager import FlextLdapLdap3ConnectionManager
+    from ._ldap3.operation_executor import FlextLdapLdap3OperationExecutor
+    from ._ldap3.result_converter import FlextLdapLdap3ResultConverter
+    from ._ldap3.result_extract import FlextLdapLdap3ResultExtract
+    from ._ldap3.search_executor import FlextLdapLdap3SearchExecutor
     from ._ldap3.wrappers import FlextLdapLdap3Wrappers
 
 
 __all__: tuple[str, ...] = (
-    "ConnectionManager",
+    "FlextLdapLdap3ConnectionManager",
+    "FlextLdapLdap3OperationExecutor",
+    "FlextLdapLdap3ResultConverter",
+    "FlextLdapLdap3ResultExtract",
+    "FlextLdapLdap3SearchExecutor",
     "FlextLdapLdap3Wrappers",
-    "OperationExecutor",
-    "ResultConverter",
-    "ResultConverterExtractMixin",
-    "SearchExecutor",
     "_ldap3",
 )
 
@@ -32,11 +32,11 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             "._ldap3": ("_ldap3",),
-            "._ldap3.connection_manager": ("ConnectionManager",),
-            "._ldap3.operation_executor": ("OperationExecutor",),
-            "._ldap3.result_converter": ("ResultConverter",),
-            "._ldap3.result_extract": ("ResultConverterExtractMixin",),
-            "._ldap3.search_executor": ("SearchExecutor",),
+            "._ldap3.connection_manager": ("FlextLdapLdap3ConnectionManager",),
+            "._ldap3.operation_executor": ("FlextLdapLdap3OperationExecutor",),
+            "._ldap3.result_converter": ("FlextLdapLdap3ResultConverter",),
+            "._ldap3.result_extract": ("FlextLdapLdap3ResultExtract",),
+            "._ldap3.search_executor": ("FlextLdapLdap3SearchExecutor",),
             "._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
         }),
         alias_groups=MappingProxyType({}),

@@ -36,9 +36,7 @@
 */.hooks.json.agents-governance.json
 .claude/*.agents-governance.json
 .gemini/*.agents-governance.json
-.claude/settings.json
 .claude/settings.local.json
-.gemini/settings.json
 
 # Operator-private local config overrides
 /config/codegen-overrides.local.yaml
@@ -313,10 +311,6 @@ __pyrefly_virtual__/
 .omo/
 .pylance_cache/
 .pytest_cache/
-.flext-runtime/
-.testmondata
-.testmondata-wal
-.testmondata-shm
 .ropeproject/
 .ruff_cache/
 .scope/
@@ -359,7 +353,7 @@ CLAUDE.local.md
 !.github/scripts/
 !.github/scripts/check-beads-policy.sh
 !.github/scripts/check-cqrs-compliance.sh
-!.github/scripts/flext-law-loop.sh
+!.github/scripts/validate-git-hook.sh
 !tests/fixtures/
 !tests/fixtures/ci/
 !tests/fixtures/ci/docker/
@@ -373,6 +367,7 @@ CLAUDE.local.md
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
 !.github/workflows/release.yml
+!docs/docs_config.json
 !.qlty/
 !.qlty/qlty.toml
 !.sonarcloud.properties

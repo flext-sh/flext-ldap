@@ -17,6 +17,23 @@
   - [Coverage Analysis](#coverage-analysis)
 - [Architecture Guidelines](#architecture-guidelines)
   - [Clean Architecture Layers](#clean-architecture-layers)
+  - [Coding Standards](#coding-standards)
+- [Code Quality Standards](#code-quality-standards)
+  - [Type Safety Requirements](#type-safety-requirements)
+  - [Import Organization](#import-organization)
+- [Testing Guidelines](#testing-guidelines)
+  - [Unit Test Structure](#unit-test-structure)
+  - [Integration Test Structure](#integration-test-structure)
+  - [Test Fixtures](#test-fixtures)
+- [Documentation Standards](#documentation-standards)
+  - [Code Documentation](#code-documentation)
+  - [API Documentation](#api-documentation)
+- [Performance Guidelines](#performance-guidelines)
+  - [Connection Management](#connection-management)
+  - [Search Optimization](#search-optimization)
+  - [Best Practices](#best-practices)
+- [Contribution Guidelines](#contribution-guidelines)
+  - [Pull Request Process](#pull-request-process)
   - [Code Review Checklist](#code-review-checklist)
 
 <!-- TOC END -->
@@ -232,8 +249,8 @@ make ldap-test-server
 # Verify server connectivity
 docker exec -it flext-ldap-test-server ldapsearch \
   -x -H ldap://localhost:389 \
-  -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" \
-  -w "REDACTED_LDAP_BIND_PASSWORD123" \
+  -D "cn=admin,dc=flext,dc=local" \
+  -w "admin123" \
   -b "dc=flext,dc=local"
 
 # Stop test server
@@ -429,6 +446,7 @@ class FlextLdapService(Generic[T]):
 from __future__ import annotations
 
 import pytest
+
 from flext_ldap import FlextLdapUser
 
 
@@ -481,6 +499,7 @@ class TestFlextLdapUser:
 from __future__ import annotations
 
 import pytest
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -540,8 +559,7 @@ from __future__ import annotations
 # tests/conftest.py
 import pytest
 from flext_tests import tk
-from flext_cli import u
-from flext_core import FlextSettings
+
 from flext_ldap import FlextLdapSettings, set_flext_ldap_settings
 
 
@@ -558,7 +576,7 @@ def ldap_server():
         environment={
             "LDAP_ORGANISATION": "FLEXT Test",
             "LDAP_DOMAIN": "internal.invalid",
-            "LDAP_ADMIN_PASSWORD": "REDACTED_LDAP_BIND_PASSWORD123",
+            "LDAP_ADMIN_PASSWORD": "admin123",
         },
         detach=True,
         remove=True,
@@ -583,8 +601,8 @@ def ldap_server():
     test_config = FlextLdapSettings(
         host="localhost",
         port=3390,
-        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local",
-        bind_password="REDACTED_LDAP_BIND_PASSWORD123",
+        bind_dn="cn=admin,dc=flext,dc=local",
+        bind_password="admin123",
         base_dn="dc=flext,dc=local",
     )
     set_flext_ldap_settings(test_config)

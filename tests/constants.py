@@ -32,10 +32,7 @@ def _docker_admin_password() -> str:
 
 def _docker_legacy_admin_password() -> str:
     """Resolve the legacy test OpenLDAP admin password (env override allowed)."""
-    return (
-        os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "")
-        or "REDACTED_LDAP_BIND_PASSWORD123"
-    )
+    return os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "") or "admin123"
 
 
 def _bind_admin_password() -> str:
@@ -183,12 +180,13 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
             DOCKER_SERVICE_NAME: Final[str] = "openldap"
             DOCKER_PORT: Final[int] = 3390
+            # Port slapd listens on inside the container; compose publishes it
+            # on DOCKER_PORT (docker/docker-compose.openldap.yml "3390:389").
+            DOCKER_CONTAINER_PORT: Final[int] = 389
             DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
             DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
             DOCKER_ADMIN_PASSWORD: Final[str] = _docker_admin_password()
-            DOCKER_LEGACY_ADMIN_DN: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-            )
+            DOCKER_LEGACY_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
             DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = _docker_legacy_admin_password()
             DOCKER_STARTUP_TIMEOUT: Final[int] = 8
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 8
@@ -215,9 +213,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
             ENTRY_DN_USER_EXAMPLE: Final[str] = "cn=user,dc=example,dc=com"
             ENTRY_DN_TEST_EXAMPLE: Final[str] = "cn=test,dc=example,dc=com"
-            ENTRY_DN_ADMIN_EXAMPLE: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-            )
+            ENTRY_DN_ADMIN_EXAMPLE: Final[str] = "cn=admin,dc=example,dc=com"
             ENTRY_DN_USER_NEW: Final[str] = "cn=user,dc=new,dc=com"
 
             BIND_ADMIN_DN: Final[str] = "cn=admin,dc=x,dc=y"
@@ -307,6 +303,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             CONSTANT_INVALID_STATUS: Final[str] = "invalid"
             ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
                 MappingProxyType({"cn": ("user",), "sn": ("Doe",)})
+            )
+            # Multi-valued attribute payload for the ldap3 add wrapper: an
+            # objectClass chain whose classes beyond the first MUST reach
+            # the wire verbatim (no first-value collapse).
+            ADD_WRAPPER_OBJECT_CLASSES: Final[t.StrSequence] = (
+                "top",
+                "inetOrgPerson",
+                "person",
             )
             # Substring matches the centralized validation error
             # ("Failed to validate entry.attributes: empty"). Update with the

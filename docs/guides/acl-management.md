@@ -7,6 +7,7 @@
 - [Architecture](#architecture)
 - [Quick Start](#quick-start)
   - [Basic Usage](#basic-usage)
+  - [Converting ACL Formats](#converting-acl-formats)
   - [Batch Conversion](#batch-conversion)
 - [ACL Format Examples](#acl-format-examples)
   - [OpenLDAP Format](#openldap-format)
@@ -14,6 +15,7 @@
   - [ACI Format (389 DS / Apache DS)](#aci-format-389-ds-apache-ds)
 - [Creating Custom ACLs](#creating-custom-acls)
   - [Using the Unified Model](#using-the-unified-model)
+- [ACL Validation](#acl-validation)
 - [Migration Scenarios](#migration-scenarios)
   - [Oracle to OpenLDAP Migration](#oracle-to-openldap-migration)
   - [OpenLDAP to 389 DS Migration](#openldap-to-389-ds-migration)
@@ -187,10 +189,10 @@ if batch_result.success:
 
 ```python
 # Attribute ACL
-"""access to attr=(userPassword) by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (write)"""
+"""access to attr=(userPassword) by group="cn=admins" (write)"""
 
 # Entry-level ACL
-'access to entry by user="cn=REDACTED_LDAP_BIND_PASSWORD" (read,write,delete)'
+'access to entry by user="cn=admin" (read,write,delete)'
 
 # Multiple attributes
 'access to attr=(cn, sn, mail) by group="cn=users" (read)'
@@ -200,7 +202,7 @@ if batch_result.success:
 
 ```python
 # Simple ACI
-'(target="ldap:///ou=users,dc=example,dc=com")'
+"""(target="ldap:///ou=users,dc=example,dc=com")"""
 
 '(version 3.0; acl "User Read"; allow (read) userdn="ldap:///anyone";)'
 
@@ -210,7 +212,7 @@ if batch_result.success:
 # Group-based ACI
 '(target="ldap:///ou=data,dc=example,dc=com")'
 '(version 3.0; acl "Admin Access"; allow (read, write)'
-'groupdn="ldap:///cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com";)'
+'groupdn="ldap:///cn=admins,ou=groups,dc=example,dc=com";)'
 ```
 
 ## Creating Custom ACLs
@@ -274,8 +276,8 @@ else:
 # Parse Oracle ACLs from existing directory
 oracle_acls = [
     'access to attr=(cn, sn) by group="cn=users" (read)',
-    'access to attr=(userPassword) by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (write)',
-    'access to entry by user="cn=REDACTED_LDAP_BIND_PASSWORD" (read,write,delete)',
+    'access to attr=(userPassword) by group="cn=admins" (write)',
+    'access to entry by user="cn=admin" (read,write,delete)',
 ]
 
 # Convert to OpenLDAP format

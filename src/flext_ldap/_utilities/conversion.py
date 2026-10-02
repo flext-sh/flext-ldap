@@ -87,7 +87,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         return updated
 
     # NOTE (multi-agent): mro-wgwh.2 — entry attribute/category behavior moved here
-    # from m.Ldap.SearchResult (models facet is declaration-only); get_entry_category
+    # from m.Ldap.SearchResult (models facet is declaration-only); resolve_entry_category
     # composes the two extractions, killing the duplicated objectClass logic.
     @staticmethod
     def extract_attrs_dict_from_entry(
@@ -112,7 +112,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         return unknown
 
     @classmethod
-    def get_entry_category(cls, entry: p.Ldif.Entry) -> str:
+    def resolve_entry_category(cls, entry: p.Ldif.Entry) -> str:
         """Get the category (first objectclass, lowercased) of an LDIF entry."""
         return cls.extract_objectclass_category(
             cls.extract_attrs_dict_from_entry(entry)
@@ -125,7 +125,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         """Group LDIF entries by their objectclass category."""
         result = m.Ldif.FlexibleCategories()
         for entry in entries:
-            result[cls.get_entry_category(entry)].append(entry)
+            result[cls.resolve_entry_category(entry)].append(entry)
         return result
 
 

@@ -12,6 +12,7 @@
 - [🔧 OpenLDAP 2.x Operations](#openldap-2x-operations)
   - [Features](#features)
   - [Basic Usage](#basic-usage)
+  - [ACL Operations](#acl-operations)
   - [Entry Operations](#entry-operations)
   - [Paged Search](#paged-search)
 - [](#_4)
@@ -45,24 +46,26 @@
 - [](#_9)
 - [🔄 Entry Adapter Integration](#entry-adapter-integration)
 - [](#_10)
+- [🔍 Servers Detection](#servers-detection)
+- [](#_11)
 - [📊 Server Comparison](#server-comparison)
   - [Connection Features](#connection-features)
   - [Schema Operations](#schema-operations)
   - [ACL Features](#acl-features)
   - [Search Features](#search-features)
-- [](#_11)
+- [](#_12)
 - [🎯 Best Practices](#best-practices)
   - [1. Use Server Detection](#1-use-server-detection)
   - [2. Handle Errors Explicitly](#2-handle-errors-explicitly)
   - [3. Use Entry Adapter](#3-use-entry-adapter)
   - [4. Server-Specific Normalization](#4-server-specific-normalization)
   - [5. Connection Management](#5-connection-management)
-- [](#_12)
+- [](#_13)
 - [🔧 Troubleshooting](#troubleshooting)
   - [Common Issues](#common-issues)
-- [](#_13)
-- [📚 Additional Resources](#additional-resources)
 - [](#_14)
+- [📚 Additional Resources](#additional-resources)
+- [](#_15)
 
 <!-- TOC END -->
 
@@ -163,7 +166,7 @@
 - Check schema DN
 - Verify ACL attribute for server
 - Check permissions
-- ACL operations typically require REDACTED_LDAP_BIND_PASSWORD privileges
+- ACL operations typically require admin privileges
 - Reduce page size
 - Check entry normalization
 - Verify required object classes and attributes
@@ -223,6 +226,7 @@ Attribute: aci - Schema DN: cn=subschema - Lines: 310 - Version Support: RFC 451
 
 ```python
 import ldap3
+
 from flext_ldap import OpenLDAP2Operations
 
 # Initialize operations
@@ -231,7 +235,7 @@ ops = OpenLDAP2Operations()
 # Connection
 connection = ldap3.Connection(
     ldap3.Server("ldap://openldap-server:389"),
-    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    user="cn=admin,dc=example,dc=com",
     password="password",
     auto_bind=True,
 )
@@ -259,7 +263,7 @@ if acl_result.success:
 
 # Set ACLs
 new_acls = [
-    {"raw": '{0}to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'},
+    {"raw": '{0}to * by dn="cn=admin,dc=example,dc=com" write'},
     {"raw": "{1}to * by self write by anonymous auth"},
 ]
 
@@ -346,9 +350,7 @@ acl_attr = ops.get_acl_attribute_name()  # Returns "access"
 
 # ACL format is legacy syntax
 # access to <what> by <who> <access>
-legacy_acl = {
-    "raw": 'access to * by dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" write'
-}
+legacy_acl = {"raw": 'access to * by dn="cn=admin,dc=example,dc=com" write'}
 ```
 
 **Note**: OpenLDAP 1.x extends OpenLDAP 2.x operations, only overriding ACL-related
@@ -400,11 +402,7 @@ if acl_result.success:
         print(f"OID ACL: {acl['raw']}")
 
 # Set orclaci ACLs
-oid_acls = [
-    {
-        "raw": 'access to entry by group="cn=REDACTED_LDAP_BIND_PASSWORDs" (browse,search,read)'
-    }
-]
+oid_acls = [{"raw": 'access to entry by group="cn=admins" (browse,search,read)'}]
 
 set_result = ops.set_acls(connection, "dc=example,dc=com", oid_acls)
 ```
@@ -465,9 +463,7 @@ acl_result = ops.get_acls(connection, dn="dc=example,dc=com")
 # Set ds-privilege-name ACLs
 oud_acls = [{"raw": "bypass-acl"}, {"raw": "settings-read"}, {"raw": "password-reset"}]
 
-set_result = ops.set_acls(
-    connection, "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com", oud_acls
-)
+set_result = ops.set_acls(connection, "cn=admin,dc=example,dc=com", oud_acls)
 ```
 
 ### **OUD-Specific Features**
@@ -561,7 +557,7 @@ ops = GenericServerOperations()
 # Works with any RFC-compliant LDAP server
 connection = ldap3.Connection(
     ldap3.Server("ldap://unknown-ldap-server:389"),
-    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    user="cn=admin,dc=example,dc=com",
     password="password",
     auto_bind=True,
 )
@@ -810,7 +806,7 @@ acl_attr = ops.get_acl_attribute_name()
 print(f"Using ACL attribute: {acl_attr}")
 
 # Check permissions
-# ACL operations typically require REDACTED_LDAP_BIND_PASSWORD privileges
+# ACL operations typically require admin privileges
 ```
 
 **Paged Search Timing Out**:

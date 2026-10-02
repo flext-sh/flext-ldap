@@ -5,8 +5,28 @@
 - [Table of Contents](#table-of-contents)
 - [FLEXT Ecosystem Integration](#flext-ecosystem-integration)
   - [Core FLEXT Dependencies](#core-flext-dependencies)
+  - [Configuration Management](#configuration-management)
+- [FastAPI Integration](#fastapi-integration)
+  - [API Endpoints with LDAP Authentication](#api-endpoints-with-ldap-authentication)
+- [Django Integration](#django-integration)
+  - [Django Authentication Backend](#django-authentication-backend)
+  - [Django User Sync Management Command](#django-user-sync-management-command)
+- [Flask Integration](#flask-integration)
+  - [Flask Application with LDAP Authentication](#flask-application-with-ldap-authentication)
+- [Docker Integration](#docker-integration)
+  - [Docker Compose Setup](#docker-compose-setup)
+  - [Dockerfile with FLEXT-LDAP](#dockerfile-with-flext-ldap)
+- [Kubernetes Integration](#kubernetes-integration)
+  - [Kubernetes Deployment](#kubernetes-deployment)
 - [ldif Integration](#ldif-integration)
   - [Entry Format Conversion](#entry-format-conversion)
+  - [LDIF File Processing](#ldif-file-processing)
+  - [Export to LDIF](#export-to-ldif)
+  - [Server Servers Detection](#server-servers-detection)
+  - [Universal LDAP Processor](#universal-ldap-processor)
+- [Monitoring and Observability](#monitoring-and-observability)
+  - [Prometheus Metrics](#prometheus-metrics)
+  - [Health Check Endpoints](#health-check-endpoints)
 
 <!-- TOC END -->
 
@@ -74,6 +94,7 @@ from __future__ import annotations
 
 # FLEXT-Core integration
 from flext_cli import u
+
 from flext_ldap.api import ldap
 
 
@@ -160,8 +181,9 @@ ldap_config = settings.get_ldap_config()
 ```python
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -267,6 +289,7 @@ from __future__ import annotations
 
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
+
 from flext_ldap.api import ldap
 
 
@@ -323,7 +346,7 @@ class FlextLdapBackend(BaseBackend):
 
     def _is_staff_user(self, ldap_user) -> bool:
         """Check if LDAP user should have staff privileges."""
-        staff_groups = ["cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=example,dc=com"]
+        staff_groups = ["cn=admins,ou=groups,dc=example,dc=com"]
         return any(group in ldap_user.member_of for group in staff_groups)
 
 
@@ -339,8 +362,9 @@ AUTHENTICATION_BACKENDS = [
 ```python
 from __future__ import annotations
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -443,8 +467,10 @@ class Command(BaseCommand):
 ```python
 from __future__ import annotations
 
-from flask import Flask, request, jsonify
 from functools import wraps
+
+from flask import Flask, jsonify, request
+
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
 
@@ -545,8 +571,8 @@ services:
     environment:
       - FLEXT_LDAP_HOST=ldap-server
       - FLEXT_LDAP_PORT=389
-      - FLEXT_LDAP_BIND_DN=cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
-      - FLEXT_LDAP_BIND_PASSWORD=REDACTED_LDAP_BIND_PASSWORD
+      - FLEXT_LDAP_BIND_DN=cn=admin,dc=example,dc=com
+      - FLEXT_LDAP_BIND_PASSWORD=admin
       - FLEXT_LDAP_BASE_DN=dc=example,dc=com
     depends_on:
       - ldap-server
@@ -558,7 +584,7 @@ services:
     environment:
       - LDAP_ORGANISATION=Example Corp
       - LDAP_DOMAIN=example.com
-      - LDAP_ADMIN_PASSWORD=REDACTED_LDAP_BIND_PASSWORD
+      - LDAP_ADMIN_PASSWORD=admin
     ports:
       - "389:389"
       - "636:636"
@@ -566,8 +592,8 @@ services:
       - ldap_data:/var/lib/ldap
       - ldap_config:/etc/ldap/slapd.d
 
-  ldap-REDACTED_LDAP_BIND_PASSWORD:
-    image: osixia/phpldapREDACTED_LDAP_BIND_PASSWORD:latest
+  ldap-admin:
+    image: osixia/phpldapadmin:latest
     environment:
       - PHPLDAPADMIN_LDAP_HOSTS=ldap-server
     ports:
@@ -708,15 +734,16 @@ FLEXT-LDAP uses ldif for universal LDIF entry handling with automatic server ser
 detection:
 
 ```python
-from flext_ldap import FlextLdapEntryAdapter
 import ldap3
+
+from flext_ldap import FlextLdapEntryAdapter
 
 adapter = FlextLdapEntryAdapter()
 
 # Convert ldap3 entries to ldif format
 connection = ldap3.Connection(
     ldap3.Server("ldap://server:389"),
-    user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+    user="cn=admin,dc=example,dc=com",
     password="password",
     auto_bind=True,
 )
@@ -761,7 +788,7 @@ def process_ldif_file():
     # Connect to LDAP server
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -798,7 +825,7 @@ def export_to_ldif():
     # Connect and search
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -849,7 +876,7 @@ def detect_and_configure():
     """Detect server type and configure operations accordingly."""
     connection = ldap3.Connection(
         ldap3.Server("ldap://server:389"),
-        user="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        user="cn=admin,dc=example,dc=com",
         password="password",
         auto_bind=True,
     )
@@ -1020,7 +1047,7 @@ class UniversalLdapProcessor:
 def main():
     processor = UniversalLdapProcessor(
         host="ldap://server:389",
-        bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        bind_dn="cn=admin,dc=example,dc=com",
         bind_password="password",
     )
 
@@ -1100,7 +1127,9 @@ start_http_server(8001)
 
 ```python
 from __future__ import annotations
+
 from fastapi import FastAPI
+
 from flext_ldap.api import ldap
 
 app = FastAPI()

@@ -104,8 +104,8 @@ settings = FlextLdapSettings(
     host="ldap.example.com",
     port=FlextConstants.LDAPS_DEFAULT_PORT,
     use_ssl=True,
-    bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-    bind_password="REDACTED_LDAP_BIND_PASSWORD-password",
+    bind_dn="cn=admin,dc=example,dc=com",
+    bind_password="admin-password",
     base_dn="dc=example,dc=com",
 )
 ```
@@ -119,7 +119,7 @@ settings = FlextLdapSettings(
 ```bash
 # Required settings
 export FLEXT_LDAP_HOST="ldap.example.com"
-export FLEXT_LDAP_BIND_DN="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
+export FLEXT_LDAP_BIND_DN="cn=admin,dc=example,dc=com"
 export FLEXT_LDAP_BIND_PASSWORD="your-password"
 export FLEXT_LDAP_BASE_DN="dc=example,dc=com"
 
@@ -183,7 +183,7 @@ DEVELOPMENT_CONFIG = FlextLdapSettings(
     host="ldap-dev.example.com",
     port=FlextConstants.LDAP_DEFAULT_PORT,
     use_ssl=False,
-    bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=dev,dc=example,dc=com",
+    bind_dn="cn=admin,dc=dev,dc=example,dc=com",
     bind_password="${LDAP_DEV_PASSWORD}",
     base_dn="dc=dev,dc=example,dc=com",
     timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
@@ -229,8 +229,8 @@ Create `.env` file:
 FLEXT_LDAP_HOST=ldap.example.com
 FLEXT_LDAP_PORT=636
 FLEXT_LDAP_USE_SSL=true
-FLEXT_LDAP_BIND_DN=cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com
-FLEXT_LDAP_BIND_PASSWORD=REDACTED_LDAP_BIND_PASSWORD-password
+FLEXT_LDAP_BIND_DN=cn=admin,dc=example,dc=com
+FLEXT_LDAP_BIND_PASSWORD=admin-password
 FLEXT_LDAP_BASE_DN=dc=example,dc=com
 
 # Connection settings
@@ -281,8 +281,8 @@ TEST_CONFIG = FlextLdapSettings(
     host=FlextConstants["Platform.DEFAULT_HOST"],
     port=FlextConstants.LDAP_DEFAULT_PORT,
     use_ssl=False,
-    bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=test,dc=flext,dc=local",
-    bind_password="REDACTED_LDAP_BIND_PASSWORD",
+    bind_dn="cn=admin,dc=test,dc=flext,dc=local",
+    bind_password="admin",
     base_dn="dc=test,dc=flext,dc=local",
     timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,
     pool_size=2,

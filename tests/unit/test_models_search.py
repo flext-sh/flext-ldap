@@ -273,7 +273,7 @@ class TestsFlextLdapModelsSearch:
     def test_get_entry_category_unknown_without_objectclass(self) -> None:
         """Verify get entry category unknown without objectclass."""
         entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        category = u.Ldap.get_entry_category(entry)
+        category = u.Ldap.resolve_entry_category(entry)
         u.Ldap.Tests.that(category, eq=c.Ldap.UNKNOWN_CATEGORY)
 
     def test_get_entry_category_lowercases_first_objectclass(self) -> None:
@@ -283,7 +283,7 @@ class TestsFlextLdapModelsSearch:
             for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
         }
         entry = self._entry(c.Ldap.Tests.RFC_DEFAULT_BASE_DN, person_top)
-        category = u.Ldap.get_entry_category(entry)
+        category = u.Ldap.resolve_entry_category(entry)
         u.Ldap.Tests.that(
             category,
             eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[
@@ -325,6 +325,3 @@ class TestsFlextLdapModelsSearch:
             m.Ldap.SearchOptions.model_json_schema()["properties"],
             keys=[c.Ldap.Tests.FIELD_BASE_DN, c.Ldap.Tests.FIELD_SCOPE],
         )
-
-
-__all__: list[str] = ["TestsFlextLdapModelsSearch"]
