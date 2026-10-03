@@ -1,4 +1,8 @@
-"""FLEXT LDAP utility facade."""
+"""FLEXT LDAP utility facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,8 @@
-"""FLEXT LDAP type definitions with strict direct contracts."""
+"""FLEXT LDAP type definitions with strict direct contracts.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -27,17 +31,21 @@ class FlextLdapTypes(FlextLdifTypes):
         )
         type Ldap3AddAttributes = FlextLdifTypes.MappingKV[str, Ldap3AddAttributeValue]
         type Ldap3ModifyChangeValue = FlextLdifTypes.Pair[
-            str, FlextLdifTypes.MutableSequenceOf[str],
+            str,
+            FlextLdifTypes.MutableSequenceOf[str],
         ]
         type Ldap3ModifyChangesDict = FlextLdifTypes.MutableMappingKV[
-            str, FlextLdifTypes.MutableSequenceOf[Ldap3ModifyChangeValue],
+            str,
+            FlextLdifTypes.MutableSequenceOf[Ldap3ModifyChangeValue],
         ]
         type OperationChangeValue = FlextLdifTypes.Pair[int, FlextLdifTypes.StrSequence]
         type OperationChanges = FlextLdifTypes.MutableMappingKV[
-            str, FlextLdifTypes.SequenceOf[OperationChangeValue],
+            str,
+            FlextLdifTypes.SequenceOf[OperationChangeValue],
         ]
         type OperationAttributes = FlextLdifTypes.MappingKV[
-            str, FlextLdifTypes.StrSequence,
+            str,
+            FlextLdifTypes.StrSequence,
         ]
         type Ldap3EntrySequenceValue = FlextLdifTypes.SequenceOf[
             Ldap3AttributeScalar | FlextLdifTypes.Numeric | bool
@@ -52,10 +60,12 @@ class FlextLdapTypes(FlextLdifTypes):
         type MultiPhaseProgressCallback = Callable[..., None]
         type ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback
         type LdapModifyChangeValue = FlextLdifTypes.Pair[
-            str | int, FlextLdifTypes.StrSequence,
+            str | int,
+            FlextLdifTypes.StrSequence,
         ]
         type LdapModifyChanges = FlextLdifTypes.MappingKV[
-            str, FlextLdifTypes.SequenceOf[LdapModifyChangeValue],
+            str,
+            FlextLdifTypes.SequenceOf[LdapModifyChangeValue],
         ]
 
 

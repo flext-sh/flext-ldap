@@ -68,7 +68,8 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
     )
 
     NO_SUCH_OBJECT_RE: Final[t.RegexPattern] = re.compile(
-        r"nosuchobject|no such object", re.IGNORECASE,
+        r"nosuchobject|no such object",
+        re.IGNORECASE,
     )
 
     OPERATION_SUCCESS_MESSAGES: ClassVar[
@@ -107,9 +108,15 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
             FlextLdapConstantsEnums.SearchScopeValue,
         ]
     ] = MappingProxyType({
-        FlextLdapConstantsEnums.SearchScope.BASE: FlextLdapConstantsEnums.SearchScopeValue.BASE,
-        FlextLdapConstantsEnums.SearchScope.ONELEVEL: FlextLdapConstantsEnums.SearchScopeValue.LEVEL,
-        FlextLdapConstantsEnums.SearchScope.SUBTREE: FlextLdapConstantsEnums.SearchScopeValue.SUBTREE,
+        FlextLdapConstantsEnums.SearchScope.BASE: (
+            FlextLdapConstantsEnums.SearchScopeValue.BASE
+        ),
+        FlextLdapConstantsEnums.SearchScope.ONELEVEL: (
+            FlextLdapConstantsEnums.SearchScopeValue.LEVEL
+        ),
+        FlextLdapConstantsEnums.SearchScope.SUBTREE: (
+            FlextLdapConstantsEnums.SearchScopeValue.SUBTREE
+        ),
     })
 
     DEFAULT_TYPE: Final[FlextLdifConstants.Ldif.ServerTypes] = (

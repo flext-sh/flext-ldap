@@ -1,4 +1,8 @@
-"""LDAP server and connection utility methods."""
+"""LDAP server and connection utility methods.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,7 +24,11 @@ class FlextLdapUtilitiesServer:
     def resolve_get_info(
         get_info: c.Ldap.Ldap3GetInfo,
     ) -> Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]:
-        """Resolve Ldap3GetInfo enum to typed literal for ldap3 stubs."""
+        """Resolve Ldap3GetInfo enum to typed literal for ldap3 stubs.
+
+        Returns:
+            The resulting ``Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']``.
+        """
         match get_info:
             case c.Ldap.Ldap3GetInfo.DSA:
                 return "DSA"
@@ -39,7 +47,11 @@ class FlextLdapUtilitiesServer:
         use_ssl: bool = False,
         get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
     ) -> p.Ldif.Ldap3Server:
-        """Create an ldap3 Server instance."""
+        """Create an ldap3 Server instance.
+
+        Returns:
+            The resulting ``p.Ldif.Ldap3Server``.
+        """
         scheme = "ldaps" if use_ssl else "ldap"
         server: p.Ldif.Ldap3Server = ldap3.Server(
             f"{scheme}://{host}:{port}",
@@ -49,11 +61,18 @@ class FlextLdapUtilitiesServer:
 
     @staticmethod
     def create_server_from_url(
-        server_url: str, *, get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
+        server_url: str,
+        *,
+        get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.ALL,
     ) -> p.Ldif.Ldap3Server:
-        """Create an ldap3 Server instance from a URL string."""
+        """Create an ldap3 Server instance from a URL string.
+
+        Returns:
+            The resulting ``p.Ldif.Ldap3Server``.
+        """
         server: p.Ldif.Ldap3Server = ldap3.Server(
-            server_url, get_info=FlextLdapUtilitiesServer.resolve_get_info(get_info),
+            server_url,
+            get_info=FlextLdapUtilitiesServer.resolve_get_info(get_info),
         )
         return server
 
@@ -66,7 +85,14 @@ class FlextLdapUtilitiesServer:
         auto_bind: bool = True,
         receive_timeout: int | None = None,
     ) -> p.Ldap.Ldap3Connection:
-        """Create an ldap3 Connection instance."""
+        """Create an ldap3 Connection instance.
+
+        Returns:
+            The resulting ``p.Ldap.Ldap3Connection``.
+
+        Raises:
+            TypeError: If Expected ldap3.Server, got.
+        """
         if not isinstance(server, ldap3.Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"
             raise TypeError(msg)
@@ -85,7 +111,11 @@ class FlextLdapUtilitiesServer:
         port: int = c.Ldap.PORT,
         get_info: c.Ldap.Ldap3GetInfo = c.Ldap.Ldap3GetInfo.NO_INFO,
     ) -> p.Ldif.Ldap3Server:
-        """Create an ldap3 Server with minimal info retrieval."""
+        """Create an ldap3 Server with minimal info retrieval.
+
+        Returns:
+            The resulting ``p.Ldif.Ldap3Server``.
+        """
         server: p.Ldif.Ldap3Server = ldap3.Server(
             host,
             port=port,

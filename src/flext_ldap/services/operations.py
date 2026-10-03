@@ -26,6 +26,9 @@ Architecture Notes:
     - No exceptions are raised; all failures return r.fail()
     - All methods are type-safe with strict Pydantic v2 validation
     - Python 3.13: uses guard-based sequence handling
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -133,7 +136,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         return bool(c.Ldap.NO_SUCH_OBJECT_RE.search(error_message))
 
     def find_entry(
-        self, dn: str, *, attributes: t.StrSequence | None = None,
+        self,
+        dn: str,
+        *,
+        attributes: t.StrSequence | None = None,
     ) -> p.Result[m.Ldap.SearchResult]:
         """Read one entry by DN; an absent entry is an empty result, not a failure.
 
@@ -202,12 +208,15 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 current_server = u.Ldif.normalize_server_type(str(current_server_raw))
             except ValueError as exc:
                 return r[m.Ldap.OperationResult].fail(
-                    f"Failed to normalize current server type: {exc}", exception=exc,
+                    f"Failed to normalize current server type: {exc}",
+                    exception=exc,
                 )
         target_server = u.Ldif.normalize_server_type(self._server_type)
         if current_server is not None and current_server != target_server:
             conversion_result = ldif.convert_model(
-                current_server, target_server, entry_for_adapter,
+                current_server,
+                target_server,
+                entry_for_adapter,
             )
             if conversion_result.failure:
                 return r[m.Ldap.OperationResult].from_failure(conversion_result)
@@ -250,7 +259,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Architecture:
             - Uses upsert() method for each entry
-            - Progress callback signature: (current: int, total: int, dn: str, stats: LdapBatchStats)
+            - Progress callback signature: (current: int, total: int, dn: str, stats:
+            LdapBatchStats)
             - Returns r pattern - no exceptions raised
 
         Args:
@@ -276,7 +286,11 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         for i, entry in enumerate(entries, 1):
             try:
                 stop_requested = self._process_batch_entry(
-                    entry, sync_options, stats, i, total_entries,
+                    entry,
+                    sync_options,
+                    stats,
+                    i,
+                    total_entries,
                 )
             except c.EXC_BROAD_IO_TYPE as exc:
                 return r[m.Ldap.LdapBatchStats].fail(
@@ -287,7 +301,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 break
         if sync_options.stop_on_error and stop_error_index is not None:
             return r[m.Ldap.LdapBatchStats].fail(
-                f"Batch upsert stopped on error at entry {stop_error_index}/{total_entries}",
+                f"Batch upsert stopped on error at entry "
+                f"{stop_error_index}/{total_entries}",
             )
         self.logger.info(
             "Batch upsert completed",
@@ -315,7 +330,11 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
     def _fold_operation_result(
         result: p.Result[m.Ldap.OperationResult],
     ) -> p.Result[m.Ldap.OperationResult]:
-        """Fold an adapter operation outcome into the canonical result surface."""
+        """Fold an adapter operation outcome into the canonical result surface.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
+        """
         folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
                 u.to_str(e, default="Unknown error"),
@@ -326,7 +345,11 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
     @staticmethod
     def _normalized_dn(dn: str | p.Ldif.DN, op_name: str) -> p.Result[m.Ldif.DN]:
-        """Normalize a str-or-DN input into a validated DN model."""
+        """Normalize a str-or-DN input into a validated DN model.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.DN]``.
+        """
         return u.try_(
             lambda: (
                 m.Ldif.DN(value=u.Ldif.get_dn_value(dn))
@@ -370,7 +393,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         return self._fold_operation_result(self._ensure_adapter().delete(dn_model))
 
     def delete_subtree(
-        self, dn: str | p.Ldif.DN,
+        self,
+        dn: str | p.Ldif.DN,
     ) -> p.Result[m.Ldap.SubtreeDeleteResult]:
         """Delete an entry and everything below it, deepest-first.
 
@@ -397,7 +421,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         return self._subtree_delete_handler.run(subtree_root)
 
     def plan_upsert(
-        self, entries: t.SequenceOf[p.Ldif.Entry],
+        self,
+        entries: t.SequenceOf[p.Ldif.Entry],
     ) -> p.Result[m.Ldap.UpsertPlan]:
         """Classify entries for upsert without writing (dry plan).
 
@@ -444,19 +469,23 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             m.Ldap.SearchResult(
                 entries=[],
                 search_options=m.Ldap.SearchOptions(
-                    base_dn=base_dn, filter_str=c.Ldap.ALL_ENTRIES_FILTER,
+                    base_dn=base_dn,
+                    filter_str=c.Ldap.ALL_ENTRIES_FILTER,
                 ),
             ),
         )
 
     def modify(
-        self, dn: str | p.Ldif.DN, changes: t.Ldap.LdapModifyChanges,
+        self,
+        dn: str | p.Ldif.DN,
+        changes: t.Ldap.LdapModifyChanges,
     ) -> p.Result[m.Ldap.OperationResult]:
         """Modify an LDAP entry with the provided change set.
 
         Business Rules:
             - Entry must exist before modification (LDAP error 32 if not found)
-            - Changes use ldap3 format: {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
+            - Changes use ldap3 format:
+              {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
             - DN normalization is applied using u.Ldif.get_dn_value()
             - String DNs are converted to DN models for type safety
             - Schema constraints are validated by LDAP server
@@ -491,7 +520,9 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         )
 
     def search(
-        self, search_options: p.Ldap.SearchOptions, server_type: str = "rfc",
+        self,
+        search_options: p.Ldap.SearchOptions,
+        server_type: str = "rfc",
     ) -> p.Result[m.Ldap.SearchResult]:
         """Perform an LDAP search using normalized search options.
 
@@ -513,7 +544,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             - Returns r pattern - no exceptions raised
 
         Args:
-            search_options: Search configuration (base_dn, filter_str, scope, attributes)
+            search_options: Search configuration (base_dn, filter_str, scope,
+                attributes)
             server_type: LDAP server type for parsing servers (default: RFC)
 
         Returns:
@@ -535,7 +567,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         )
         effective_server_type = server_type or self._server_type
         result = self._ensure_adapter().search(
-            normalized_options, server_type=effective_server_type,
+            normalized_options,
+            server_type=effective_server_type,
         )
         folded: p.Result[m.Ldap.SearchResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.SearchResult].fail(
@@ -576,11 +609,12 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Args:
             entry: Entry model to upsert (must include DN and attributes)
-            retry_on_errors: List of error patterns to retry on (e.g., ["session terminated"])
+            retry_on_errors: Error patterns to retry on (e.g. ["session terminated"])
             max_retries: Maximum number of retry attempts (default: 1, no retry)
 
         Returns:
-            r containing LdapOperationResult with operation type (ADDED|MODIFIED|SKIPPED)
+            r containing LdapOperationResult with operation type
+                (ADDED|MODIFIED|SKIPPED)
 
         """
         if not (retry_on_errors and max_retries > 1):
@@ -599,12 +633,14 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             return self._upsert_handler.execute(entry)
 
         retry_result: p.Result[m.Ldap.LdapOperationResult] = u.retry(
-            operation=wrapped_execute, max_attempts=max_retries, delay_seconds=1.0,
+            operation=wrapped_execute,
+            max_attempts=max_retries,
+            delay_seconds=1.0,
         )
         return retry_result
 
+    @staticmethod
     def _invoke_batch_progress_callback(
-        self,
         callback: t.Ldap.LdapProgressCallback,
         entry_index: int,
         total: int,
@@ -623,7 +659,11 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         entry_index: int,
         total_entries: int,
     ) -> bool:
-        """Process one batch entry and report whether stop-on-error should halt."""
+        """Process one batch entry and report whether stop-on-error should halt.
+
+        Returns:
+            The resulting ``bool``.
+        """
         entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
         upsert_result = self.upsert(
             entry,
@@ -631,7 +671,11 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             max_retries=sync_options.max_retries,
         )
         self._update_batch_stats(
-            upsert_result, stats, entry_index, entry_dn, total_entries,
+            upsert_result,
+            stats,
+            entry_index,
+            entry_dn,
+            total_entries,
         )
         if sync_options.progress_callback:
             self._invoke_batch_progress_callback(

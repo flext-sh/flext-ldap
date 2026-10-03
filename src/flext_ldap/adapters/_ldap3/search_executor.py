@@ -27,7 +27,11 @@ class FlextLdapLdap3SearchExecutor:
         params: m.Ldap.SearchParams,
         server_type: c.Ldif.ServerTypes | str,
     ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
-        """Execute LDAP search and return entries parsed by the result converter."""
+        """Execute LDAP search and return entries parsed by the result converter.
+
+        Returns:
+            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]``.
+        """
         try:
             _ = FlextLdapLdap3Wrappers.search(connection, params)
         except c.EXC_BROAD_IO_TYPE as exc:

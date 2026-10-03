@@ -29,14 +29,16 @@ class TestsFlextLdapBase:
 
     # ── execute(): success outcome ─────────────────────────────────────
 
-    def test_execute_success_reports_success(self) -> None:
+    @staticmethod
+    def test_execute_success_reports_success() -> None:
         """Verify execute success reports success."""
         result = m.Ldap.Tests.SuccessService().execute()
 
         tm.ok(result)
         tm.that(result.failure, eq=False)
 
-    def test_execute_success_carries_true_value(self) -> None:
+    @staticmethod
+    def test_execute_success_carries_true_value() -> None:
         """Verify execute success carries true value."""
         result = m.Ldap.Tests.SuccessService().execute()
 
@@ -45,14 +47,16 @@ class TestsFlextLdapBase:
 
     # ── execute(): failure outcome ─────────────────────────────────────
 
-    def test_execute_failure_reports_failure(self) -> None:
+    @staticmethod
+    def test_execute_failure_reports_failure() -> None:
         """Verify execute failure reports failure."""
         result = m.Ldap.Tests.FailService().execute()
 
         tm.fail(result)
         tm.fail(result)
 
-    def test_execute_failure_exposes_declared_error_message(self) -> None:
+    @staticmethod
+    def test_execute_failure_exposes_declared_error_message() -> None:
         """Verify execute failure exposes declared error message."""
         result = m.Ldap.Tests.FailService().execute()
 
@@ -60,21 +64,24 @@ class TestsFlextLdapBase:
 
     # ── r[T] combinator laws on the returned result ────────────────────
 
-    def test_map_transforms_success_value_only(self) -> None:
+    @staticmethod
+    def test_map_transforms_success_value_only() -> None:
         """Verify map transforms success value only."""
         mapped = m.Ldap.Tests.SuccessService().execute().map(not_)
 
         tm.ok(mapped)
         tm.that(mapped.unwrap(), eq=False)
 
-    def test_map_does_not_run_on_failure(self) -> None:
+    @staticmethod
+    def test_map_does_not_run_on_failure() -> None:
         """Verify map does not run on failure."""
         mapped = m.Ldap.Tests.FailService().execute().map(not_)
 
         tm.fail(mapped)
         tm.that(mapped.error, eq=c.Ldap.Tests.BASE_FAIL_ERROR_MESSAGE)
 
-    def test_recover_replaces_failure_with_fallback_value(self) -> None:
+    @staticmethod
+    def test_recover_replaces_failure_with_fallback_value() -> None:
         """Verify recover replaces failure with fallback value."""
         recovered = m.Ldap.Tests.FailService().execute().recover(lambda _err: True)
 
@@ -88,8 +95,8 @@ class TestsFlextLdapBase:
             (m.Ldap.Tests.FailService, False, False),
         ],
     )
+    @staticmethod
     def test_unwrap_or_returns_value_or_fallback(
-        self,
         service_factory: type[m.Ldap.Tests.SuccessService | m.Ldap.Tests.FailService],
         *,
         fallback: bool,
@@ -100,10 +107,12 @@ class TestsFlextLdapBase:
 
     # ── settings: isolation from the root singleton ────────────────────
 
-    def test_settings_isolated_from_root_global(self) -> None:
+    @staticmethod
+    def test_settings_isolated_from_root_global() -> None:
         """Verify settings isolated from root global."""
         cfg = m.Ldap.Tests.SuccessService().settings
-        # NOTE (multi-agent): restore root singleton read removed by a bad "fixes" commit.
+        # NOTE (multi-agent): restore root singleton read removed by a bad "fixes"
+        # commit.
         glob = FlextSettings.fetch_global()
 
         tm.that(cfg is glob, eq=False)
@@ -116,23 +125,27 @@ class TestsFlextLdapBase:
     # plain BaseModel sections (flext-core reference: tests/unit/test_service.py);
     # CLI data is flat cli_* fields, not a "Cli" namespace.
     @pytest.mark.parametrize("namespace", ["ldif", "Ldap"])
-    def test_fetch_settings_exposes_mro_namespace(self, namespace: str) -> None:
+    @staticmethod
+    def test_fetch_settings_exposes_mro_namespace(namespace: str) -> None:
         """Verify fetch settings exposes mro namespace."""
         settings = m.Ldap.Tests.SuccessService.fetch_settings()
 
         tm.that(getattr(settings, namespace), is_=m.BaseModel)
 
-    def test_instance_settings_match_fetch_settings_singleton(self) -> None:
+    @staticmethod
+    def test_instance_settings_match_fetch_settings_singleton() -> None:
         """Verify instance settings match fetch settings singleton."""
         instance = m.Ldap.Tests.SuccessService()
 
         tm.that(
-            instance.settings is m.Ldap.Tests.SuccessService.fetch_settings(), eq=True,
+            instance.settings is m.Ldap.Tests.SuccessService.fetch_settings(),
+            eq=True,
         )
 
     # ── independence across instances ──────────────────────────────────
 
-    def test_distinct_services_resolve_independently(self) -> None:
+    @staticmethod
+    def test_distinct_services_resolve_independently() -> None:
         """Verify distinct services resolve independently."""
         ok, bad = m.Ldap.Tests.SuccessService(), m.Ldap.Tests.FailService()
 
