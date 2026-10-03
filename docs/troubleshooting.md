@@ -271,7 +271,7 @@ SearchError: Bad search filter
 
 **Common Filter Mistakes:**
 
-```python
+```text
 # ❌ WRONG - Missing parentheses
 filter_str = "objectClass=person"
 
@@ -330,7 +330,7 @@ SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
 
 **Diagnosis:**
 
-```python
+```text
 from __future__ import annotations
 
 from flext_ldap import FlextLdapEntities

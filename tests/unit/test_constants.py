@@ -48,7 +48,6 @@ class TestsFlextLdapConstantsUnit:
         """Verify valid statuses covers every status member."""
         u.Ldap.Tests.that(frozenset(c.Ldap.Status) == c.Ldap.VALID_STATUSES, eq=True)
 
-    @staticmethod
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     @staticmethod
     def test_is_valid_status_accepts_every_enum_member(
@@ -57,7 +56,6 @@ class TestsFlextLdapConstantsUnit:
         """Verify is valid status accepts every enum member."""
         u.Ldap.Tests.that(u.Ldap.Validation.valid_status(status), eq=True)
 
-    @staticmethod
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     @staticmethod
     def test_is_valid_status_accepts_every_status_string_value(
