@@ -4,7 +4,7 @@ Composes ``FlextLdapLdap3ResultExtract`` for DN/attribute/metadata extraction
 and exposes the public ``convert_*`` API consumed by ``FlextLdapLdap3SearchExecutor``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier=MIT
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -39,9 +39,8 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
         multi-values stay as lists. Type information is normalized to strings.
 
         Returns:
-            The resulting
-            ``t.SequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]]`` value.
-
+            The resulting ``t.SequenceOf[t.Pair[str, t.MappingKV[str,
+                t.StrSequence]]]``.
         """
         results: t.MutableSequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]] = []
         entries: t.SequenceOf[p.Ldif.Ldap3Entry] = getattr(connection, "entries", [])
@@ -64,8 +63,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
         ``extract_attributes``, ``extract_metadata``.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]`` value.
-
+            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]``.
         """
         entries_raw = parse_response.entries
         if not entries_raw:

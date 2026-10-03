@@ -24,8 +24,7 @@ class FlextLdapLdap3Wrappers:
         """Convert an ldap3 attribute payload through the canonical utility.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]`` value.
-
+            The resulting ``t.MutableSequenceOf[str]``.
         """
         return list(u.Ldap.ldap3_value_to_strings(value))
 
@@ -40,8 +39,7 @@ class FlextLdapLdap3Wrappers:
         This helper extracts the method via getattr and wraps the return as bool.
 
         Returns:
-            The resulting ``Callable[..., bool]`` value.
-
+            The resulting ``Callable[..., bool]``.
         """
         method: Callable[..., bool] = getattr(connection, method_name)
         return method
@@ -64,8 +62,7 @@ class FlextLdapLdap3Wrappers:
         ``objectClassViolation``.
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
         return add_fn(dn, object_class, dict(attributes))
@@ -75,8 +72,7 @@ class FlextLdapLdap3Wrappers:
         """Type-safe wrapper for untyped ldap3 Connection.delete().
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         delete_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "delete")
         return delete_fn(dn)
@@ -86,8 +82,7 @@ class FlextLdapLdap3Wrappers:
         """Safely read ldap3 bound state from dynamic connection objects.
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         bound_state: bool = getattr(connection, "bound", False)
         return bound_state
@@ -97,8 +92,7 @@ class FlextLdapLdap3Wrappers:
         """Bind only after the adapter owns the connection for cleanup.
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         bind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "bind")
         return bind_fn()
@@ -112,8 +106,7 @@ class FlextLdapLdap3Wrappers:
         """Type-safe wrapper for untyped ldap3 Connection.modify().
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         modify_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "modify")
         return modify_fn(dn, changes)
@@ -123,8 +116,7 @@ class FlextLdapLdap3Wrappers:
         """Safely invoke ldap3 search on dynamic connection objects.
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         scope_map: t.MappingKV[int, c.Ldap.Ldap3SearchScope] = {
             c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
@@ -146,12 +138,10 @@ class FlextLdapLdap3Wrappers:
         """Safely invoke STARTTLS from dynamic ldap3 connection objects.
 
         Returns:
-            The resulting ``bool`` value.
+            The resulting ``bool``.
 
         Raises:
-            AttributeError: If the connection object does not expose a
-                ``start_tls`` method.
-
+            AttributeError: If start_tls method not available on connection object.
         """
         start_tls_fn = getattr(connection, "start_tls", None)
         if start_tls_fn is None:
@@ -165,8 +155,7 @@ class FlextLdapLdap3Wrappers:
         """Type-safe wrapper for untyped ldap3 p.Ldap.Ldap3Connection.unbind().
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         unbind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "unbind")
         return unbind_fn()

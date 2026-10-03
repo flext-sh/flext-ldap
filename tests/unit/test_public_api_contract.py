@@ -1,10 +1,10 @@
 """Behavioral contract test for the flext-ldap public API surface.
 
 Asserts the OBSERVABLE public contract of the ``flext_ldap`` package: the
-root export set propagated from each module's declarations, the importability
-of every exported name, the identity
-of the canonical single-letter aliases, and the operations the ``FlextLdap``
-facade promises its callers. It deliberately avoids internal implementation
+root export set propagated from each module's declarations, the
+importability of every exported name, the identity of the canonical
+single-letter aliases, and the operations the ``FlextLdap`` facade
+promises its callers. It deliberately avoids internal implementation
 details (MRO ordering, private attributes, adapter modules).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -85,8 +85,8 @@ class TestsFlextLdapPublicApiContract:
         tm.that(declared, empty=False)
         tm.that(declared - frozenset(flext_ldap.__all__), empty=True)
 
-    @staticmethod
     @pytest.mark.parametrize("name", sorted(flext_ldap.__all__))
+    @staticmethod
     def test_every_declared_export_is_importable(name: str) -> None:
         """Verify every declared export is importable."""
         tm.that(
@@ -101,8 +101,8 @@ class TestsFlextLdapPublicApiContract:
         names: t.VariadicTuple[str] = flext_ldap.__all__
         tm.that(len(names), eq=len(set(names)))
 
-    @staticmethod
     @pytest.mark.parametrize(("alias", "facade"), _ALIAS_FACADE_CASES)
+    @staticmethod
     def test_canonical_alias_resolves_to_domain_facade(
         alias: str,
         facade: type,
@@ -117,8 +117,8 @@ class TestsFlextLdapPublicApiContract:
         # honouring that relationship is part of the contract.
         tm.that(FlextLdapService in FlextLdap.__mro__, eq=True)
 
-    @staticmethod
     @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
+    @staticmethod
     def test_facade_exposes_documented_operation(operation: str) -> None:
         """Verify facade exposes documented operation."""
         member = getattr(FlextLdap, operation, None)

@@ -40,8 +40,7 @@ class FlextLdapLdap3OperationExecutor:
             """Normalize ldap3 JSON descriptions into the operation message text.
 
             Returns:
-                The resulting ``str | None`` value.
-
+                The resulting ``str | None``.
             """
             if value is None:
                 return None
@@ -81,8 +80,7 @@ class FlextLdapLdap3OperationExecutor:
         """Build ``r.fail`` from ``connection.result.description`` when present.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.OperationResult]`` value.
-
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
         """
         error_msg = f"{prefix}: LDAP operation returned failure status"
         result_payload = connection.result
@@ -104,8 +102,7 @@ class FlextLdapLdap3OperationExecutor:
         """Execute LDAP add via ``Connection.add`` and return ``r``.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.OperationResult]`` value.
-
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
         """
         attrs_dict: t.MappingKV[str, t.StrSequence] = {
             k: list(v) for k, v in ldap_attrs.items()
@@ -124,8 +121,7 @@ class FlextLdapLdap3OperationExecutor:
         """Execute LDAP delete via ``Connection.delete`` and return ``r``.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.OperationResult]`` value.
-
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
         """
         dn_str = u.Ldif.get_dn_value(dn)
         return FlextLdapLdap3OperationExecutor._execute(
@@ -143,8 +139,7 @@ class FlextLdapLdap3OperationExecutor:
         """Execute LDAP modify via ``Connection.modify`` and return ``r``.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.OperationResult]`` value.
-
+            The resulting ``p.Result[m.Ldap.OperationResult]``.
         """
         dn_str = u.Ldif.get_dn_value(dn)
         return FlextLdapLdap3OperationExecutor._execute(

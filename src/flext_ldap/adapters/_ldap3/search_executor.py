@@ -30,8 +30,7 @@ class FlextLdapLdap3SearchExecutor:
         """Execute LDAP search and return entries parsed by the result converter.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]`` value.
-
+            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]``.
         """
         try:
             _ = FlextLdapLdap3Wrappers.search(connection, params)

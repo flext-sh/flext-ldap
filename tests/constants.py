@@ -29,8 +29,7 @@ def _docker_admin_password() -> str:
     """Resolve the test OpenLDAP admin password (env override allowed).
 
     Returns:
-        The resulting ``str`` value.
-
+        The resulting ``str``.
     """
     return os.getenv("FLEXT_LDAP_TEST_DOCKER_ADMIN_PASSWORD", "") or "admin123"
 
@@ -39,8 +38,7 @@ def _docker_legacy_admin_password() -> str:
     """Resolve the legacy test OpenLDAP admin password (env override allowed).
 
     Returns:
-        The resulting ``str`` value.
-
+        The resulting ``str``.
     """
     return os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "") or "admin123"
 
@@ -49,8 +47,7 @@ def _bind_admin_password() -> str:
     """Resolve the test bind admin password (env override allowed).
 
     Returns:
-        The resulting ``str`` value.
-
+        The resulting ``str``.
     """
     return os.getenv("FLEXT_LDAP_TEST_BIND_ADMIN_PASSWORD", "") or "secret"
 

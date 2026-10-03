@@ -32,8 +32,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         """Normalize entry attributes to the canonical LDAP comparison mapping.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.StrSequence]`` value.
-
+            The resulting ``t.MappingKV[str, t.StrSequence]``.
         """
         attrs = entry.attributes
         if attrs is None:
@@ -49,8 +48,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         """Resolve attribute values by case-insensitive LDAP name matching.
 
         Returns:
-            The resulting ``t.StrSequence | None`` value.
-
+            The resulting ``t.StrSequence | None``.
         """
         normalized_target = cls.norm_str(attr_name, case="lower")
         for key, values in existing_attrs.items():
@@ -63,8 +61,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         """Normalize LDAP attribute values for stable comparison.
 
         Returns:
-            The resulting ``set[str]`` value.
-
+            The resulting ``set[str]``.
         """
         return {value.lower() for value in values if value}
 
@@ -78,8 +75,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         """Build replacement changes for non-operational attributes.
 
         Returns:
-            The resulting ``t.Pair[t.Ldap.OperationChanges, set[str]]`` value.
-
+            The resulting ``t.Pair[t.Ldap.OperationChanges, set[str]]``.
         """
         changes: t.Ldap.OperationChanges = {}
         processed: set[str] = set()
@@ -107,8 +103,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         """Build delete operations for attributes absent from the target entry.
 
         Returns:
-            The resulting ``t.Ldap.OperationChanges`` value.
-
+            The resulting ``t.Ldap.OperationChanges``.
         """
         empty_values: t.StrSequence = []
         ignored = {value.lower() for value in ignore}
@@ -124,8 +119,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         """Lowercased attribute names of the entry DN's leading RDN (RFC 4514).
 
         Returns:
-            The resulting ``p.Result[frozenset[str]]`` value.
-
+            The resulting ``p.Result[frozenset[str]]``.
         """
         if entry.dn is None:
             return r[frozenset[str]].fail("Entry has no DN")
@@ -155,8 +149,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         set: LDAP modify can never change an entry's RDN (notAllowedOnRDN).
 
         Returns:
-            The resulting ``p.Result[t.Ldap.OperationChanges]`` value.
-
+            The resulting ``p.Result[t.Ldap.OperationChanges]``.
         """
         existing_rdn_result = cls.rdn_attribute_names(existing_entry)
         if existing_rdn_result.failure:

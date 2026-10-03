@@ -95,8 +95,7 @@ class TestsFlextLdapSubtreeDelete:
             """Public read of the deletion order the double observed.
 
             Returns:
-                The resulting ``list[str]`` value.
-
+                The resulting ``list[str]``.
             """
             return list(self._deleted_dns)
 
@@ -104,8 +103,7 @@ class TestsFlextLdapSubtreeDelete:
             """Public read of every write attempt the double observed.
 
             Returns:
-                The resulting ``list[str]`` value.
-
+                The resulting ``list[str]``.
             """
             return list(self._write_calls)
 

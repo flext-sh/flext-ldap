@@ -110,8 +110,7 @@ class FlextLdapSubtreeDeleteHandler:
         """Enumerate every DN under (and including) the base, attributes omitted.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[str]]`` value.
-
+            The resulting ``p.Result[t.SequenceOf[str]]``.
         """
         search_options = m.Ldap.SearchOptions(
             base_dn=base_dn,
@@ -143,7 +142,6 @@ class FlextLdapSubtreeDeleteHandler:
         """Depth of a DN as its RDN separator count (parent-safe ordering).
 
         Returns:
-            The resulting ``int`` value.
-
+            The resulting ``int``.
         """
         return dn.count(",")

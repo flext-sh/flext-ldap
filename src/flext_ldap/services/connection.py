@@ -40,8 +40,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         """Establish an LDAP connection with optional automatic retry.
 
         Returns:
-            The resulting ``p.Result[bool]`` value.
-
+            The resulting ``p.Result[bool]``.
         """
         _ = kwargs
         adapter = self._ensure_adapter()
@@ -92,8 +91,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         """Execute service health check.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.Response]`` value.
-
+            The resulting ``p.Result[m.Ldap.Response]``.
         """
         _ = kwargs
         if self.is_connected:
@@ -112,9 +110,8 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         """Detect LDAP server type after successful connection.
 
         Raises:
-            RuntimeError: If no active connection is available or server
-                detection fails.
-
+            RuntimeError: If No active connection available for server detection; or if
+                ``detection_result.failure``.
         """
         adapter = self._ensure_adapter()
         connection = adapter.connection

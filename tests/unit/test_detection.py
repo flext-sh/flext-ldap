@@ -104,8 +104,7 @@ class TestsFlextLdapDetection:
         """Build a bound connection double advertising the given vendor metadata.
 
         Returns:
-            The resulting ``p.Ldif.RootDseConnection`` value.
-
+            The resulting ``p.Ldif.RootDseConnection``.
         """
         attributes: dict[str, t.Ldap.Ldap3EntryValue] = {}
         if vendor_name is not None:

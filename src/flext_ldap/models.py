@@ -38,6 +38,7 @@ class FlextLdapModels(FlextLdifModels):
 
 # Global instance
 
-__all__: list[str] = ["FlextLdapModels", "m"]
 
 m = FlextLdapModels
+
+__all__: list[str] = ["FlextLdapModels", "m"]

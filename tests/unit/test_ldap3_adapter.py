@@ -41,8 +41,8 @@ class TestsFlextLdapLdap3Adapter:
         MODIFY = "modify"
         SEARCH = "search"
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def adapter() -> FlextLdapLdap3Adapter:
         """Return a freshly constructed, never-connected adapter."""
         return FlextLdapLdap3Adapter()
@@ -105,8 +105,8 @@ class TestsFlextLdapLdap3Adapter:
         u.Ldap.Tests.that(adapter.is_connected, eq=False)
         u.Ldap.Tests.that(adapter.connection, eq=None)
 
-    @staticmethod
     @pytest.mark.parametrize("case", list(c.Ldap.Tests.Ldap3ServerCase))
+    @staticmethod
     def test_create_server_configures_host_and_port(
         case: c.Ldap.Tests.Ldap3ServerCase,
     ) -> None:

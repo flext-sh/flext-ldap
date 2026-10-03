@@ -71,8 +71,7 @@ def worker_id(request: pytest.FixtureRequest) -> str:
     """Provide worker id.
 
     Returns:
-        The resulting ``str`` value.
-
+        The resulting ``str``.
     """
     return _get_worker_id(request.config)
 
@@ -82,8 +81,7 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
     """Provide ldap container.
 
     Returns:
-        The resulting ``t.MappingKV[str, t.Scalar]`` value.
-
+        The resulting ``t.MappingKV[str, t.Scalar]``.
     """
     if not _docker_compose_available():
         pytest.skip(

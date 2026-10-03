@@ -16,8 +16,7 @@ def main(args: t.StrSequence | None = None) -> int:
     """Console-script entry point — commands are not implemented yet.
 
     Returns:
-        The resulting ``int`` value.
-
+        The resulting ``int``.
     """
     _ = args
     return 0

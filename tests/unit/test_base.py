@@ -111,8 +111,8 @@ class TestsFlextLdapBase:
     def test_settings_isolated_from_root_global() -> None:
         """Verify settings isolated from root global."""
         cfg = m.Ldap.Tests.SuccessService().settings
-        # NOTE (multi-agent): restore root singleton read removed by
-        # a bad "fixes" commit.
+        # NOTE (multi-agent): restore root singleton read removed by a bad "fixes"
+        # commit.
         glob = FlextSettings.fetch_global()
 
         tm.that(cfg is glob, eq=False)
@@ -124,8 +124,8 @@ class TestsFlextLdapBase:
     # NOTE (multi-agent): SSOT settings expose Ldap/ldif namespaces as
     # plain BaseModel sections (flext-core reference: tests/unit/test_service.py);
     # CLI data is flat cli_* fields, not a "Cli" namespace.
-    @staticmethod
     @pytest.mark.parametrize("namespace", ["ldif", "Ldap"])
+    @staticmethod
     def test_fetch_settings_exposes_mro_namespace(namespace: str) -> None:
         """Verify fetch settings exposes mro namespace."""
         settings = m.Ldap.Tests.SuccessService.fetch_settings()
