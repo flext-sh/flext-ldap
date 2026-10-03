@@ -27,8 +27,7 @@ class FlextLdapUtilitiesServer:
         """Resolve Ldap3GetInfo enum to typed literal for ldap3 stubs.
 
         Returns:
-            The resulting ``Literal["ALL", "DSA", "NO_INFO", "SCHEMA"]`` value.
-
+            The resulting ``Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']``.
         """
         match get_info:
             case c.Ldap.Ldap3GetInfo.DSA:
@@ -51,8 +50,7 @@ class FlextLdapUtilitiesServer:
         """Create an ldap3 Server instance.
 
         Returns:
-            The resulting ``p.Ldif.Ldap3Server`` value.
-
+            The resulting ``p.Ldif.Ldap3Server``.
         """
         scheme = "ldaps" if use_ssl else "ldap"
         server: p.Ldif.Ldap3Server = ldap3.Server(
@@ -70,8 +68,7 @@ class FlextLdapUtilitiesServer:
         """Create an ldap3 Server instance from a URL string.
 
         Returns:
-            The resulting ``p.Ldif.Ldap3Server`` value.
-
+            The resulting ``p.Ldif.Ldap3Server``.
         """
         server: p.Ldif.Ldap3Server = ldap3.Server(
             server_url,
@@ -91,11 +88,10 @@ class FlextLdapUtilitiesServer:
         """Create an ldap3 Connection instance.
 
         Returns:
-            The resulting ``p.Ldap.Ldap3Connection`` value.
+            The resulting ``p.Ldap.Ldap3Connection``.
 
         Raises:
-            TypeError: If ``server`` is not an ``ldap3.Server`` instance.
-
+            TypeError: If Expected ldap3.Server, got.
         """
         if not isinstance(server, ldap3.Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"
@@ -118,8 +114,7 @@ class FlextLdapUtilitiesServer:
         """Create an ldap3 Server with minimal info retrieval.
 
         Returns:
-            The resulting ``p.Ldif.Ldap3Server`` value.
-
+            The resulting ``p.Ldif.Ldap3Server``.
         """
         server: p.Ldif.Ldap3Server = ldap3.Server(
             host,

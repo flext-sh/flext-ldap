@@ -42,8 +42,7 @@ class TestsFlextLdapApi:
         """Verify context manager does not suppress exceptions.
 
         Raises:
-            RuntimeError: If the value is invalid.
-
+            RuntimeError: Always.
         """
         with pytest.raises(RuntimeError), ldap:
             raise RuntimeError(c.Ldap.Tests.RFC_DEFAULT_FILTER)

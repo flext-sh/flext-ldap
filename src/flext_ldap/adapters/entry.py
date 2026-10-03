@@ -72,8 +72,7 @@ class FlextLdapEntryAdapter(s[bool]):
         """Build conversion metadata tracking ldap3 to LDIF transformation.
 
         Returns:
-            The resulting ``m.Ldap.ConversionMetadata`` value.
-
+            The resulting ``m.Ldap.ConversionMetadata``.
         """
         return u.Ldap.build_conversion_metadata(
             removed_attrs,
@@ -93,8 +92,7 @@ class FlextLdapEntryAdapter(s[bool]):
         """Track DN and attribute differences in conversion metadata.
 
         Returns:
-            The resulting ``m.Ldap.ConversionMetadata`` value.
-
+            The resulting ``m.Ldap.ConversionMetadata``.
         """
         return u.Ldap.track_conversion_differences(
             conversion_metadata,
@@ -105,7 +103,8 @@ class FlextLdapEntryAdapter(s[bool]):
         )
 
     @override
-    def execute(self) -> p.Result[bool]:
+    @staticmethod
+    def execute() -> p.Result[bool]:
         """Execute method required by s.
 
         Business Rules:
@@ -141,8 +140,8 @@ class FlextLdapEntryAdapter(s[bool]):
             - DN is extracted from entry.entry_dn (string conversion)
             - Attributes are extracted from entry.entry_attributes_as_dict
             - Attribute values are normalized to t.StrSequence format
-            - Base64 encoding detection uses ASCII threshold (127) for
-            - non-printable chars
+            - Base64 encoding detection uses ASCII threshold (127) for non-printable
+            chars
             - Removed attributes (None values) are tracked in conversion metadata
             - Conversion metadata includes source DN, removed attrs, base64 attrs
             - Server type from adapter instance is stored in ServerMetadata
@@ -188,8 +187,7 @@ class FlextLdapEntryAdapter(s[bool]):
         """Build an LDIF entry from an ldap3 entry without exception handling.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]`` value.
-
+            The resulting ``p.Result[m.Ldif.Entry]``.
         """
         dn_str = str(ldap3_entry.entry_dn)
         attrs_dict: t.Ldap.Ldap3AttributeDict = ldap3_entry.entry_attributes_as_dict

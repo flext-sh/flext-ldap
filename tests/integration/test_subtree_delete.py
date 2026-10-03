@@ -29,8 +29,7 @@ def _ou_entry(dn: str, ou: str) -> m.Ldif.Entry:
     """Build an organizationalUnit entry for the real directory.
 
     Returns:
-        The resulting ``m.Ldif.Entry`` value.
-
+        The resulting ``m.Ldif.Entry``.
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
@@ -49,8 +48,7 @@ def _user_entry(dn: str, identifier: str, *, cn: str) -> m.Ldif.Entry:
     """Build an inetOrgPerson entry for the real directory.
 
     Returns:
-        The resulting ``m.Ldif.Entry`` value.
-
+        The resulting ``m.Ldif.Entry``.
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
@@ -74,8 +72,7 @@ def _modify_add_entry(dn: str, attribute: str, value: str) -> m.Ldif.Entry:
     """Build a ``changetype: modify`` entry adding one attribute value.
 
     Returns:
-        The resulting ``m.Ldif.Entry`` value.
-
+        The resulting ``m.Ldif.Entry``.
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
@@ -98,8 +95,7 @@ def _attribute_values(dn: str, attribute: str) -> t.StrSequence:
     """Read one attribute of one entry through the public ``find_entry``.
 
     Returns:
-        The resulting ``t.StrSequence`` value.
-
+        The resulting ``t.StrSequence``.
     """
     found = ldap.find_entry(dn, attributes=[attribute])
     tm.ok(found)

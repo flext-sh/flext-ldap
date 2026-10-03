@@ -25,8 +25,7 @@ class FlextLdapUtilitiesNormalization:
         """Check whether a normalized value is present in a collection.
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         collection_list: t.StrSequence
         match collection:
@@ -50,8 +49,7 @@ class FlextLdapUtilitiesNormalization:
         """Normalize and join string values.
 
         Returns:
-            The resulting ``str`` value.
-
+            The resulting ``str``.
         """
         values_list: t.StrSequence
         match values:
@@ -101,8 +99,7 @@ class FlextLdapUtilitiesNormalization:
         """Convert LDAP attributes into string sequences.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.StrSequence]`` value.
-
+            The resulting ``t.MappingKV[str, t.StrSequence]``.
         """
         return {k: cls._convert_attr_value(v) for k, v in (attrs or {}).items()}
 
@@ -113,8 +110,7 @@ class FlextLdapUtilitiesNormalization:
         """Convert an ldap3 attribute payload to canonical string values.
 
         Returns:
-            The resulting ``t.StrSequence`` value.
-
+            The resulting ``t.StrSequence``.
         """
         match value:
             case None:
@@ -145,8 +141,7 @@ class FlextLdapUtilitiesNormalization:
         """Normalize original ldap3 values while preserving list semantics.
 
         Returns:
-            The resulting ``t.StrSequence`` value.
-
+            The resulting ``t.StrSequence``.
         """
         return cls.ldap3_value_to_strings(value)
 
@@ -159,8 +154,7 @@ class FlextLdapUtilitiesNormalization:
         """Extract a DN string from supported LDIF inputs.
 
         Returns:
-            The resulting ``str`` value.
-
+            The resulting ``str``.
         """
         if dn is None:
             return default
@@ -176,8 +170,7 @@ class FlextLdapUtilitiesNormalization:
         """Filter truthy values from a list or mapping.
 
         Returns:
-            The resulting ``t.JsonList | t.JsonMapping`` value.
-
+            The resulting ``t.JsonList | t.JsonMapping``.
         """
         if isinstance(value, Mapping):
             return {k: v for k, v in value.items() if v}
@@ -193,8 +186,7 @@ class FlextLdapUtilitiesNormalization:
         """Normalize a string collection and optionally join it.
 
         Returns:
-            The resulting ``str | t.StrSequence`` value.
-
+            The resulting ``str | t.StrSequence``.
         """
         normalized: t.MutableSequenceOf[str] = []
         for val in values:
@@ -213,8 +205,7 @@ class FlextLdapUtilitiesNormalization:
         """Normalize a string by the requested case.
 
         Returns:
-            The resulting ``str`` value.
-
+            The resulting ``str``.
         """
         if not value:
             return ""

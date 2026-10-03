@@ -24,8 +24,7 @@ class FlextLdapLdap3ResultExtract:
         canonical empty DN via ``m.Ldif.DN.empty()`` when extraction fails.
 
         Returns:
-            The resulting ``m.Ldif.DN`` value.
-
+            The resulting ``m.Ldif.DN``.
         """
         if parsed is None:
             return m.Ldif.DN.empty()
@@ -48,8 +47,7 @@ class FlextLdapLdap3ResultExtract:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model.
 
         Returns:
-            The resulting ``m.Ldif.Attributes`` value.
-
+            The resulting ``m.Ldif.Attributes``.
         """
         empty = m.Ldif.Attributes(attributes={}, attribute_metadata={}, metadata=None)
         if parsed is None:
@@ -79,8 +77,7 @@ class FlextLdapLdap3ResultExtract:
         """Normalize input formats to ``t.Ldap.OperationAttributes``.
 
         Returns:
-            The resulting ``t.Ldap.OperationAttributes`` value.
-
+            The resulting ``t.Ldap.OperationAttributes``.
         """
         if isinstance(attrs, p.Ldap.HasAttributesProperty):
             return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
@@ -104,8 +101,7 @@ class FlextLdapLdap3ResultExtract:
         """Extract server metadata from LDAP entry, returning ``None`` when absent.
 
         Returns:
-            The resulting ``m.Ldif.ServerMetadata | None`` value.
-
+            The resulting ``m.Ldif.ServerMetadata | None``.
         """
         match parsed:
             case None:
@@ -149,8 +145,7 @@ class FlextLdapLdap3ResultExtract:
         """Normalize attribute values to ``t.StrSequence`` format.
 
         Returns:
-            The resulting ``t.Ldap.OperationAttributes`` value.
-
+            The resulting ``t.Ldap.OperationAttributes``.
         """
         if attrs_dict is None:
             return {}
@@ -174,8 +169,7 @@ class FlextLdapLdap3ResultExtract:
         """Filter metadata to ``ServerMetadata``-compatible primitive values.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.Scalar | t.ScalarList] | None`` value.
-
+            The resulting ``t.MappingKV[str, t.Scalar | t.ScalarList] | None``.
         """
         if not metadata:
             return None

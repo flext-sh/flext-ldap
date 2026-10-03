@@ -24,8 +24,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         """Infer server type from rootDSE extensions and naming contexts.
 
         Returns:
-            The resulting ``str`` value.
-
+            The resulting ``str``.
         """
         ext_str = str(cls.map_str(supported_extensions, case="lower", join=" "))
         context_str = cls.norm_join(naming_contexts, case="lower")
@@ -60,8 +59,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         """Evaluate declarative vendor-detection markers for one server type.
 
         Returns:
-            The resulting ``bool`` value.
-
+            The resulting ``bool``.
         """
         required_markers = c.Ldap.ROOT_DSE_VENDOR_REQUIRED_MARKERS.get(
             server_name,
@@ -92,8 +90,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         """Infer server type from vendor metadata when available.
 
         Returns:
-            The resulting ``str | None`` value.
-
+            The resulting ``str | None``.
         """
         vendor_parts = [
             u.to_str(value)
@@ -123,8 +120,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         """Resolve the effective server type from rootDSE metadata.
 
         Returns:
-            The resulting ``str`` value.
-
+            The resulting ``str``.
         """
         return cls.detect_from_vendor(
             vendor_name,

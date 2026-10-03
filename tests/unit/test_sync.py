@@ -30,6 +30,7 @@ class TestsFlextLdapSync:
 
     @staticmethod
     @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
+    @staticmethod
     def test_sync_phase_entries_missing_file_fails_with_parse_error(
         phase: str,
     ) -> None:
@@ -45,6 +46,7 @@ class TestsFlextLdapSync:
 
     @staticmethod
     @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
+    @staticmethod
     def test_sync_multiple_phases_missing_file_fails_with_not_found(
         phase: str,
     ) -> None:
@@ -158,8 +160,8 @@ class TestsFlextLdapSync:
             c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
             encoding="utf-8",
         )
-        # Act / Assert: an unsupported arity is a contract violation,
-        # not a failure result
+        # Act / Assert: an unsupported arity is a contract violation, not a failure
+        # result
         with pytest.raises(TypeError, match="single-phase"):
             ldap.sync_phase_entries(
                 ldif_file,

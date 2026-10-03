@@ -66,6 +66,7 @@ class TestsFlextLdapConfig:
 
     @staticmethod
     @pytest.mark.parametrize(c.Ldap.Tests.FIELD_PORT, c.Ldap.Tests.CONFIG_VALID_PORTS)
+    @staticmethod
     def test_in_range_port_is_accepted(port: int) -> None:
         """Verify in range port is accepted."""
         u.Ldap.Tests.that(
@@ -77,6 +78,7 @@ class TestsFlextLdapConfig:
 
     @staticmethod
     @pytest.mark.parametrize("port", [0, -1, 65536, 70000, 999999])
+    @staticmethod
     def test_out_of_range_port_is_rejected(port: int) -> None:
         """Verify out of range port is rejected."""
         with pytest.raises(c.ValidationError):
@@ -86,6 +88,7 @@ class TestsFlextLdapConfig:
 
     @staticmethod
     @pytest.mark.parametrize(c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.CONFIG_HOST_CASES)
+    @staticmethod
     def test_host_is_stored_verbatim(host: str) -> None:
         """Verify host is stored verbatim."""
         u.Ldap.Tests.that(
@@ -97,6 +100,7 @@ class TestsFlextLdapConfig:
 
     @staticmethod
     @pytest.mark.parametrize(("ssl", "tls"), c.Ldap.Tests.CONFIG_SSL_TLS_COMBOS)
+    @staticmethod
     def test_ssl_and_tls_flags_are_independent(*, ssl: bool, tls: bool) -> None:
         """Verify ssl and tls flags are independent."""
         cfg = LdapTestSettings(Ldap=_LdapSettings(use_ssl=ssl, use_tls=tls))

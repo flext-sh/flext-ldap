@@ -47,8 +47,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Provide fail.
 
                 Returns:
-                    The resulting ``str`` value.
-
+                    The resulting ``str``.
                 """
                 failure_message: str = tm.fail(result, **kwargs)
                 return failure_message
@@ -60,8 +59,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Provide ok.
 
                 Returns:
-                    The resulting ``TResult`` value.
-
+                    The resulting ``TResult``.
                 """
                 return tm.ok(result)
 
@@ -72,8 +70,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Provide check.
 
                 Returns:
-                    The resulting ``m.Tests.Chain[TResult]`` value.
-
+                    The resulting ``m.Tests.Chain[TResult]``.
                 """
                 return tm.check(result)
 
@@ -84,8 +81,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Create an ldap3 server from container metadata.
 
                 Returns:
-                    The resulting ``p.Ldif.Ldap3Server`` value.
-
+                    The resulting ``p.Ldif.Ldap3Server``.
                 """
                 server_url = ldap_container["server_url"]
                 server: p.Ldif.Ldap3Server = u.Ldap.create_server_from_url(
@@ -101,8 +97,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Create an ldap3 connection from container metadata.
 
                 Returns:
-                    The resulting ``p.Ldap.Ldap3Connection`` value.
-
+                    The resulting ``p.Ldap.Ldap3Connection``.
                 """
                 connection: p.Ldap.Ldap3Connection = u.Ldap.create_connection(
                     server,
@@ -118,11 +113,10 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Build a typed connection settings from container metadata.
 
                 Returns:
-                    The resulting ``m.Ldap.ConnectionConfig`` value.
+                    The resulting ``m.Ldap.ConnectionConfig``.
 
                 Raises:
-                    TypeError: If the container port has an unsupported type.
-
+                    TypeError: If ldap_container port must be int, str or float, got.
                 """
                 port = ldap_container["port"]
                 port_value = (
@@ -190,8 +184,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 container fixture skips instead of faking the service.
 
                 Returns:
-                    The resulting ``Path`` value.
-
+                    The resulting ``Path``.
                 """
                 rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
                 here: Path = Path(__file__).resolve()
@@ -207,8 +200,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Create Docker test infrastructure controller.
 
                 Returns:
-                    The resulting ``tk`` value.
-
+                    The resulting ``tk``.
                 """
                 return tk.compose(
                     compose_file=c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL,
@@ -259,12 +251,12 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Resolve working LDAP admin credentials.
 
                 Returns:
-                    The resulting ``tuple[str, str]`` value.
+                    The resulting ``tuple[str, str]``.
 
                 Raises:
-                    RuntimeError: If no valid LDAP admin credential can be
-                        resolved.
-
+                    RuntimeError: If Failed to resolve a valid LDAP admin credential for
+                        test LDAP container. Check that the LDAP container is running
+                        and credentials are correct.
                 """
                 cache = cls._resolved_admin_credentials
                 if cache[0] is not None:
@@ -303,9 +295,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 """Ensure the base organizational units exist for smoke tests.
 
                 Raises:
-                    RuntimeError: If an organizational unit entry cannot be
-                        created.
-
+                    RuntimeError: If Failed to create.
                 """
                 admin_dn, admin_password = cls.get_admin_credentials()
                 connection = u.Ldap.create_connection(

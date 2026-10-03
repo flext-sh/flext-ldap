@@ -19,8 +19,7 @@ class FlextLdapApiRuntime:
         """Context manager entry.
 
         Returns:
-            The resulting ``Self`` value.
-
+            The resulting ``Self``.
         """
         return self
 

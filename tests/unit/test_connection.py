@@ -26,6 +26,7 @@ class TestsFlextLdapConnection:
 
     @staticmethod
     @pytest.fixture
+    @staticmethod
     def _isolated_disconnected_facade() -> Iterator[None]:
         """Guarantee each test starts and ends from a disconnected facade."""
         ldap.disconnect()
@@ -37,8 +38,7 @@ class TestsFlextLdapConnection:
         """Build a typed config pointing at an unreachable host.
 
         Returns:
-            The resulting ``m.Ldap.ConnectionConfig`` value.
-
+            The resulting ``m.Ldap.ConnectionConfig``.
         """
         return m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.CONFIG_INVALID_HOST,

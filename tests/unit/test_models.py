@@ -78,6 +78,7 @@ class TestsFlextLdapModelsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("case", c.Ldap.Tests.ConnectionSecurityCase)
+    @staticmethod
     def test_connection_config_accepts_single_security_mode(
         case: c.Ldap.Tests.ConnectionSecurityCase,
     ) -> None:
@@ -106,6 +107,7 @@ class TestsFlextLdapModelsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
+    @staticmethod
     def test_connection_config_rejects_out_of_range_ports(
         invalid_port: int,
     ) -> None:

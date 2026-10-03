@@ -50,6 +50,7 @@ class TestsFlextLdapConstantsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
+    @staticmethod
     def test_is_valid_status_accepts_every_enum_member(
         status: c.Ldap.Status,
     ) -> None:
@@ -58,6 +59,7 @@ class TestsFlextLdapConstantsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
+    @staticmethod
     def test_is_valid_status_accepts_every_status_string_value(
         status: c.Ldap.Status,
     ) -> None:
@@ -151,6 +153,7 @@ class TestsFlextLdapConstantsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
+    @staticmethod
     def test_operation_success_messages_defined_for_every_operation(
         operation: c.Ldap.OperationType,
     ) -> None:
@@ -160,6 +163,7 @@ class TestsFlextLdapConstantsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
+    @staticmethod
     def test_operation_failure_prefixes_defined_for_every_operation(
         operation: c.Ldap.OperationType,
     ) -> None:

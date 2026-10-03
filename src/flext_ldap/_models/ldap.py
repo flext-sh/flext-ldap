@@ -20,8 +20,7 @@ def _empty_phase_results() -> t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResu
     """Build an immutable, precisely typed empty phase result mapping.
 
     Returns:
-        The resulting ``t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]`` value.
-
+        The resulting ``t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]``.
     """
     return MappingProxyType({})
 
@@ -63,11 +62,10 @@ class FlextLdapModelsLdap:
             """Validate that SSL and TLS are mutually exclusive.
 
             Returns:
-                The resulting ``Self`` value.
+                The resulting ``Self``.
 
             Raises:
-                ValueError: If both ``use_ssl`` and ``use_tls`` are enabled.
-
+                ValueError: If use_ssl and use_tls are mutually exclusive.
             """
             if self.use_ssl and self.use_tls:
                 msg = "use_ssl and use_tls are mutually exclusive"
@@ -133,8 +131,7 @@ class FlextLdapModelsLdap:
             returned for a meaningful comparison — ldap3 omits them unless asked.
 
             Returns:
-                The resulting ``Self`` value.
-
+                The resulting ``Self``.
             """
             return cls(
                 base_dn=base_dn,
