@@ -47,7 +47,7 @@ class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
                 @staticmethod
                 def execute() -> p.Result[bool]:
                     return r[bool].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
+                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE
                     )
 
 
