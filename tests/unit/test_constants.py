@@ -48,6 +48,7 @@ class TestsFlextLdapConstantsUnit:
         """Verify valid statuses covers every status member."""
         u.Ldap.Tests.that(frozenset(c.Ldap.Status) == c.Ldap.VALID_STATUSES, eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     @staticmethod
     def test_is_valid_status_accepts_every_enum_member(
@@ -56,6 +57,7 @@ class TestsFlextLdapConstantsUnit:
         """Verify is valid status accepts every enum member."""
         u.Ldap.Tests.that(u.Ldap.Validation.valid_status(status), eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     @staticmethod
     def test_is_valid_status_accepts_every_status_string_value(
@@ -149,6 +151,7 @@ class TestsFlextLdapConstantsUnit:
     # Operation message maps keyed by every OperationType
     # ------------------------------------------------------------------ #
 
+    @staticmethod
     @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
     @staticmethod
     def test_operation_success_messages_defined_for_every_operation(
@@ -158,6 +161,7 @@ class TestsFlextLdapConstantsUnit:
         message: str = c.Ldap.OPERATION_SUCCESS_MESSAGES[operation]
         u.Ldap.Tests.that(bool(message), eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
     @staticmethod
     def test_operation_failure_prefixes_defined_for_every_operation(
