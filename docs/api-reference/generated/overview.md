@@ -9,7 +9,7 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 - Package: `flext_ldap`
-- Version: `0.20.0`
+- Version: `0.12.0`
 - Description: Enterprise LDAP Operations Library for FLEXT Framework
 - Doc summary: Flext Ldap package.
 - Classifiers: Development Status :: 3 - Alpha, Intended Audience :: Developers,
