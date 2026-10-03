@@ -21,7 +21,7 @@ Architecture Notes:
     - Implements Adapter pattern between ldap3 and ldif domains
     - Python 3.13: Uses guard-based sequence handling
     - Extends s[bool] for health check capability
-    - Inner class _ConversionHelpers follows SRP for value processing
+    - Value normalization and base64 detection delegate to ``u.Ldap``
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -31,8 +31,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, m, p, s, t, u
 from flext_ldif import e, r
+
+from flext_ldap import c, m, p, s, t, u
 
 
 class FlextLdapEntryAdapter(s[bool]):
@@ -48,37 +49,6 @@ class FlextLdapEntryAdapter(s[bool]):
     All operations are generic and work with any LDAP server by leveraging
     flext-ldif's servers system for server-specific handling.
     """
-
-    class _ConversionHelpers:
-        """Conversion helper methods for entry value and attribute processing (SRP).
-
-        Handles normalization of ldap3 values to LDIF list format with base64 detection.
-        Uses u type guards for safe type narrowing (no isinstance checks).
-        """
-
-        ASCII_THRESHOLD: int = c.Ldif.ASCII_THRESHOLD
-
-        @staticmethod
-        def convert_value_to_strings(value: t.Ldap.Ldap3EntryValue) -> t.StrSequence:
-            """Compatibility shim delegating value normalization to ``u.Ldap``."""
-            result: t.StrSequence = u.Ldap.ldap3_value_to_strings(value)
-            return result
-
-        @staticmethod
-        def is_base64_encoded(
-            value: str, threshold: int = c.Ldif.ASCII_THRESHOLD
-        ) -> bool:
-            """Compatibility shim delegating encoding detection to ``u.Ldap``."""
-            encoded: bool = u.Ldap.is_base64_encoded(value, threshold)
-            return encoded
-
-        @staticmethod
-        def normalize_original_attr_value(
-            value: t.Ldap.Ldap3EntryValue,
-        ) -> t.StrSequence:
-            """Compatibility shim delegating normalization to ``u.Ldap``."""
-            result: t.StrSequence = u.Ldap.normalize_original_attr_value(value)
-            return result
 
     _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldif.ServerTypes.RFC)
 
@@ -98,21 +68,32 @@ class FlextLdapEntryAdapter(s[bool]):
         base64_attrs: t.StrSequence,
         original_attrs_dict: t.MappingKV[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
-    ) -> p.Ldap.ConversionMetadata:
-        """Build conversion metadata tracking ldap3 to LDIF transformation."""
+    ) -> m.Ldap.ConversionMetadata:
+        """Build conversion metadata tracking ldap3 to LDIF transformation.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata``.
+        """
         return u.Ldap.build_conversion_metadata(
-            removed_attrs, base64_attrs, original_attrs_dict, original_dn
+            removed_attrs,
+            base64_attrs,
+            original_attrs_dict,
+            original_dn,
         )
 
     @staticmethod
     def _track_conversion_differences(
-        conversion_metadata: p.Ldap.ConversionMetadata,
+        conversion_metadata: m.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: t.MappingKV[str, t.StrSequence],
-    ) -> p.Ldap.ConversionMetadata:
-        """Track DN and attribute differences in conversion metadata."""
+    ) -> m.Ldap.ConversionMetadata:
+        """Track DN and attribute differences in conversion metadata.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata``.
+        """
         return u.Ldap.track_conversion_differences(
             conversion_metadata,
             original_dn=original_dn,
@@ -122,7 +103,8 @@ class FlextLdapEntryAdapter(s[bool]):
         )
 
     @override
-    def execute(self) -> p.Result[bool]:
+    @staticmethod
+    def execute() -> p.Result[bool]:
         """Execute method required by s.
 
         Business Rules:
@@ -149,15 +131,17 @@ class FlextLdapEntryAdapter(s[bool]):
         return r[bool].ok(value=True)
 
     def ldap3_to_ldif_entry(
-        self, ldap3_entry: p.Ldap.Ldap3Entry
-    ) -> p.Result[p.Ldif.Entry]:
+        self,
+        ldap3_entry: p.Ldif.Ldap3Entry,
+    ) -> p.Result[m.Ldif.Entry]:
         """Convert ldap3.Entry to p.Ldif.Entry.
 
         Business Rules:
             - DN is extracted from entry.entry_dn (string conversion)
             - Attributes are extracted from entry.entry_attributes_as_dict
             - Attribute values are normalized to t.StrSequence format
-            - Base64 encoding detection uses ASCII threshold (127) for non-printable chars
+            - Base64 encoding detection uses ASCII threshold (127) for non-printable
+            chars
             - Removed attributes (None values) are tracked in conversion metadata
             - Conversion metadata includes source DN, removed attrs, base64 attrs
             - Server type from adapter instance is stored in ServerMetadata
@@ -197,9 +181,14 @@ class FlextLdapEntryAdapter(s[bool]):
             return e.fail_operation("create Entry", exc)
 
     def _build_ldif_entry_from_ldap3(
-        self, ldap3_entry: p.Ldap.Ldap3Entry
-    ) -> p.Result[p.Ldif.Entry]:
-        """Build an LDIF entry from an ldap3 entry without exception handling."""
+        self,
+        ldap3_entry: p.Ldif.Ldap3Entry,
+    ) -> p.Result[m.Ldif.Entry]:
+        """Build an LDIF entry from an ldap3 entry without exception handling.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         dn_str = str(ldap3_entry.entry_dn)
         attrs_dict: t.Ldap.Ldap3AttributeDict = ldap3_entry.entry_attributes_as_dict
         original_attrs_dict: t.Ldap.Ldap3AttributeDict = attrs_dict
@@ -209,25 +198,38 @@ class FlextLdapEntryAdapter(s[bool]):
         for key, raw_value in attrs_dict.items():
             ldif_attrs[key] = list(
                 self._convert_ldap3_value_to_list(
-                    raw_value, key, base64_attrs, removed_attrs
-                )
+                    raw_value,
+                    key,
+                    base64_attrs,
+                    removed_attrs,
+                ),
             )
         conversion_metadata = FlextLdapEntryAdapter._build_conversion_metadata(
-            removed_attrs, base64_attrs, original_attrs_dict, dn_str
+            removed_attrs,
+            base64_attrs,
+            original_attrs_dict,
+            dn_str,
         )
         conversion_metadata = FlextLdapEntryAdapter._track_conversion_differences(
-            conversion_metadata, dn_str, dn_str, original_attrs_dict, ldif_attrs
+            conversion_metadata,
+            dn_str,
+            dn_str,
+            original_attrs_dict,
+            ldif_attrs,
         )
         metadata_obj = m.Ldif.ServerMetadata(
             server_type=c.Ldif.ServerTypes(self._server_type),
             extensions=conversion_metadata.model_dump(exclude_defaults=False),
         )
         return m.Ldif.Entry.create(
-            dn=dn_str, attributes=ldif_attrs, metadata=metadata_obj
+            dn=dn_str,
+            attributes=ldif_attrs,
+            metadata=metadata_obj,
         )
 
     def ldif_entry_to_ldap3_attributes(
-        self, entry: p.Ldif.Entry
+        self,
+        entry: m.Ldif.Entry,
     ) -> p.Result[t.Ldap.OperationAttributes]:
         """Convert p.Ldif.Entry to ldap3 attributes format.
 
@@ -251,7 +253,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Returns t.MappingKV[str, t.StrSequence] format expected by ldap3
 
         Args:
-            entry: p.Ldif.Entry with attributes to convert.
+            entry: m.Ldif.Entry with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:
@@ -287,19 +289,19 @@ class FlextLdapEntryAdapter(s[bool]):
             )
             return e.fail_operation("convert attributes to ldap3 format", exc)
 
+    @staticmethod
     def _convert_ldap3_value_to_list(
-        self,
         value: t.Ldap.Ldap3EntryValue | None,
         key: str,
         base64_attrs: t.MutableSequenceOf[str],
         removed_attrs: t.MutableSequenceOf[str],
-        ascii_threshold: int = _ConversionHelpers.ASCII_THRESHOLD,
+        ascii_threshold: int = c.Ldif.ASCII_THRESHOLD,
     ) -> t.StrSequence:
         """Convert ldap3 attribute value to list format, tracking metadata.
 
         Business Rules:
             - None values are tracked in removed_attrs and return []
-            - Values are converted using _ConversionHelpers.convert_value_to_strings()
+            - Values are converted using u.Ldap.ldap3_value_to_strings()
             - Base64 encoding detection uses ASCII threshold (127)
             - Attributes requiring base64 are tracked in base64_attrs
             - Mutates tracking lists for conversion metadata generation
@@ -310,7 +312,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Tracking enables audit trail of value transformations
 
         Architecture:
-            - Uses _ConversionHelpers for value conversion
+            - Uses u.Ldap for value conversion
             - Mutates base64_attrs and removed_attrs lists (side effect)
             - Uses type guards for safe value type narrowing
             - Returns t.StrSequence for consistent format
@@ -330,10 +332,7 @@ class FlextLdapEntryAdapter(s[bool]):
             removed_attrs.append(key)
             empty_values: t.StrSequence = []
             return empty_values
-        converted_values = list(self._ConversionHelpers.convert_value_to_strings(value))
-        if any(
-            self._ConversionHelpers.is_base64_encoded(v, ascii_threshold)
-            for v in converted_values
-        ):
+        converted_values = list(u.Ldap.ldap3_value_to_strings(value))
+        if any(u.Ldap.base64_encoded(v, ascii_threshold) for v in converted_values):
             base64_attrs.append(key)
         return converted_values

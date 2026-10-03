@@ -1,4 +1,4 @@
-"""LDAP3 adapter — SearchExecutor.
+"""LDAP3 adapter — FlextLdapLdap3SearchExecutor.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,46 +6,43 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import c, m, p, t
-from flext_ldap.adapters._ldap3.result_converter import ResultConverter
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldif import r
 
+from flext_ldap import c, m, p, t
+from flext_ldap.adapters._ldap3.result_converter import FlextLdapLdap3ResultConverter
+from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 
-class SearchExecutor:
+
+class FlextLdapLdap3SearchExecutor:
     """LDAP search executor (SRP).
 
     Stateless dispatcher: invokes ldap3 Connection.search via
     ``FlextLdapLdap3Wrappers``, validates the result code, then delegates
-    parsing to ``ResultConverter``.
+    parsing to ``FlextLdapLdap3ResultConverter``.
     """
 
     @staticmethod
     def execute(
         connection: p.Ldap.Ldap3Connection,
-        params: p.Ldap.SearchParams,
+        params: m.Ldap.SearchParams,
         server_type: c.Ldif.ServerTypes | str,
-    ) -> p.Result[t.SequenceOf[p.Ldif.Entry]]:
-        """Execute LDAP search and return parsed entries via ``ResultConverter``."""
+    ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
+        """Execute LDAP search and return entries parsed by the result converter.
+
+        Returns:
+            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]``.
+        """
         try:
-            _ = FlextLdapLdap3Wrappers.search(
-                connection,
-                search_base=params.base_dn,
-                search_filter=params.filter_str,
-                search_scope=params.ldap_scope,
-                attributes=params.search_attributes,
-                size_limit=params.size_limit,
-                time_limit=params.time_limit,
-            )
+            _ = FlextLdapLdap3Wrappers.search(connection, params)
         except c.EXC_BROAD_IO_TYPE as exc:
-            return r[t.SequenceOf[p.Ldif.Entry]].fail_op("Search", exc)
+            return r[t.SequenceOf[m.Ldif.Entry]].fail_op("Search", exc)
         conn_result = connection.result or {}
         result_code = conn_result.get("result", -1)
         if result_code not in c.Ldap.PARTIAL_SUCCESS_CODES:
             error_msg = conn_result.get("message", "LDAP search failed")
             error_desc = conn_result.get("description", "unknown")
-            return r[t.SequenceOf[p.Ldif.Entry]].fail(
-                f"LDAP search failed: {error_desc} - {error_msg}"
+            return r[t.SequenceOf[m.Ldif.Entry]].fail(
+                f"LDAP search failed: {error_desc} - {error_msg}",
             )
         try:
             server_type_enum = (
@@ -54,23 +51,21 @@ class SearchExecutor:
                 else c.Ldif.ServerTypes(server_type)
             )
         except ValueError:
-            return r[t.SequenceOf[p.Ldif.Entry]].fail(
-                f"Unsupported server type: {server_type}"
+            return r[t.SequenceOf[m.Ldif.Entry]].fail(
+                f"Unsupported server type: {server_type}",
             )
         _ = server_type_enum
-        ldap3_results = ResultConverter.convert_ldap3_results(connection)
-        entries: t.MutableSequenceOf[p.Ldif.Entry] = []
+        ldap3_results = FlextLdapLdap3ResultConverter.convert_ldap3_results(connection)
+        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
         for dn, attrs in ldap3_results:
             str_attrs: t.MutableMappingKV[str, t.MutableSequenceOf[str] | str] = {
                 k: list(v) for k, v in attrs.items()
             }
             entry_result = m.Ldif.Entry.create(dn=dn, attributes=str_attrs)
             if entry_result.failure:
-                return r[t.SequenceOf[p.Ldif.Entry]].fail(
-                    entry_result.error or "Failed to create LDAP search entry"
-                )
+                return r[t.SequenceOf[m.Ldif.Entry]].from_failure(entry_result)
             entries.append(entry_result.value)
-        return r[t.SequenceOf[p.Ldif.Entry]].ok(entries)
+        return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
 
 
-__all__: list[str] = ["SearchExecutor"]
+__all__: list[str] = ["FlextLdapLdap3SearchExecutor"]

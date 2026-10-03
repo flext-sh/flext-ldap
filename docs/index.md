@@ -1,13 +1,24 @@
-<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
-
 # flext-ldap Documentation
 
-- Version: `0.20.0`
+<!-- TOC START -->
+
+- [Start Here](#start-here)
+- [Public Surface Summary](#public-surface-summary)
+- [Collection Rules](#collection-rules)
+- [Quality Gates](#quality-gates)
+- [Governance Pointer](#governance-pointer)
+
+<!-- TOC END -->
+
+<!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
+
+- Version: `0.12.0`
 - Project class: `domain`
 - Package: `flext_ldap`
 - Description: Enterprise LDAP Operations Library for FLEXT Framework
 
-This project portal is generated from `pyproject.toml`, package exports, and real docstrings.
+This project portal is generated from `pyproject.toml`, package exports, and real
+docstrings.
 
 ## Start Here
 
@@ -19,6 +30,7 @@ This project portal is generated from `pyproject.toml`, package exports, and rea
 ## Public Surface Summary
 
 ::: flext_ldap
+
     options:
       members: false
       show_root_heading: false
@@ -27,15 +39,26 @@ This project portal is generated from `pyproject.toml`, package exports, and rea
 
 ## Collection Rules
 
-Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/main/AGENTS.md) §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry verification).
+Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
+§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent
+FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry
+verification).
 
 ## Quality Gates
 
-Canonical `make` verbs (`check`, `test`, `val`, `docs`) — see `AGENTS.md` §5 (Make Contract) and the [`flext-quality-gates`](https://github.com/flext-sh/flext/blob/main/.agents/skills/flext-quality-gates/SKILL.md) skill for selectors and thresholds.
+Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) execute their declared
+operations directly.
+
+See [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
+for the build, test, and Python quality gates.
 
 ## Governance Pointer
 
-- Engineering law: [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/main/AGENTS.md)
-- Governance + ADRs: [`/flext/docs/GOVERNANCE.md`](https://github.com/flext-sh/flext/blob/main/docs/GOVERNANCE.md)
-- Skills index: [`/flext/.agents/skills/`](https://github.com/flext-sh/flext/tree/main/.agents/skills/)
-- Onboarding: [`/flext/docs/guides/onboarding.md`](https://github.com/flext-sh/flext/blob/main/docs/guides/onboarding.md)
+- Engineering law:
+  [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
+- Governance + ADRs:
+  [`/flext/docs/GOVERNANCE.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/GOVERNANCE.md)
+- Skills index:
+  [`/flext/.agents/skills/`](https://github.com/flext-sh/flext/tree/0.12.0-dev/.agents/skills/)
+- Onboarding:
+  [`/flext/docs/guides/onboarding.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/guides/onboarding.md)

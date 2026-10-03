@@ -13,7 +13,6 @@ from typing import Protocol, TypeGuard
 
 import pytest
 
-from flext_ldap import FlextLdapLdap3Wrappers
 from tests import c, t, u
 
 # NOTE (multi-agent): mro-wkii.17.20 relies on the flext_tests pytest11 fixtures.
@@ -40,8 +39,7 @@ def _get_worker_id(settings: pytest.Config) -> str:
 
 
 def _docker_compose_path() -> Path:
-    compose_file_rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-    return Path(__file__).resolve().parents[1] / compose_file_rel
+    return u.Ldap.Tests.repository_root() / c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
 
 
 def _docker_compose_available() -> bool:
@@ -70,24 +68,33 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) ->
 
 @pytest.fixture(scope="session")
 def worker_id(request: pytest.FixtureRequest) -> str:
-    """Provide worker id."""
+    """Provide worker id.
+
+    Returns:
+        The resulting ``str``.
+    """
     return _get_worker_id(request.config)
 
 
 @pytest.fixture(scope="session")
 def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
-    """Provide ldap container."""
+    """Provide ldap container.
+
+    Returns:
+        The resulting ``t.MappingKV[str, t.Scalar]``.
+    """
     if not _docker_compose_available():
         pytest.skip(
             "LDAP smoke tests require the Docker compose file; skipping because "
-            "it is unavailable in this environment."
+            "it is unavailable in this environment.",
         )
     lock = u.Ldap.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock"
+        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
     )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
-        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
+        # Start the container before probing credentials — bind probes require
+        # a listening LDAP server (get_admin_credentials fails closed otherwise).
         execute_result = docker_control.execute()
         if execute_result.failure:
             msg = (
@@ -96,8 +103,12 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
             )
             pytest.skip(msg)
         waited: float = 0.0
+        admin_dn = ""
+        admin_password = ""
+        last_bind_error: Exception | None = None
         while waited < c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT:
             try:
+                admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
                 srv = u.Ldap.create_server_from_url(
                     f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
                     get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
@@ -109,17 +120,34 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                     auto_bind=True,
                     receive_timeout=1,
                 )
-                if conn.bound:
-                    FlextLdapLdap3Wrappers.unbind(conn)
-                    break
-            except (t.Ldap.LDAPException, ConnectionError, TimeoutError, OSError):
-                pass
+            except (
+                RuntimeError,
+                t.Ldap.LDAPException,
+                ConnectionError,
+                TimeoutError,
+                OSError,
+            ) as exc:
+                last_bind_error = exc
+            else:
+                try:
+                    if conn.bound:
+                        conn.unbind()
+                        break
+                except (
+                    RuntimeError,
+                    t.Ldap.LDAPException,
+                    ConnectionError,
+                    TimeoutError,
+                    OSError,
+                ) as exc:
+                    last_bind_error = exc
             time.sleep(1.0)
             waited += 1.0
         else:
+            detail = f"; last bind error: {last_bind_error}" if last_bind_error else ""
             msg = (
                 f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} LDAP not ready "
-                f"within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s "
+                f"within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s{detail}"
                 f"(LDAP server unavailable)"
             )
             pytest.skip(msg)

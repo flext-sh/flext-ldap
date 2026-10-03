@@ -11,15 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Iterator
 
 import pytest
 
 from flext_ldap import ldap
-from tests import c, m, p, u
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
+from tests import c, m, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -28,14 +25,20 @@ class TestsFlextLdapConnection:
     """Connection lifecycle contract, asserted through the public API only."""
 
     @pytest.fixture
-    def _isolated_disconnected_facade(self) -> Iterator[None]:
+    @staticmethod
+    def _isolated_disconnected_facade() -> Iterator[None]:
         """Guarantee each test starts and ends from a disconnected facade."""
         ldap.disconnect()
         yield
         ldap.disconnect()
 
-    def _invalid_config(self) -> p.Ldap.ConnectionConfig:
-        """Build a typed config pointing at an unreachable host."""
+    @staticmethod
+    def _invalid_config() -> m.Ldap.ConnectionConfig:
+        """Build a typed config pointing at an unreachable host.
+
+        Returns:
+            The resulting ``m.Ldap.ConnectionConfig``.
+        """
         return m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.CONFIG_INVALID_HOST,
             port=c.Ldap.PORT,
@@ -43,21 +46,26 @@ class TestsFlextLdapConnection:
             bind_password=c.Ldap.Tests.BIND_ADMIN_PASSWORD,
         )
 
-    def test_is_connected_is_false_before_any_connection(self) -> None:
+    @staticmethod
+    def test_is_connected_is_false_before_any_connection() -> None:
         """A freshly obtained facade reports no active connection."""
         u.Ldap.Tests.that(ldap.is_connected, eq=False)
 
-    def test_execute_without_connection_fails_with_not_connected(self) -> None:
+    @staticmethod
+    def test_execute_without_connection_fails_with_not_connected() -> None:
         """execute() surfaces a NOT_CONNECTED failure when unbound."""
         error = u.Ldap.Tests.fail(ldap.execute())
 
         u.Ldap.Tests.that(
-            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
+            error.lower(),
+            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
 
     @pytest.mark.parametrize("auto_retry", [False, True])
     def test_connect_invalid_host_fails_and_stays_disconnected(
-        self, *, auto_retry: bool
+        self,
+        *,
+        auto_retry: bool,
     ) -> None:
         """connect() to an unreachable host fails without binding the facade.
 
@@ -76,7 +84,8 @@ class TestsFlextLdapConnection:
         u.Ldap.Tests.that(error, none=False)
         u.Ldap.Tests.that(ldap.is_connected, eq=False)
 
-    def test_disconnect_is_idempotent_and_preserves_failure_semantics(self) -> None:
+    @staticmethod
+    def test_disconnect_is_idempotent_and_preserves_failure_semantics() -> None:
         """Repeated disconnect() calls are safe and keep execute() failing."""
         ldap.disconnect()
         ldap.disconnect()
@@ -84,15 +93,18 @@ class TestsFlextLdapConnection:
         u.Ldap.Tests.that(ldap.is_connected, eq=False)
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
-            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
+            error.lower(),
+            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
 
-    def test_context_manager_yields_same_facade(self) -> None:
+    @staticmethod
+    def test_context_manager_yields_same_facade() -> None:
         """The context manager binds the facade itself as the ``as`` target."""
         with ldap as client:
             u.Ldap.Tests.that(client is ldap, eq=True)
 
-    def test_context_manager_exit_leaves_facade_disconnected(self) -> None:
+    @staticmethod
+    def test_context_manager_exit_leaves_facade_disconnected() -> None:
         """Leaving the context disconnects and keeps NOT_CONNECTED semantics."""
         with ldap as client:
             u.Ldap.Tests.that(client.is_connected, eq=False)
@@ -100,8 +112,6 @@ class TestsFlextLdapConnection:
         u.Ldap.Tests.that(ldap.is_connected, eq=False)
         error = u.Ldap.Tests.fail(ldap.execute())
         u.Ldap.Tests.that(
-            error.lower(), contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower()
+            error.lower(),
+            contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
-
-
-__all__: list[str] = ["TestsFlextLdapConnection"]

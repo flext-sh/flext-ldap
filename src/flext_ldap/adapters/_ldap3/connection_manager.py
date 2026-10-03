@@ -1,4 +1,4 @@
-"""LDAP3 adapter — ConnectionManager.
+"""LDAP3 adapter — FlextLdapLdap3ConnectionManager.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,25 +6,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif import e, r
 from ldap3 import Connection, Server
 
-from flext_ldap import c, p
+from flext_ldap import c, m, p
 from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
-from flext_ldif import e, r
 
 
-class ConnectionManager:
+class FlextLdapLdap3ConnectionManager:
     """Connection management logic (SRP)."""
 
     @staticmethod
     def create_connection(
-        server: p.Ldap.Ldap3Server, settings: p.Ldap.ConnectionConfig
+        server: p.Ldif.Ldap3Server,
+        settings: m.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
         """Create ldap3 p.Ldap.Ldap3Connection t.JsonValue.
 
         Business Rules:
             - Bind credentials (user, password) from settings
-            - auto_bind from settings controls automatic binding
+            - Constructor never binds; the adapter binds after taking ownership
             - auto_range from settings controls automatic range handling
             - Receive timeout uses settings.timeout value
             - p.Ldap.Ldap3Connection is created but may not be bound yet
@@ -32,15 +33,17 @@ class ConnectionManager:
         Architecture:
             - Uses ldap3 p.Ldap.Ldap3Connection() constructor directly
             - Returns p.Ldap.Ldap3Connection instance (may need bind() call)
-            - No network calls if auto_bind=False
+            - No network calls during construction
 
         Args:
             server: ldap3 Server t.JsonValue from create_server().
             settings: p.Ldap.Ldap3Connection configuration with bind credentials.
 
         Returns:
-            ldap3 p.Ldap.Ldap3Connection t.JsonValue (bound if auto_bind=True).
+            ldap3 p.Ldap.Ldap3Connection t.JsonValue, initially unbound.
 
+        Raises:
+            TypeError: If Expected ldap3.Server, got.
         """
         if not isinstance(server, Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"
@@ -49,14 +52,14 @@ class ConnectionManager:
             server=server,
             user=settings.bind_dn,
             password=settings.bind_password,
-            auto_bind=settings.auto_bind,
+            auto_bind=False,
             auto_range=settings.auto_range,
             check_names=False,
             receive_timeout=settings.timeout,
         )
 
     @staticmethod
-    def create_server(settings: p.Ldap.ConnectionConfig) -> p.Ldap.Ldap3Server:
+    def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldif.Ldap3Server:
         """Create ldap3 Server t.JsonValue.
 
         Business Rules:
@@ -85,12 +88,15 @@ class ConnectionManager:
                 connect_timeout=settings.timeout,
             )
         return Server(
-            host=settings.host, port=settings.port, connect_timeout=settings.timeout
+            host=settings.host,
+            port=settings.port,
+            connect_timeout=settings.timeout,
         )
 
     @staticmethod
     def handle_tls(
-        connection: p.Ldap.Ldap3Connection, settings: p.Ldap.ConnectionConfig
+        connection: p.Ldap.Ldap3Connection,
+        settings: m.Ldap.ConnectionConfig,
     ) -> p.Result[bool]:
         """Handle STARTTLS if requested.
 
@@ -129,4 +135,4 @@ class ConnectionManager:
             return r[bool].fail(error_msg)
 
 
-__all__: list[str] = ["ConnectionManager"]
+__all__: list[str] = ["FlextLdapLdap3ConnectionManager"]

@@ -14,17 +14,17 @@ from typing import TYPE_CHECKING, override
 
 from flext_tests import FlextTestsModels, r
 
-from flext_ldap import m
-from tests.base import s
+from flext_ldap import FlextLdapModels
+from tests.base import TestsFlextLdapServiceBase
 
 if TYPE_CHECKING:
     from tests import p
 
 
-class TestsFlextLdapModels(m, FlextTestsModels):
-    """Test models - composição de TestsFlextModels + m."""
+class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
+    """Test models composed from TestsFlextModels plus m."""
 
-    class Ldap(m.Ldap):
+    class Ldap(FlextLdapModels.Ldap):
         """LDAP test models."""
 
         class Tests:
@@ -32,18 +32,20 @@ class TestsFlextLdapModels(m, FlextTestsModels):
 
             FAIL_ERROR_MESSAGE = "nope"
 
-            class SuccessService(s[bool]):
+            class SuccessService(TestsFlextLdapServiceBase[bool]):
                 """Test service that always succeeds."""
 
                 @override
-                def execute(self) -> p.Result[bool]:
-                    return r[bool].ok(True)
+                @staticmethod
+                def execute() -> p.Result[bool]:
+                    return r[bool].ok(value=True)
 
-            class FailService(s[bool]):
+            class FailService(TestsFlextLdapServiceBase[bool]):
                 """Test service that always fails."""
 
                 @override
-                def execute(self) -> p.Result[bool]:
+                @staticmethod
+                def execute() -> p.Result[bool]:
                     return r[bool].fail(
                         TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE
                     )

@@ -1,16 +1,21 @@
-"""FLEXT LDAP utility facade."""
+"""FLEXT LDAP utility facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
+
+from flext_ldif import FlextLdifUtilities
 
 from flext_ldap._utilities.comparison import FlextLdapUtilitiesComparison
 from flext_ldap._utilities.conversion import FlextLdapUtilitiesConversion
 from flext_ldap._utilities.root_dse import FlextLdapUtilitiesRootDse
 from flext_ldap._utilities.server import FlextLdapUtilitiesServer
 from flext_ldap._utilities.validation import FlextLdapUtilitiesValidation
-from flext_ldif import u
 
 
-class FlextLdapUtilities(u):
+class FlextLdapUtilities(FlextLdifUtilities):
     """LDAP-specific utility facade."""
 
     class Ldap(

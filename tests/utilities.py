@@ -8,18 +8,20 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import ClassVar, overload
+from typing import ClassVar, TypeVar
 
-from flext_tests import FlextTestsUtilities, tk, tm
+from flext_tests import FlextTestsUtilities, r, tk, tm
 
-from flext_ldap import u
+from flext_ldap import FlextLdapUtilities
 from tests import c, m, p, t
 
+TResult = TypeVar("TResult", bound=t.Tests.TestResultValue)
 
-class TestsFlextLdapUtilities(FlextTestsUtilities, u):
+
+class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
     """Utilities for flext-ldap tests."""
 
-    class Ldap(u.Ldap):
+    class Ldap(FlextLdapUtilities.Ldap):
         """Provide the test double for ldap."""
 
         class Tests(FlextTestsUtilities.Tests):
@@ -29,61 +31,74 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def that(
-                value: t.Tests.Testobject, **kwargs: t.Tests.MatcherCallKwargValue
+                value: t.Tests.Testobject,
+                *,
+                owned_payload: bool = False,
+                **kwargs: p.AttributeProbe,
             ) -> None:
                 """Provide that."""
-                tm.that(value, **kwargs)
+                tm.that(value, owned_payload=owned_payload, **kwargs)
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherCallKwargValue
+                result: p.Result[TResult],
+                **kwargs: object,
             ) -> str:
-                """Provide fail."""
+                """Provide fail.
+
+                Returns:
+                    The resulting ``str``.
+                """
                 failure_message: str = tm.fail(result, **kwargs)
                 return failure_message
 
             @staticmethod
-            @overload
             def ok[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
-            ) -> TResult: ...
+            ) -> TResult:
+                """Provide ok.
 
-            @staticmethod
-            @overload
-            def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherCallKwargValue
-            ) -> TResult | t.Tests.TestobjectSerializable: ...
-
-            @staticmethod
-            def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult], **kwargs: t.Tests.MatcherCallKwargValue
-            ) -> TResult | t.Tests.TestobjectSerializable:
-                """Provide ok."""
-                return tm.ok(result, **kwargs)
+                Returns:
+                    The resulting ``TResult``.
+                """
+                return tm.ok(result)
 
             @staticmethod
             def check[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
-            ) -> p.Tests.Chain[TResult]:
-                """Provide check."""
+            ) -> m.Tests.Chain[TResult]:
+                """Provide check.
+
+                Returns:
+                    The resulting ``m.Tests.Chain[TResult]``.
+                """
                 return tm.check(result)
 
             @staticmethod
             def create_ldap3_server(
                 ldap_container: t.MappingKV[str, t.Scalar],
-            ) -> p.Ldap.Ldap3Server:
-                """Create an ldap3 server from container metadata."""
+            ) -> p.Ldif.Ldap3Server:
+                """Create an ldap3 server from container metadata.
+
+                Returns:
+                    The resulting ``p.Ldif.Ldap3Server``.
+                """
                 server_url = ldap_container["server_url"]
-                server: p.Ldap.Ldap3Server = u.Ldap.create_server_from_url(
-                    str(server_url)
+                server: p.Ldif.Ldap3Server = u.Ldap.create_server_from_url(
+                    str(server_url),
                 )
                 return server
 
             @staticmethod
             def create_ldap3_connection(
-                server: p.Ldap.Ldap3Server, ldap_container: t.MappingKV[str, t.Scalar]
+                server: p.Ldif.Ldap3Server,
+                ldap_container: t.MappingKV[str, t.Scalar],
             ) -> p.Ldap.Ldap3Connection:
-                """Create an ldap3 connection from container metadata."""
+                """Create an ldap3 connection from container metadata.
+
+                Returns:
+                    The resulting ``p.Ldap.Ldap3Connection``.
+                """
                 connection: p.Ldap.Ldap3Connection = u.Ldap.create_connection(
                     server,
                     user=str(ldap_container["bind_dn"]),
@@ -94,8 +109,15 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             @staticmethod
             def create_connection_config(
                 ldap_container: t.MappingKV[str, t.Scalar],
-            ) -> p.Ldap.ConnectionConfig:
-                """Build a typed connection settings from container metadata."""
+            ) -> m.Ldap.ConnectionConfig:
+                """Build a typed connection settings from container metadata.
+
+                Returns:
+                    The resulting ``m.Ldap.ConnectionConfig``.
+
+                Raises:
+                    TypeError: If ldap_container port must be int, str or float, got.
+                """
                 port = ldap_container["port"]
                 port_value = (
                     port
@@ -126,7 +148,9 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
             def assert_connection_bound(connection: p.Ldap.Ldap3Connection) -> None:
                 """Assert that an LDAP connection is bound."""
                 tm.that(
-                    connection.bound, eq=True, msg="LDAP server not responding to bind"
+                    connection.bound,
+                    eq=True,
+                    msg="LDAP server not responding to bind",
                 )
 
             @staticmethod
@@ -149,28 +173,52 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 tm.ok(result)
 
             @staticmethod
+            def repository_root() -> Path:
+                """Resolve the workspace root that owns the shared LDAP compose.
+
+                Walks ancestors for the shared ``docker/`` compose asset so the
+                resolver is independent of test-file nesting depth. In-workspace
+                this returns the monorepo root that holds the shared compose; run
+                standalone (submodule checkout without the shared compose) it
+                returns the submodule root, where the compose is absent so the
+                container fixture skips instead of faking the service.
+
+                Returns:
+                    The resulting ``Path``.
+                """
+                rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
+                here: Path = Path(__file__).resolve()
+                for parent in here.parents:
+                    if (parent / rel).exists():
+                        return parent
+                return here.parents[1]
+
+            @staticmethod
             def get_docker_control(
                 _worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
             ) -> tk:
-                """Create Docker test infrastructure controller."""
+                """Create Docker test infrastructure controller.
+
+                Returns:
+                    The resulting ``tk``.
+                """
                 return tk.compose(
                     compose_file=c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL,
                     target=m.Tests.ContainerConfig(
                         container_name=c.Ldap.Tests.DOCKER_CONTAINER_NAME,
                         service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
                         host=c.LOCALHOST,
-                        port=c.Ldap.Tests.DOCKER_PORT,
+                        port=c.Ldap.Tests.DOCKER_CONTAINER_PORT,
                         startup_timeout=c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT,
                     ),
-                    workspace_root=Path(__file__).resolve().parents[1],
+                    repository_root=TestsFlextLdapUtilities.Ldap.Tests.repository_root(),
                 )
-
-            FileLock = FlextTestsUtilities.Tests.FileLock
 
             @staticmethod
             def _admin_credentials_from_candidate(
-                candidate_dn: str, candidate_password: str
-            ) -> tuple[str, str] | None:
+                candidate_dn: str,
+                candidate_password: str,
+            ) -> p.Result[tuple[str, str]]:
                 try:
                     server = u.Ldap.create_server_from_url(
                         f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
@@ -184,15 +232,32 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                         receive_timeout=1,
                     )
                     if not connection.bound:
-                        return None
+                        return r[tuple[str, str]].fail(
+                            f"candidate bind failed for {candidate_dn}",
+                        )
                     connection.unbind()
-                    return candidate_dn, candidate_password
-                except (ConnectionError, OSError, ValueError, t.Ldap.LDAPException):
-                    return None
+                except (
+                    ConnectionError,
+                    OSError,
+                    ValueError,
+                    t.Ldap.LDAPException,
+                ) as exc:
+                    return r[tuple[str, str]].fail(str(exc), exception=exc)
+                else:
+                    return r[tuple[str, str]].ok((candidate_dn, candidate_password))
 
             @classmethod
             def get_admin_credentials(cls) -> tuple[str, str]:
-                """Resolve working LDAP admin credentials."""
+                """Resolve working LDAP admin credentials.
+
+                Returns:
+                    The resulting ``tuple[str, str]``.
+
+                Raises:
+                    RuntimeError: If Failed to resolve a valid LDAP admin credential for
+                        test LDAP container. Check that the LDAP container is running
+                        and credentials are correct.
+                """
                 cache = cls._resolved_admin_credentials
                 if cache[0] is not None:
                     return cache[0]
@@ -210,12 +275,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                 ])
                 for candidate_dn, candidate_password in candidates:
                     resolved = cls._admin_credentials_from_candidate(
-                        candidate_dn, candidate_password
+                        candidate_dn,
+                        candidate_password,
                     )
-                    if resolved is None:
+                    if resolved.failure:
                         continue
-                    cache[0] = resolved
-                    return resolved
+                    resolved_credentials = resolved.unwrap()
+                    cache[0] = resolved_credentials
+                    return resolved_credentials
                 error_message = (
                     "Failed to resolve a valid LDAP admin credential for test "
                     "LDAP container. Check that the LDAP container is running "
@@ -225,7 +292,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @classmethod
             def ensure_basic_ldap_structure(cls) -> None:
-                """Ensure the base organizational units exist for smoke tests."""
+                """Ensure the base organizational units exist for smoke tests.
+
+                Raises:
+                    RuntimeError: If Failed to create.
+                """
                 admin_dn, admin_password = cls.get_admin_credentials()
                 connection = u.Ldap.create_connection(
                     u.Ldap.create_server_from_url(
@@ -241,7 +312,9 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
                     for ou_name in c.Ldap.Tests.DOCKER_OU_NAMES:
                         dn = f"ou={ou_name},{c.Ldap.Tests.DOCKER_BASE_DN}"
                         created = connection.add(
-                            dn, ["top", "organizationalUnit"], {"ou": ou_name}
+                            dn,
+                            ["top", "organizationalUnit"],
+                            {"ou": ou_name},
                         )
                         if created:
                             continue
@@ -259,13 +332,20 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, u):
 
             @staticmethod
             def single_phase_cb(
-                _a: int, _b: int, _c: str, _d: p.Ldap.LdapBatchStats
+                _a: int,
+                _b: int,
+                _c: str,
+                _d: p.Ldap.LdapBatchStats,
             ) -> None:
                 """Test callback with 4 parameters."""
 
             @staticmethod
             def multi_phase_cb(
-                _a: str, _b: int, _c: int, _d: str, _e: p.Ldap.LdapBatchStats
+                _a: str,
+                _b: int,
+                _c: int,
+                _d: str,
+                _e: p.Ldap.LdapBatchStats,
             ) -> None:
                 """Test callback with 5 parameters."""
 

@@ -13,10 +13,11 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, m, p, t, u
-from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost
-from flext_ldap.services.detection import FlextLdapServerDetector
 from flext_ldif import r
+
+from flext_ldap import c, m, p, t, u
+from flext_ldap.adapters.host import FlextLdapAdapterHost
+from flext_ldap.services.detection import FlextLdapServerDetector
 
 
 class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
@@ -36,7 +37,11 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         retry_delay: float = c.Ldap.DEFAULT_RETRY_DELAY,
         **kwargs: t.Scalar,
     ) -> p.Result[bool]:
-        """Establish an LDAP connection with optional automatic retry."""
+        """Establish an LDAP connection with optional automatic retry.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         _ = kwargs
         adapter = self._ensure_adapter()
         concrete_config = (
@@ -82,23 +87,32 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         self._server_type = c.Ldap.DEFAULT_TYPE
 
     @override
-    def execute(self, **kwargs: t.Scalar) -> p.Result[p.Ldap.Response]:
-        """Execute service health check."""
+    def execute(self, **kwargs: t.Scalar) -> p.Result[m.Ldap.Response]:
+        """Execute service health check.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.Response]``.
+        """
         _ = kwargs
         if self.is_connected:
-            return r[p.Ldap.Response].ok(
+            return r[m.Ldap.Response].ok(
                 m.Ldap.SearchResult(
                     entries=[],
                     search_options=m.Ldap.SearchOptions(
                         base_dn=c.Ldap.EXAMPLE_BASE_DN,
                         filter_str=c.Ldap.ALL_ENTRIES_FILTER,
                     ),
-                )
+                ),
             )
-        return r[p.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
+        return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
     def _detect_server_type(self) -> None:
-        """Detect LDAP server type after successful connection."""
+        """Detect LDAP server type after successful connection.
+
+        Raises:
+            RuntimeError: If No active connection available for server detection; or if
+                ``detection_result.failure``.
+        """
         adapter = self._ensure_adapter()
         connection = adapter.connection
         if not connection:

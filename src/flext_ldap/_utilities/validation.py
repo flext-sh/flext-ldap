@@ -1,4 +1,8 @@
-"""LDAP validation utility methods."""
+"""LDAP validation utility methods.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,7 +15,7 @@ class FlextLdapUtilitiesValidation:
     """LDAP validation helpers."""
 
     @staticmethod
-    def is_valid_status(value: str | t.JsonValue) -> TypeIs[str]:
+    def valid_status(value: str | t.JsonValue) -> TypeIs[str]:
         """Return whether a value is a valid LDAP status."""
         if isinstance(value, c.Ldap.Status):
             return True

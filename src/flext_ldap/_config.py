@@ -1,10 +1,8 @@
-"""FlextLdapConfig — frozen, validated config singleton for flext-ldap.
+"""FlextLdapConfig — frozen config singleton for flext-ldap (ADR-005 §7).
 
-Every ``config/*.yaml`` file is auto-discovered and deep-merged at first
-``fetch_global`` call (model-less, ``extra=allow`` at the FlextConfig base).
-The flat YAML is then validated into the pure-Pydantic ``_models.config``
-shapes and exposed as typed domain objects under ``config.Ldap`` — never a
-model-less dict subscript.
+Model-less: business rules live in ``config/*.yaml`` under the ``Ldap:`` key and
+are exposed through the open ``config.Ldap`` namespace (``extra="allow"``), with
+no per-domain model. Access is ``config.Ldap.<domain>[<key>...]``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,24 +10,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from functools import cached_property
-from pathlib import Path
-from typing import ClassVar
+from typing import Annotated
 
-from flext_cli import FlextCliConfig
-from flext_ldap._models.config import FlextLdapConfigModels
+from flext_ldif import m
+
+from flext_core import FlextConfig
 
 
-class FlextLdapConfig(FlextCliConfig):
-    """Ldap config auto-loaded from ``config/*.yaml`` and validated via models."""
+class _LdapNamespace(m.BaseModel):
+    """Open, frozen namespace exposing every ``config/*.yaml`` domain model-less."""
 
-    CONFIG_DIR: ClassVar[str] = str(Path(__file__).resolve().parents[2] / "config")
+    model_config = m.ConfigDict(extra="allow", frozen=True)
 
-    @cached_property
-    def Ldap(self) -> FlextLdapConfigModels.Ldap:
-        """Validated ``Ldap`` business-rule config namespace."""
-        root = FlextLdapConfigModels.Root.model_validate(dict(self.model_extra or {}))
-        return root.Ldap
+
+class FlextLdapConfig(FlextConfig):
+    """Ldap config auto-loaded model-less from ``config/*.yaml``."""
+
+    Ldap: Annotated[
+        _LdapNamespace,
+        m.Field(
+            description="Open namespace exposing ``config/*.yaml`` under ``Ldap``.",
+        ),
+    ] = _LdapNamespace()
 
 
 config: FlextLdapConfig = FlextLdapConfig.fetch_global()

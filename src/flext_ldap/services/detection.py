@@ -1,11 +1,16 @@
-"""Detect LDAP server type from a bound ``ldap3`` connection."""
+"""Detect LDAP server type from a bound ``ldap3`` connection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, m, p, s, t, u
 from flext_ldif import e, r
+
+from flext_ldap import c, m, p, s, t, u
 
 
 class FlextLdapServerDetector(s[m.Ldap.Response]):
@@ -13,8 +18,12 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
 
     @staticmethod
     def _get_first_value(attrs: t.Ldap.OperationAttributes, key: str) -> str | None:
-        """Compatibility shim for unit tests and older callers."""
-        value: str | None = u.Ldap.get_first_attribute_value(attrs, key)
+        """Compatibility shim for unit tests and older callers.
+
+        Returns:
+            The resulting ``str | None``.
+        """
+        value: str | None = u.Ldap.resolve_first_attribute_value(attrs, key)
         return value
 
     @staticmethod
@@ -25,7 +34,11 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
         supported_controls: t.StrSequence,
         supported_extensions: t.StrSequence,
     ) -> p.Result[str]:
-        """Compatibility shim that delegates heuristic detection to utilities."""
+        """Compatibility shim that delegates heuristic detection to utilities.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         _ = supported_controls
         return r[str].ok(
             u.Ldap.detect_server_type(
@@ -33,19 +46,28 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                 vendor_version=vendor_version,
                 naming_contexts=naming_contexts,
                 supported_extensions=supported_extensions,
-            )
+            ),
         )
 
+    @staticmethod
     def detect_from_connection(
-        self, connection: p.Ldap.Ldap3Connection | p.Ldap.RootDseConnection
+        connection: p.Ldap.Ldap3Connection | p.Ldif.RootDseConnection,
     ) -> p.Result[str]:
-        """Detect the effective LDAP server type from an active connection."""
+        """Detect the effective LDAP server type from an active connection.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+        """
         detection_result: p.Result[str] = u.Ldap.detect_from_connection(connection)
         return detection_result
 
     @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[p.Ldap.Response]:
-        """Detect server type using the provided ``connection`` keyword argument."""
+    def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
+        """Detect server type using the provided ``connection`` keyword argument.
+
+        Returns:
+            The resulting ``p.Result[m.Ldap.Response]``.
+        """
         connection_raw = kwargs.get("connection")
         if connection_raw is None:
             return e.fail_validation("connection", error="parameter required")
@@ -55,7 +77,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                     service_name="connection",
                     expected_type="ldap3.Connection",
                     actual_type=type(connection_raw).__name__,
-                )
+                ),
             )
         return self.detect_from_connection(connection_raw).map(
             lambda detected_type: m.Ldap.OperationResult(
@@ -63,5 +85,5 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                 operation_type=c.Ldap.OperationName.DETECT_FROM_CONNECTION,
                 message=detected_type,
                 entries_affected=0,
-            )
+            ),
         )

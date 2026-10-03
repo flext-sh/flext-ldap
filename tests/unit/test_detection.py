@@ -33,10 +33,12 @@ import pytest
 from flext_tests import tm
 
 from flext_ldap.services.detection import FlextLdapServerDetector
-from tests import c, p, t, u
+from tests import c, p, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from tests import t
 
 pytestmark = pytest.mark.unit
 
@@ -48,7 +50,8 @@ class TestsFlextLdapDetection:
         """Structural double for one ldap3 rootDSE entry (external boundary)."""
 
         def __init__(
-            self, attributes: t.MappingKV[str, t.Ldap.Ldap3EntryValue]
+            self,
+            attributes: t.MappingKV[str, t.Ldap.Ldap3EntryValue],
         ) -> None:
             self._attributes = attributes
 
@@ -62,7 +65,11 @@ class TestsFlextLdapDetection:
         def __init__(
             self,
             *,
-            entries: t.SequenceOf[p.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue],
+            entries: t.SequenceOf[
+                p.Ldif.RootDseEntry
+                | t.Ldap.Ldap3EntryValue
+                | TestsFlextLdapDetection._RootDseEntryDouble
+            ],
             searchable: bool = True,
             search_succeeds: bool = True,
         ) -> None:
@@ -75,21 +82,30 @@ class TestsFlextLdapDetection:
             if not self._searchable:
                 return None
             succeeds = self._search_succeeds
-            return lambda **_kwargs: succeeds
+
+            def search_result(**_kwargs: t.JsonValue) -> bool:
+                return succeeds
+
+            return search_result
 
         @property
         def result(self) -> t.JsonMapping | None:
             return {"description": "operation failed"}
 
         @property
-        def entries(self) -> t.SequenceOf[p.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue]:
+        def entries(self) -> t.SequenceOf[p.Ldif.RootDseEntry | t.Ldap.Ldap3EntryValue]:
             return self._entries
 
     @staticmethod
     def _connection_for(
-        vendor_name: str | None, vendor_version: str | None
-    ) -> p.Ldap.RootDseConnection:
-        """Build a bound connection double advertising the given vendor metadata."""
+        vendor_name: str | None,
+        vendor_version: str | None,
+    ) -> p.Ldif.RootDseConnection:
+        """Build a bound connection double advertising the given vendor metadata.
+
+        Returns:
+            The resulting ``p.Ldif.RootDseConnection``.
+        """
         attributes: dict[str, t.Ldap.Ldap3EntryValue] = {}
         if vendor_name is not None:
             attributes[c.Ldap.RootDseAttribute.VENDOR_NAME] = [vendor_name]
@@ -102,8 +118,8 @@ class TestsFlextLdapDetection:
         ("kwargs", "expect_failure", "error_substring"),
         c.Ldap.Tests.DETECTION_EXECUTE_SCENARIOS,
     )
+    @staticmethod
     def test_execute_reports_failure_for_invalid_connection_argument(
-        self,
         kwargs: t.MappingKV[str, bool | float | str | None] | None,
         *,
         expect_failure: bool,
@@ -119,13 +135,17 @@ class TestsFlextLdapDetection:
         tm.that(str(result.error), has=error_substring)
 
     @pytest.mark.parametrize(
-        ("attrs", "key", "expected"), c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS
+        ("attrs", "key", "expected"),
+        c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS,
     )
+    @staticmethod
     def test_get_first_attribute_value_returns_first_truthy_value(
-        self, attrs: t.MappingKV[str, t.StrSequence], key: str, expected: str | None
+        attrs: t.MappingKV[str, t.StrSequence],
+        key: str,
+        expected: str | None,
     ) -> None:
         """The rootDSE helper returns the first non-empty value, else ``None``."""
-        value = u.Ldap.get_first_attribute_value(dict(attrs), key)
+        value = u.Ldap.resolve_first_attribute_value(dict(attrs), key)
 
         tm.that(value, eq=expected)
 
@@ -133,8 +153,8 @@ class TestsFlextLdapDetection:
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
         c.Ldap.Tests.DETECTION_FROM_ATTRIBUTES_SCENARIOS,
     )
+    @staticmethod
     def test_detect_server_type_classifies_vendor_metadata(
-        self,
         vendor_name: str | None,
         vendor_version: str | None,
         supported_controls: t.StrSequence,
@@ -163,7 +183,10 @@ class TestsFlextLdapDetection:
         ],
     )
     def test_detect_from_connection_returns_detected_server_type(
-        self, vendor_name: str | None, vendor_version: str | None, expected: str
+        self,
+        vendor_name: str | None,
+        vendor_version: str | None,
+        expected: str,
     ) -> None:
         """A bound connection yields the server type read from its rootDSE."""
         detector = FlextLdapServerDetector()
@@ -193,18 +216,20 @@ class TestsFlextLdapDetection:
             (True, True, [], "no entries"),
         ],
     )
+    @staticmethod
     def test_detect_from_connection_propagates_rootdse_failure(
-        self,
         *,
         searchable: bool,
         search_succeeds: bool,
-        entries: list[p.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue],
+        entries: list[p.Ldif.RootDseEntry | t.Ldap.Ldap3EntryValue],
         error_substring: str,
     ) -> None:
         """A failed rootDSE read surfaces as a failed detection result."""
         detector = FlextLdapServerDetector()
         connection = TestsFlextLdapDetection._ConnectionDouble(
-            entries=entries, searchable=searchable, search_succeeds=search_succeeds
+            entries=entries,
+            searchable=searchable,
+            search_succeeds=search_succeeds,
         )
 
         result = detector.detect_from_connection(connection)

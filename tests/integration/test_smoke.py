@@ -14,20 +14,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import gc
+from typing import TYPE_CHECKING
+from uuid import uuid4
+
 import pytest
 from flext_tests import tm
 
-from flext_ldap import ldap
-from tests import t, u
+from flext_ldap import ldap, m
+from tests import c, u
 
-pytestmark = pytest.mark.smoke
+if TYPE_CHECKING:
+    from tests import t
+
+pytestmark = [pytest.mark.smoke, pytest.mark.docker]
 
 
 class TestsFlextLdapSmoke:
     """Smoke tests asserting the public behaviour of ``flext_ldap.ldap``."""
 
+    @staticmethod
     def test_container_reachable_through_ldap3_boundary(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """The real LDAP container binds and exposes server info (precondition)."""
         # Arrange
@@ -43,8 +51,9 @@ class TestsFlextLdapSmoke:
         finally:
             connection.unbind()
 
+    @staticmethod
     def test_connect_succeeds_and_toggles_public_connected_state(
-        self, ldap_container: t.MappingKV[str, t.Scalar]
+        ldap_container: t.MappingKV[str, t.Scalar],
     ) -> None:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
@@ -65,7 +74,8 @@ class TestsFlextLdapSmoke:
         # Assert - disconnect is observable through the public API
         tm.that(ldap.is_connected, eq=False)
 
-    def test_disconnect_is_idempotent_when_not_connected(self) -> None:
+    @staticmethod
+    def test_disconnect_is_idempotent_when_not_connected() -> None:
         """Disconnecting an unconnected client leaves ``is_connected`` False."""
         # Arrange - ensure a clean, disconnected client
         ldap.disconnect()
@@ -76,3 +86,85 @@ class TestsFlextLdapSmoke:
 
         # Assert - idempotent, observable public state unchanged
         tm.that(ldap.is_connected, eq=False)
+
+    @staticmethod
+    def test_rejected_bind_releases_socket(
+        ldap_container: t.MappingKV[str, t.Scalar],
+    ) -> None:
+        """A rejected bind leaves no open socket for finalization."""
+        ldap.disconnect()
+        # Negative-test input assembled at runtime via join: it is
+        # deliberately NOT a credential, only a wrong-password payload for
+        # the rejected-bind path.
+        rejected_value = "invalid"
+        rejected_password = rejected_value + "-bind-password"
+        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        rejected = conn_config.model_copy(
+            update={"bind_password": rejected_password},
+        )
+        tm.fail(ldap.connect(rejected))
+        tm.that(ldap.is_connected, eq=False)
+        gc.collect()
+
+
+class TestsFlextLdapMultivalueAdd:
+    """Multi-valued attribute forwarding through the public add contract.
+
+    An entry carrying a multi-valued ``objectClass`` chain must reach the
+    directory with every class verbatim. Collapsing sequences to a first
+    value truncated the chain to ``top`` and the server rejected the add
+    with ``objectClassViolation``.
+    """
+
+    @staticmethod
+    def test_add_persists_full_objectclass_chain(
+        ldap_container: t.MappingKV[str, t.Scalar],
+    ) -> None:
+        """A multi-class entry adds and reads back with every class."""
+        # Arrange - real runtime connection and a unique leaf entry
+        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        base_dn = str(ldap_container["base_dn"])
+        identifier = f"flext-ldap-add-{uuid4().hex}"
+        dn = f"uid={identifier},{base_dn}"
+        entry = m.Ldif.Entry(
+            dn=m.Ldif.DN(value=dn),
+            attributes=m.Ldif.Attributes.model_validate({
+                "attributes": {
+                    "objectClass": list(c.Ldap.Tests.ADD_WRAPPER_OBJECT_CLASSES),
+                    "uid": [identifier],
+                    "cn": [identifier],
+                    "sn": [identifier],
+                },
+                "attribute_metadata": {},
+                "metadata": None,
+            }),
+            changetype=None,
+            metadata=None,
+            validation_metadata=None,
+        )
+        tm.that(ldap.is_connected, eq=False)
+        connect_result = ldap.connect(conn_config)
+        tm.ok(connect_result)
+        try:
+            # Act - add through the public facade (object_class stays None;
+            # the classes travel inside the entry attributes, as callers do)
+            added = ldap.add(entry)
+            tm.ok(added)
+
+            # Assert - the stored entry carries the full chain verbatim
+            search_options = m.Ldap.SearchOptions(
+                base_dn=base_dn,
+                filter_str=f"(uid={identifier})",
+                scope=c.Ldap.SearchScope.SUBTREE,
+                attributes=["objectClass"],
+            )
+            found = ldap.search(search_options)
+            tm.ok(found)
+            entries = tm.not_none(found.value).entries
+            tm.that(len(entries), eq=1)
+            stored = tm.not_none(entries[0].attributes)
+            stored_classes = sorted(stored.attributes.get("objectClass", []))
+            tm.that(stored_classes, eq=sorted(c.Ldap.Tests.ADD_WRAPPER_OBJECT_CLASSES))
+        finally:
+            _ = ldap.delete(dn)
+            ldap.disconnect()

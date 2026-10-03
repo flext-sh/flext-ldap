@@ -1,26 +1,30 @@
-"""Service base for flext-ldap tests."""
+"""Service base for flext-ldap tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_tests import s as tests_s
 
-from flext_ldap import m, p, t
+from flext_ldap import m
 from tests.settings import TestsFlextLdapSettings
 
+if TYPE_CHECKING:
+    from tests import p
 
-class TestsFlextLdapServiceBase[
-    TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload]
-](tests_s[TResult]):
+
+class TestsFlextLdapServiceBase[TDomainResult: p.Base = p.Base](tests_s[TDomainResult]):
     """LDAP test service base with source and test settings namespaces."""
 
     # NOTE (multi-agent): flext-tests owns fetch_settings; this project
     # declares only its more-specific bootstrap settings type.
     @classmethod
     @override
-    def _runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+    def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
         return m.RuntimeBootstrapOptions(settings_type=TestsFlextLdapSettings)
 
 

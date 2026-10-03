@@ -16,42 +16,49 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from pydantic import BaseModel, Field
-from pydantic_settings import SettingsConfigDict
-
 from flext_ldif import FlextLdifSettings
+
+from flext_ldap import m
 
 
 class FlextLdapSettings(FlextLdifSettings):
     """LDAP runtime settings."""
 
-    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        env_prefix="FLEXT_LDAP_", extra="ignore"
+    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
+        env_prefix="FLEXT_LDAP_",
+        extra="ignore",
     )
 
-    class LdapSettings(BaseModel):
+    class LdapSettings(m.BaseModel):
         """Namespaced LDAP runtime settings."""
 
-        host: Annotated[str, Field(description="LDAP server host")] = "localhost"
-        port: Annotated[int, Field(ge=1, le=65535, description="LDAP server port")] = (
-            389
+        host: Annotated[str, m.Field(description="LDAP server host")] = "localhost"
+        port: Annotated[
+            int,
+            m.Field(ge=1, le=65535, description="LDAP server port"),
+        ] = 389
+        use_ssl: Annotated[bool, m.Field(description="Enable LDAPS")] = False
+        use_tls: Annotated[bool, m.Field(description="Enable STARTTLS")] = False
+        bind_dn: Annotated[str, m.Field(description="LDAP bind distinguished name")] = (
+            ""
         )
-        use_ssl: Annotated[bool, Field(description="Enable LDAPS")] = False
-        use_tls: Annotated[bool, Field(description="Enable STARTTLS")] = False
-        bind_dn: Annotated[str, Field(description="LDAP bind distinguished name")] = ""
-        bind_password: Annotated[str, Field(description="LDAP bind password")] = ""
+        bind_password: Annotated[str, m.Field(description="LDAP bind password")] = ""
         timeout: Annotated[
-            int, Field(ge=1, description="LDAP operation timeout in seconds")
+            int,
+            m.Field(ge=1, description="LDAP operation timeout in seconds"),
         ] = 30
         auto_bind: Annotated[
-            bool, Field(description="Auto-bind connection after connect")
+            bool,
+            m.Field(description="Auto-bind connection after connect"),
         ] = True
         auto_range: Annotated[
-            bool, Field(description="Enable LDAP range retrieval")
+            bool,
+            m.Field(description="Enable LDAP range retrieval"),
         ] = True
 
-    Ldap: LdapSettings = Field(
-        default_factory=LdapSettings, description="Namespaced LDAP settings branch."
+    Ldap: LdapSettings = m.Field(
+        default_factory=LdapSettings,
+        description="Namespaced LDAP settings branch.",
     )
 
 

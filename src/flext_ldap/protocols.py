@@ -1,27 +1,26 @@
 """LDAP Protocol Definitions - Protocol Interfaces for FLEXT LDAP Operations.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
-
 Protocols use structural typing only - no model imports.
 This allows protocols to remain independent of model implementations.
 
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 
-from flext_ldif import p
+from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
     import types
     from collections.abc import Callable
 
-    from flext_ldap import FlextLdapTypes as t
+    from flext_ldap import FlextLdapTypes as t, m as lm
 
 
-class FlextLdapProtocols(p):
+class FlextLdapProtocols(FlextLdifProtocols):
     """LDAP-specific protocol definitions.
 
     Domain-specific protocol interfaces for LDAP operations.
@@ -46,14 +45,14 @@ class FlextLdapProtocols(p):
 
         All LDAP domain-specific protocols are organized here at ROOT level
         to enable proper namespace separation. LDIF protocols from parent
-        are accessed via `.Ldif` namespace (e.g., `p.Ldif.Entry`).
+        are accessed via `.Ldif` namespace (e.g., `m.Ldif.Entry`).
 
-        Pattern: `FlextLdapProtocols.Ldap.ProtocolName` (aligned with
-        flext-ldif and flext-cli).
+        Pattern: `FlextLdapProtocols.Ldap.ProtocolName` (aligned with flext-ldif,
+        flext-cli)
         """
 
         @runtime_checkable
-        class LdapSettings(p.BaseModel, Protocol):
+        class LdapSettings(FlextLdifProtocols.Model, Protocol):
             """Namespaced LDAP runtime settings branch."""
 
             host: str
@@ -67,21 +66,22 @@ class FlextLdapProtocols(p):
             auto_range: bool
 
         @runtime_checkable
-        class Settings(p.Ldif.Settings, Protocol):
+        class Settings(FlextLdifProtocols.Ldif.Settings, Protocol):
             """MRO-composed settings contract with the LDAP namespace."""
 
             @property
-            def Ldap(self) -> FlextLdapProtocols.Ldap.LdapSettings:
+            @staticmethod
+            def ldap() -> FlextLdapProtocols.Ldap.LdapSettings:
                 """Namespaced LDAP settings branch (read-only for covariance)."""
                 ...
 
         # ── Layer 0: Domain Protocols ────────────────────────────
-        # DN, Attributes, Entry → use p.Ldif.DN,
-        # p.Ldif.Attributes, p.Ldif.Entry
+        # DN, Attributes, Entry → use _ldif_p.Ldif.DN,
+        # _ldif_p.Ldif.Attributes, _ldif_p.Ldif.Entry
         # directly from flext-ldif (SSOT — no redefinition in Ldap namespace)
 
         @runtime_checkable
-        class LdapBatchStats(p.BaseModel, Protocol):
+        class LdapBatchStats(Protocol):
             """Protocol for LDAP batch statistics (structural type)."""
 
             synced: int
@@ -89,7 +89,7 @@ class FlextLdapProtocols(p):
             skipped: int
 
         @runtime_checkable
-        class ConnectionConfig(p.BaseModel, Protocol):
+        class ConnectionConfig(Protocol):
             """Protocol for LDAP connection configuration (structural type)."""
 
             host: str
@@ -107,28 +107,13 @@ class FlextLdapProtocols(p):
             """Protocol for search scope (structural type - accepts StrEnum or str)."""
 
             @override
-            def __str__(self) -> str:
+            @staticmethod
+            def __str__() -> str:
                 """Return string representation of scope."""
                 ...
 
-        class Parse:
-            """Parse-related protocols."""
-
-            @runtime_checkable
-            class ParseResult(Protocol):
-                """Protocol for parse results (structural type)."""
-
-                failure: bool
-                "Indicates if parsing failed."
-                success: bool
-                "Indicates if parsing succeeded."
-                error: str | None
-                "Error message if parsing failed."
-                value: t.Scalar | None
-                "Parsed value or result t.JsonValue."
-
         @runtime_checkable
-        class SearchOptions(p.BaseModel, Protocol):
+        class SearchOptions(Protocol):
             """Protocol for LDAP search options (structural type).
 
             Accepts both simple types and complex types (StrEnum, models).
@@ -144,7 +129,7 @@ class FlextLdapProtocols(p):
             time_limit: int
 
         @runtime_checkable
-        class OperationResult(p.BaseModel, Protocol):
+        class OperationResult(Protocol):
             """Protocol for LDAP operation result (structural type).
 
             Accepts both simple types and complex types (StrEnum).
@@ -157,15 +142,11 @@ class FlextLdapProtocols(p):
             entries_affected: int
 
         @runtime_checkable
-        class SearchResult(p.BaseModel, Protocol):
+        class SearchResult(Protocol):
             """Protocol for LDAP search result (structural type)."""
 
-            entries: t.SequenceOf[p.Ldif.Entry]
+            entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry]
             search_options: FlextLdapProtocols.Ldap.SearchOptions
-
-        @runtime_checkable
-        class Response(p.BaseModel, Protocol):
-            """Base contract for heterogeneous LDAP service responses."""
 
         @runtime_checkable
         class PhaseSyncResult(Protocol):
@@ -186,7 +167,8 @@ class FlextLdapProtocols(p):
             """Protocol for LDAP clients that support CRUD operations."""
 
             @property
-            def is_connected(self) -> bool:
+            @staticmethod
+            def is_connected() -> bool:
                 """Whether client is connected.
 
                 Returns:
@@ -195,9 +177,10 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            @staticmethod
             def add(
-                self, entry: p.Ldif.Entry
-            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
+                entry: FlextLdifProtocols.Ldif.Entry,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry.
 
                 Args:
@@ -209,27 +192,50 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            @staticmethod
             def batch_upsert(
-                self,
-                entries: t.SequenceOf[p.Ldif.Entry],
+                entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
                 *,
                 progress_callback: t.Ldap.LdapProgressCallback | None = None,
                 retry_on_errors: t.StrSequence | None = None,
                 max_retries: int = 1,
                 stop_on_error: bool = False,
-            ) -> p.Result[FlextLdapProtocols.Ldap.LdapBatchStats]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.LdapBatchStats]:
                 """Upsert multiple entries and report canonical batch statistics."""
                 ...
 
+            @staticmethod
+            def delete_subtree(
+                dn: str | FlextLdifProtocols.Ldif.DN,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SubtreeDeleteResult]:
+                """Delete an entry and its descendants, deepest-first."""
+                ...
+
+            @staticmethod
+            def plan_upsert(
+                entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
+            ) -> FlextLdifProtocols.Result[lm.Ldap.UpsertPlan]:
+                """Classify entries for upsert without writing (dry plan)."""
+                ...
+
+            @staticmethod
+            def find_entry(
+                dn: str,
+                *,
+                attributes: t.StrSequence | None = None,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
+                """Read one entry by DN; an absent entry is an empty result."""
+                ...
+
+            @staticmethod
             def connect(
-                self,
                 connection_config: FlextLdapProtocols.Ldap.ConnectionConfig,
                 *,
                 auto_retry: bool = False,
                 max_retries: int = 1,
                 retry_delay: float = 0.0,
                 **kwargs: t.Scalar,
-            ) -> p.Result[bool]:
+            ) -> FlextLdifProtocols.Result[bool]:
                 """Connect to LDAP server.
 
                 Args:
@@ -261,13 +267,15 @@ class FlextLdapProtocols(p):
                 """Exit the LDAP client context manager and release resources."""
                 ...
 
-            def disconnect(self) -> None:
+            @staticmethod
+            def disconnect() -> None:
                 """Disconnect from LDAP server and release resources."""
                 ...
 
+            @staticmethod
             def delete(
-                self, dn: str | p.Ldif.DN
-            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
+                dn: str | FlextLdifProtocols.Ldif.DN,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry.
 
                 Args:
@@ -279,9 +287,10 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            @staticmethod
             def execute(
-                self, **kwargs: t.Scalar
-            ) -> p.Result[FlextLdapProtocols.Ldap.Response]:
+                **kwargs: t.Scalar,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.Response]:
                 """Execute health check or default operation.
 
                 Args:
@@ -294,9 +303,11 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            @staticmethod
             def modify(
-                self, dn: str | p.Ldif.DN, changes: t.Ldap.LdapModifyChanges
-            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
+                dn: str | FlextLdifProtocols.Ldif.DN,
+                changes: t.Ldap.LdapModifyChanges,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Modify LDAP entry.
 
                 Args:
@@ -309,11 +320,11 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            @staticmethod
             def search(
-                self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
                 """Perform LDAP search operation.
 
                 Args:
@@ -336,48 +347,56 @@ class FlextLdapProtocols(p):
             """
 
             @property
-            def is_connected(self) -> bool:
+            @staticmethod
+            def is_connected() -> bool:
                 """Whether adapter is connected."""
                 ...
 
             @property
-            def connection(self) -> FlextLdapProtocols.Ldap.Ldap3Connection | None:
+            @staticmethod
+            def connection() -> FlextLdapProtocols.Ldap.Ldap3Connection | None:
                 """The active ldap3 connection when one exists."""
                 ...
 
+            @staticmethod
             def connect(
-                self, settings: FlextLdapProtocols.Ldap.ConnectionConfig
-            ) -> p.Result[bool]:
+                settings: lm.Ldap.ConnectionConfig,
+            ) -> FlextLdifProtocols.Result[bool]:
                 """Establish the ldap3 server/connection pair and verify bind."""
                 ...
 
-            def disconnect(self) -> None:
+            @staticmethod
+            def disconnect() -> None:
                 """Close any active adapter connection."""
                 ...
 
+            @staticmethod
             def add(
-                self, entry: p.Ldif.Entry
-            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
+                entry: lm.Ldif.Entry,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Add LDAP entry, returning the operation result."""
                 ...
 
+            @staticmethod
             def delete(
-                self, dn: str | p.Ldif.DN
-            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
+                dn: str | lm.Ldif.DN,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Delete LDAP entry, returning the operation result."""
                 ...
 
+            @staticmethod
             def modify(
-                self, dn: str | p.Ldif.DN, changes: t.Ldap.OperationChanges
-            ) -> p.Result[FlextLdapProtocols.Ldap.OperationResult]:
+                dn: str | lm.Ldif.DN,
+                changes: t.Ldap.OperationChanges,
+            ) -> FlextLdifProtocols.Result[lm.Ldap.OperationResult]:
                 """Modify LDAP entry, returning the operation result."""
                 ...
 
+            @staticmethod
             def search(
-                self,
-                search_options: FlextLdapProtocols.Ldap.SearchOptions,
+                search_options: lm.Ldap.SearchOptions,
                 server_type: str = "rfc",
-            ) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
+            ) -> FlextLdifProtocols.Result[lm.Ldap.SearchResult]:
                 """Perform LDAP search, returning the search result."""
                 ...
 
@@ -391,7 +410,8 @@ class FlextLdapProtocols(p):
             """
 
             @property
-            def is_connected(self) -> bool:
+            @staticmethod
+            def is_connected() -> bool:
                 """Whether connection is active.
 
                 Returns:
@@ -400,18 +420,19 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
+            @staticmethod
             def connect(
-                self,
                 connection_config: FlextLdapProtocols.Ldap.ConnectionConfig,
                 *,
                 auto_retry: bool = False,
                 max_retries: int = 3,
                 retry_delay: float = 1.0,
-            ) -> p.Result[bool]:
+            ) -> FlextLdifProtocols.Result[bool]:
                 """Connect using the public LDAP connection service contract."""
                 ...
 
-            def disconnect(self) -> None:
+            @staticmethod
+            def disconnect() -> None:
                 """Disconnect from LDAP server.
 
                 Closes the connection and releases resources.
@@ -420,180 +441,43 @@ class FlextLdapProtocols(p):
                 """
                 ...
 
-            def execute(self) -> p.Result[FlextLdapProtocols.Ldap.SearchResult]:
+            @staticmethod
+            def execute() -> FlextLdifProtocols.Result[
+                FlextLdapProtocols.Ldap.SearchResult
+            ]:
                 """Run the connection service health check/default operation."""
                 ...
 
         # ── LDAP runtime object contracts ────────────────────────
-        # These names are intentionally structural so downstream projects type
-        # against stable protocol-owned contracts rather than ldap3 classes.
+        # The base structural ldap3 contracts live in flext-ldif (``p.Ldif``)
+        # as the single source of truth and are reached through MRO; this
+        # package extends only what it needs.
 
         @runtime_checkable
-        class Ldap3Connection(Protocol):
-            """Structural contract for ldap3-compatible connection objects."""
+        class Ldap3Connection(FlextLdifProtocols.Ldif.Ldap3Connection, Protocol):
+            """Structural contract for ldap3-compatible connection objects.
+
+            Extends the base contract from ``flext-ldif`` with LDAP-specific
+            additional members (``server``, ``result``, ``start_tls``) required
+            by the connection manager and operation executor adapters.
+            """
 
             @property
-            def server(self) -> FlextLdapProtocols.Ldap.Ldap3Server:
+            @staticmethod
+            def server() -> FlextLdifProtocols.Ldif.Ldap3Server:
                 """The ldap3 server bound to this connection."""
                 ...
 
             @property
-            def bound(self) -> bool:
-                """Whether the connection is currently bound."""
-                ...
-
-            def bind(self) -> bool:
-                """Bind the connection using the configured credentials."""
-                ...
-
-            @property
-            def result(self) -> t.JsonMapping | None:
+            @staticmethod
+            def result() -> t.JsonMapping | None:
                 """The last LDAP operation result payload."""
                 ...
 
             @property
-            def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
-                """The entries produced by the last LDAP operation."""
-                ...
-
-            @property
-            def add(self) -> Callable[..., bool]:
-                """The callable implementing the add operation."""
-                ...
-
-            @property
-            def delete(self) -> Callable[..., bool]:
-                """The callable implementing the delete operation."""
-                ...
-
-            @property
-            def modify(self) -> Callable[..., bool]:
-                """The callable implementing the modify operation."""
-                ...
-
-            @property
-            def search(self) -> Callable[..., bool | t.JsonValue | None]:
-                """The callable implementing the search operation."""
-                ...
-
-            @property
-            def start_tls(self) -> Callable[..., bool]:
+            @staticmethod
+            def start_tls() -> Callable[..., bool]:
                 """The callable implementing STARTTLS negotiation."""
-                ...
-
-            @property
-            def unbind(self) -> Callable[..., bool]:
-                """The callable implementing connection teardown."""
-                ...
-
-        class Ldap3ServerInfo(Protocol):
-            """Structural marker for ldap3-compatible server info payloads."""
-
-            @property
-            def naming_contexts(self) -> t.StrSequence | None:
-                """The advertised naming contexts when available."""
-                ...
-
-            @property
-            def other(self) -> t.MappingKV[str, t.JsonValue]:
-                """The auxiliary ldap3 server info fields."""
-                ...
-
-        class Ldap3Server(Protocol):
-            """Structural contract for ldap3-compatible server objects."""
-
-            @property
-            def info(self) -> FlextLdapProtocols.Ldap.Ldap3ServerInfo | None:
-                """The ldap3 server-info payload when populated."""
-                ...
-
-            @override
-            def __str__(self) -> str:
-                """Return the server URL-style representation."""
-                ...
-
-        @runtime_checkable
-        class Ldap3Entry(Protocol):
-            """Structural contract for ldap3-compatible entry objects."""
-
-            @property
-            def entry_dn(self) -> str | None:
-                """The entry distinguished name."""
-                ...
-
-            @property
-            def entry_attributes(self) -> t.StrSequence:
-                """The attribute names present in this entry."""
-                ...
-
-            @property
-            def entry_attributes_as_dict(self) -> t.Ldap.Ldap3AttributeDict:
-                """The entry attributes as an LDAP attribute mapping."""
-                ...
-
-            def __getitem__(
-                self, attribute_name: str
-            ) -> FlextLdapProtocols.Ldap.Ldap3Attribute:
-                """Return one ldap3 attribute object by attribute name."""
-                ...
-
-        class Ldap3Attribute(Protocol):
-            """Structural contract for ldap3-compatible attribute objects."""
-
-            @property
-            def values(self) -> t.Ldap.Ldap3AttributeValues:
-                """The raw LDAP values for this attribute."""
-                ...
-
-            @property
-            def value(self) -> t.Ldap.Ldap3EntryValue:
-                """The resolved attribute value."""
-                ...
-
-        @runtime_checkable
-        class Ldap3ParseResponse(Protocol):
-            """Protocol for ldap3.ParseResponse objects (structural type).
-
-            ldap3.ParseResponse has an entries property containing list of Entry.
-            """
-
-            @property
-            def entries(self) -> t.SequenceOf[FlextLdapProtocols.Ldap.Ldap3Entry]:
-                """The list of entries."""
-                ...
-
-        @runtime_checkable
-        class RootDseEntry(Protocol):
-            """Structural protocol for entries exposing rootDSE attributes."""
-
-            @property
-            def entry_attributes_as_dict(
-                self,
-            ) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
-                """The raw ldap3-style attribute payloads."""
-                ...
-
-        @runtime_checkable
-        class RootDseConnection(Protocol):
-            """Structural protocol for connections that can query rootDSE."""
-
-            @property
-            def search(self) -> Callable[..., bool | t.JsonValue | None] | None:
-                """The ldap3-compatible search callable when available."""
-                ...
-
-            @property
-            def result(self) -> t.JsonMapping | None:
-                """The raw ldap3 result payload for the last operation."""
-                ...
-
-            @property
-            def entries(
-                self,
-            ) -> t.SequenceOf[
-                FlextLdapProtocols.Ldap.RootDseEntry | t.Ldap.Ldap3EntryValue
-            ]:
-                """The entry payloads produced by the last search."""
                 ...
 
         # ── Structural Duck-Typing Protocols ─────────────────────
@@ -602,24 +486,27 @@ class FlextLdapProtocols(p):
         class HasItemsMethod(Protocol):
             """Protocol for objects with items() method."""
 
-            def items(self) -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
+            @staticmethod
+            def items() -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
                 """Return items as sequence of tuples."""
                 ...
 
         @runtime_checkable
         class HasConfigAttribute(Protocol):
-            """Protocol for objects exposing duck-typed configuration."""
+            """Protocol for objects exposing configuration (settings duck typing)."""
 
             @property
-            def settings(self) -> None:
+            @staticmethod
+            def settings() -> None:
                 """The resolved configuration t.JsonValue."""
                 ...
 
         @runtime_checkable
         class HasDynamicAttribute(Protocol):
-            """Protocol for objects exposing dynamic attributes via __getattr__."""
+            """Protocol for objects with dynamic attribute access via getattr."""
 
-            def __getattr__(self, name: str) -> None:
+            @staticmethod
+            def __getattr__(name: str) -> None:
                 """Get dynamic attribute."""
                 ...
 
@@ -632,34 +519,13 @@ class FlextLdapProtocols(p):
             """
 
             @property
-            def attributes(self) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
-                """Expose covariant attributes for structural compatibility."""
+            @staticmethod
+            def attributes() -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
+                """The attributes property - covariant Mapping.
+
+                Structurally compatible.
+                """
                 ...
-
-        class ServiceContracts:
-            """Stricter contracts for service interfaces."""
-
-            @runtime_checkable
-            class EntryContract(Protocol):
-                """Structural LDAP entry contract for service boundaries.
-
-                Stricter than LdapEntry - requires non-None dn and attributes.
-                For use at service layer boundaries where data is validated.
-                """
-
-                dn: str
-                attributes: t.MappingKV[str, t.StrSequence]
-
-            @runtime_checkable
-            class SearchOptionsContract(Protocol):
-                """Structural LDAP search options contract for service boundaries.
-
-                Minimal required fields for LDAP search operations at service layer.
-                """
-
-                scope: str
-                filter_str: str
-                attributes: t.StrSequence
 
 
 p = FlextLdapProtocols

@@ -1,46 +1,25 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Unit package."""
+"""Tests.unit package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from types import MappingProxyType
 
-_LAZY_IMPORTS = build_lazy_import_map({
-    ".test_api": ("TestsFlextLdapApi",),
-    ".test_base": ("TestsFlextLdapBase",),
-    ".test_config": ("TestsFlextLdapConfig",),
-    ".test_connection": ("TestsFlextLdapConnection",),
-    ".test_constants": ("TestsFlextLdapConstantsUnit",),
-    ".test_detection": ("TestsFlextLdapDetection",),
-    ".test_entry_adapter": ("TestsFlextLdapEntryAdapter",),
-    ".test_ldap3_adapter": ("TestsFlextLdapLdap3Adapter",),
-    ".test_ldap3_adapter_helpers": ("TestsFlextLdapLdap3AdapterHelpers",),
-    ".test_models": ("TestsFlextLdapModelsUnit",),
-    ".test_models_search": ("TestsFlextLdapModelsSearch",),
-    ".test_models_sync": ("TestsFlextLdapModelsSync",),
-    ".test_operations": ("TestsFlextLdapOperations",),
-    ".test_public_api_contract": ("TestsFlextLdapPublicApiContract",),
-    ".test_sync": ("TestsFlextLdapSync",),
-    ".test_utilities": ("TestsFlextLdapUtilitiesUnit",),
-    "flext_tests": (
-        "c",
-        "d",
-        "e",
-        "h",
-        "m",
-        "p",
-        "r",
-        "s",
-        "t",
-        "td",
-        "tf",
-        "tk",
-        "tm",
-        "tv",
-        "u",
-        "x",
+from flext_core import build_lazy_import_map, install_lazy_exports
+
+
+__all__: tuple[str, ...] = ()
+
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({}),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
     ),
-})
+)
 
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

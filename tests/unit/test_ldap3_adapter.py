@@ -16,7 +16,8 @@ from enum import StrEnum, unique
 import pytest
 from flext_tests import tm
 
-from flext_ldap.adapters.ldap3 import FlextLdapAdapterHost, FlextLdapLdap3Adapter
+from flext_ldap.adapters.host import FlextLdapAdapterHost
+from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
 from tests import c, m, u
 
 pytestmark = pytest.mark.unit
@@ -41,12 +42,14 @@ class TestsFlextLdapLdap3Adapter:
         SEARCH = "search"
 
     @pytest.fixture
-    def adapter(self) -> FlextLdapLdap3Adapter:
+    @staticmethod
+    def adapter() -> FlextLdapLdap3Adapter:
         """Return a freshly constructed, never-connected adapter."""
         return FlextLdapLdap3Adapter()
 
+    @staticmethod
     def test_fresh_adapter_reports_not_connected(
-        self, adapter: FlextLdapLdap3Adapter
+        adapter: FlextLdapLdap3Adapter,
     ) -> None:
         """Verify fresh adapter reports not connected."""
         # Arrange / Act / Assert — public property contract on a new adapter.
@@ -55,7 +58,9 @@ class TestsFlextLdapLdap3Adapter:
 
     @pytest.mark.parametrize("op", list(DisconnectedOp))
     def test_operations_fail_when_not_connected(
-        self, adapter: FlextLdapLdap3Adapter, op: DisconnectedOp
+        self,
+        adapter: FlextLdapLdap3Adapter,
+        op: DisconnectedOp,
     ) -> None:
         """Verify operations fail when not connected."""
         # Every public fallible operation returns a failed r[T] carrying the
@@ -66,17 +71,19 @@ class TestsFlextLdapLdap3Adapter:
                 u.Ldap.Tests.fail(adapter.execute(), has=needle)
             case self.DisconnectedOp.ADD:
                 entry = m.Ldif.Entry(
-                    dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
+                    dn=m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN),
                     attributes=m.Ldif.Attributes(attributes={}),
                 )
                 u.Ldap.Tests.fail(adapter.add(entry), has=needle)
             case self.DisconnectedOp.DELETE:
                 u.Ldap.Tests.fail(
-                    adapter.delete(c.Ldap.Tests.RFC_DEFAULT_BASE_DN), has=needle
+                    adapter.delete(c.Ldap.Tests.RFC_DEFAULT_BASE_DN),
+                    has=needle,
                 )
             case self.DisconnectedOp.MODIFY:
                 u.Ldap.Tests.fail(
-                    adapter.modify(c.Ldap.Tests.RFC_DEFAULT_BASE_DN, {}), has=needle
+                    adapter.modify(c.Ldap.Tests.RFC_DEFAULT_BASE_DN, {}),
+                    has=needle,
                 )
             case self.DisconnectedOp.SEARCH:
                 options = m.Ldap.SearchOptions(
@@ -86,8 +93,9 @@ class TestsFlextLdapLdap3Adapter:
                 )
                 u.Ldap.Tests.fail(adapter.search(options), has=needle)
 
+    @staticmethod
     def test_disconnect_is_idempotent_and_keeps_state_unbound(
-        self, adapter: FlextLdapLdap3Adapter
+        adapter: FlextLdapLdap3Adapter,
     ) -> None:
         """Verify disconnect is idempotent and keeps state unbound."""
         # Disconnecting a never-connected adapter is a no-op that raises
@@ -98,8 +106,9 @@ class TestsFlextLdapLdap3Adapter:
         u.Ldap.Tests.that(adapter.connection, eq=None)
 
     @pytest.mark.parametrize("case", list(c.Ldap.Tests.Ldap3ServerCase))
+    @staticmethod
     def test_create_server_configures_host_and_port(
-        self, case: c.Ldap.Tests.Ldap3ServerCase
+        case: c.Ldap.Tests.Ldap3ServerCase,
     ) -> None:
         """Verify create server configures host and port."""
         # create_server is public via the ConnectionManager ClassVar; its
@@ -123,12 +132,15 @@ class TestsFlextLdapLdap3Adapter:
         )
         u.Ldap.Tests.that(
             getattr(
-                server, c.Ldap.Tests.FIELD_PORT, c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT
+                server,
+                c.Ldap.Tests.FIELD_PORT,
+                c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
             ),
             eq=port,
         )
 
-    def test_adapter_host_reports_unbound_before_use(self) -> None:
+    @staticmethod
+    def test_adapter_host_reports_unbound_before_use() -> None:
         """Verify adapter host reports unbound before use."""
         # FlextLdapAdapterHost exposes is_connected without eagerly building
         # an adapter; before any use it must observe an unbound state.

@@ -1,10 +1,14 @@
-"""LDAP normalization utility methods."""
+"""LDAP normalization utility methods.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_ldap import c, m, p, t
+from flext_ldap import c, m, t
 
 
 class FlextLdapUtilitiesNormalization:
@@ -18,7 +22,11 @@ class FlextLdapUtilitiesNormalization:
         *,
         case: str | None = None,
     ) -> bool:
-        """Check whether a normalized value is present in a collection."""
+        """Check whether a normalized value is present in a collection.
+
+        Returns:
+            The resulting ``bool``.
+        """
         collection_list: t.StrSequence
         match collection:
             case tuple():
@@ -33,9 +41,16 @@ class FlextLdapUtilitiesNormalization:
 
     @classmethod
     def norm_join(
-        cls, values: t.StrSequence | t.VariadicTuple[str], *, case: str | None = None
+        cls,
+        values: t.StrSequence | t.VariadicTuple[str],
+        *,
+        case: str | None = None,
     ) -> str:
-        """Normalize and join string values."""
+        """Normalize and join string values.
+
+        Returns:
+            The resulting ``str``.
+        """
         values_list: t.StrSequence
         match values:
             case tuple():
@@ -81,14 +96,22 @@ class FlextLdapUtilitiesNormalization:
             | t.MappingKV[str, t.StrSequence]
         ),
     ) -> t.MappingKV[str, t.StrSequence]:
-        """Convert LDAP attributes into string sequences."""
+        """Convert LDAP attributes into string sequences.
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.StrSequence]``.
+        """
         return {k: cls._convert_attr_value(v) for k, v in (attrs or {}).items()}
 
     @staticmethod
     def ldap3_value_to_strings(
         value: t.Ldap.Ldap3EntryValue | t.JsonValue | None,
     ) -> t.StrSequence:
-        """Convert an ldap3 attribute payload to canonical string values."""
+        """Convert an ldap3 attribute payload to canonical string values.
+
+        Returns:
+            The resulting ``t.StrSequence``.
+        """
         match value:
             case None:
                 empty_values: t.StrSequence = []
@@ -106,24 +129,33 @@ class FlextLdapUtilitiesNormalization:
                 return [str(value)]
 
     @staticmethod
-    def is_base64_encoded(value: str, threshold: int = c.Ldif.ASCII_THRESHOLD) -> bool:
+    def base64_encoded(value: str, threshold: int = c.Ldif.ASCII_THRESHOLD) -> bool:
         """Return True when a value requires LDIF base64 encoding."""
         return value.startswith("::") or any(ord(char) > threshold for char in value)
 
     @classmethod
     def normalize_original_attr_value(
-        cls, value: t.Ldap.Ldap3EntryValue | None
+        cls,
+        value: t.Ldap.Ldap3EntryValue | None,
     ) -> t.StrSequence:
-        """Normalize original ldap3 values while preserving list semantics."""
+        """Normalize original ldap3 values while preserving list semantics.
+
+        Returns:
+            The resulting ``t.StrSequence``.
+        """
         return cls.ldap3_value_to_strings(value)
 
     @staticmethod
     def dn_str(
-        dn: str | p.Ldif.DN | p.Ldif.Entry | None,
+        dn: str | m.Ldif.DN | m.Ldif.Entry | None,
         *,
         default: str = c.Ldap.UNKNOWN_CATEGORY,
     ) -> str:
-        """Extract a DN string from supported LDIF inputs."""
+        """Extract a DN string from supported LDIF inputs.
+
+        Returns:
+            The resulting ``str``.
+        """
         if dn is None:
             return default
         if isinstance(dn, m.Ldif.DN):
@@ -135,7 +167,11 @@ class FlextLdapUtilitiesNormalization:
 
     @staticmethod
     def filter_truthy(value: t.JsonList | t.JsonMapping) -> t.JsonList | t.JsonMapping:
-        """Filter truthy values from a list or mapping."""
+        """Filter truthy values from a list or mapping.
+
+        Returns:
+            The resulting ``t.JsonList | t.JsonMapping``.
+        """
         if isinstance(value, Mapping):
             return {k: v for k, v in value.items() if v}
         return [item for item in value if item]
@@ -147,7 +183,11 @@ class FlextLdapUtilitiesNormalization:
         case: str | None = None,
         join: str | None = None,
     ) -> str | t.StrSequence:
-        """Normalize a string collection and optionally join it."""
+        """Normalize a string collection and optionally join it.
+
+        Returns:
+            The resulting ``str | t.StrSequence``.
+        """
         normalized: t.MutableSequenceOf[str] = []
         for val in values:
             normalized_val = val
@@ -162,7 +202,11 @@ class FlextLdapUtilitiesNormalization:
 
     @staticmethod
     def norm_str(value: str, *, case: str | None = None) -> str:
-        """Normalize a string by the requested case."""
+        """Normalize a string by the requested case.
+
+        Returns:
+            The resulting ``str``.
+        """
         if not value:
             return ""
         if case == "lower":

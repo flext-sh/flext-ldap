@@ -1,11 +1,18 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Ldap package."""
+"""Flext Ldap package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core import build_lazy_import_map, install_lazy_exports
+
+
 from flext_ldap.__version__ import (
     __author__,
     __author_email__,
@@ -18,110 +25,32 @@ from flext_ldap.__version__ import (
 )
 
 if TYPE_CHECKING:
+    from flext_ldap import adapters, services
+    from flext_ldap._config import FlextLdapConfig, config
+    from flext_ldap._settings import FlextLdapSettings, settings
+    from flext_ldap.api import FlextLdap, ldap
+    from flext_ldap.base import FlextLdapService, s
+    from flext_ldap.cli import main
+    from flext_ldap.constants import FlextLdapConstants, c
+    from flext_ldap.models import FlextLdapModels, m
+    from flext_ldap.protocols import FlextLdapProtocols, p
+    from flext_ldap.services.api_runtime import FlextLdapApiRuntime
+    from flext_ldap.services.sync import FlextLdapSync
+    from flext_ldap.typings import FlextLdapTypes, t
+    from flext_ldap.utilities import FlextLdapUtilities, u
     from flext_ldif import d, e, h, r, x
 
-    from ._config import FlextLdapConfig, config
-    from ._settings import FlextLdapSettings, settings
-    from .api import FlextLdap, ldap
-    from .base import FlextLdapService, s
-    from .constants import FlextLdapConstants, FlextLdapConstants as c
-    from .models import FlextLdapModels, FlextLdapModels as m
-    from .protocols import FlextLdapProtocols, FlextLdapProtocols as p
-    from .typings import FlextLdapTypes, FlextLdapTypes as t
-    from .utilities import FlextLdapUtilities, FlextLdapUtilities as u
-
-    _ = (
-        c,
-        FlextLdapConstants,
-        t,
-        FlextLdapTypes,
-        p,
-        FlextLdapProtocols,
-        m,
-        FlextLdapModels,
-        u,
-        FlextLdapUtilities,
-        d,
-        e,
-        h,
-        r,
-        x,
-        s,
-        FlextLdapService,
-        FlextLdapConfig,
-        config,
-        FlextLdapSettings,
-        settings,
-        FlextLdap,
-        ldap,
-    )
-
-
-_LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    "._config": ("FlextLdapConfig", "config"),
-    "._settings": ("FlextLdapSettings", "settings"),
-    ".api": ("FlextLdap", "ldap"),
-    ".base": ("FlextLdapService", "s"),
-    ".constants": ("FlextLdapConstants", "c"),
-    ".models": ("FlextLdapModels", "m"),
-    ".protocols": ("FlextLdapProtocols", "p"),
-    ".typings": ("FlextLdapTypes", "t"),
-    ".utilities": ("FlextLdapUtilities", "u"),
-    "flext_ldif": ("d", "e", "h", "r", "x"),
-}
-
-
-_LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
-
-
-_LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
-)
-
-_DIRECT_IMPORTS: tuple[str, ...] = (
-    "FlextLdap",
-    "FlextLdapConfig",
-    "FlextLdapConstants",
-    "FlextLdapModels",
-    "FlextLdapProtocols",
-    "FlextLdapService",
-    "FlextLdapSettings",
-    "FlextLdapTypes",
-    "FlextLdapUtilities",
-    "__author__",
-    "__author_email__",
-    "__description__",
-    "__license__",
-    "__title__",
-    "__url__",
-    "__version__",
-    "__version_info__",
-    "build_lazy_import_map",
-    "c",
-    "config",
-    "d",
-    "e",
-    "h",
-    "install_lazy_exports",
-    "ldap",
-    "m",
-    "p",
-    "r",
-    "s",
-    "settings",
-    "t",
-    "u",
-    "x",
-)
 
 __all__: tuple[str, ...] = (
     "FlextLdap",
+    "FlextLdapApiRuntime",
     "FlextLdapConfig",
     "FlextLdapConstants",
     "FlextLdapModels",
     "FlextLdapProtocols",
     "FlextLdapService",
     "FlextLdapSettings",
+    "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "__author__",
@@ -132,6 +61,7 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
+    "adapters",
     "c",
     "config",
     "d",
@@ -139,14 +69,39 @@ __all__: tuple[str, ...] = (
     "h",
     "ldap",
     "m",
+    "main",
     "p",
     "r",
     "s",
+    "services",
     "settings",
     "t",
     "u",
     "x",
 )
 
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            "._config": ("FlextLdapConfig", "config"),
+            "._settings": ("FlextLdapSettings", "settings"),
+            ".adapters": ("adapters",),
+            ".api": ("FlextLdap", "ldap"),
+            ".base": ("FlextLdapService", "s"),
+            ".cli": ("main",),
+            ".constants": ("FlextLdapConstants", "c"),
+            ".models": ("FlextLdapModels", "m"),
+            ".protocols": ("FlextLdapProtocols", "p"),
+            ".services": ("services",),
+            ".services.api_runtime": ("FlextLdapApiRuntime",),
+            ".services.sync": ("FlextLdapSync",),
+            ".typings": ("FlextLdapTypes", "t"),
+            ".utilities": ("FlextLdapUtilities", "u"),
+            "flext_ldif": ("d", "e", "h", "r", "x"),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    ),
+)
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

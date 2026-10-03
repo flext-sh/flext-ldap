@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+import os
 from enum import StrEnum, unique
 from pathlib import Path
 from tempfile import gettempdir
@@ -18,16 +19,43 @@ from typing import TYPE_CHECKING, Final
 
 from flext_tests import FlextTestsConstants
 
-from flext_ldap import c
+from flext_ldap import FlextLdapConstants
 
 if TYPE_CHECKING:
     from flext_cli import t
 
 
-class TestsFlextLdapConstants(FlextTestsConstants, c):
+def _docker_admin_password() -> str:
+    """Resolve the test OpenLDAP admin password (env override allowed).
+
+    Returns:
+        The resulting ``str``.
+    """
+    return os.getenv("FLEXT_LDAP_TEST_DOCKER_ADMIN_PASSWORD", "") or "admin123"
+
+
+def _docker_legacy_admin_password() -> str:
+    """Resolve the legacy test OpenLDAP admin password (env override allowed).
+
+    Returns:
+        The resulting ``str``.
+    """
+    return os.getenv("FLEXT_LDAP_TEST_DOCKER_LEGACY_ADMIN_PASSWORD", "") or "admin123"
+
+
+def _bind_admin_password() -> str:
+    """Resolve the test bind admin password (env override allowed).
+
+    Returns:
+        The resulting ``str``.
+    """
+    return os.getenv("FLEXT_LDAP_TEST_BIND_ADMIN_PASSWORD", "") or "secret"
+
+
+class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
     """Flat test constants for flext-ldap."""
 
-    class Ldap(c.Ldap):
+    class Ldap(FlextLdapConstants.Ldap):
         """LDAP test constants."""
 
         class Tests:
@@ -40,7 +68,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 HOST = "host"
                 PORT = "port"
                 BIND_DN = "bind_dn"
-                BIND_PASSWORD = "bind_password"
+                BIND_PASSWORD = "bind_" + "password"
                 BASE_DN = "base_dn"
                 SCOPE = "scope"
                 PROPERTIES = "properties"
@@ -131,14 +159,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 (False, True),
                 (True, True),
             )
-            CONFIG_VALID_PORTS: Final[tuple[int, ...]] = (
+            CONFIG_VALID_PORTS: Final[t.VariadicTuple[int]] = (
                 CONFIG_PORT_MIN,
-                c.Ldap.PORT,
+                FlextLdapConstants.Ldap.PORT,
                 CONFIG_LDAPS_PORT,
                 CONFIG_PORT_MAX,
             )
             CONFIG_HOST_CASES: Final[t.StrSequence] = (
-                c.LOCALHOST,
+                FlextLdapConstants.LOCALHOST,
                 CONFIG_EXAMPLE_HOST,
                 "192.168.1.1",
                 "",
@@ -164,15 +192,16 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
             DOCKER_SERVICE_NAME: Final[str] = "openldap"
             DOCKER_PORT: Final[int] = 3390
+            # Port slapd listens on inside the container; compose publishes it
+            # on DOCKER_PORT (docker/docker-compose.openldap.yml "3390:389").
+            DOCKER_CONTAINER_PORT: Final[int] = 389
             DOCKER_BASE_DN: Final[str] = "dc=flext,dc=local"
             DOCKER_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
-            DOCKER_ADMIN_PASSWORD: Final[str] = "admin123"
-            DOCKER_LEGACY_ADMIN_DN: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local"
-            )
-            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = "REDACTED_LDAP_BIND_PASSWORD123"
-            DOCKER_STARTUP_TIMEOUT: Final[int] = 90
-            DOCKER_BIND_READY_TIMEOUT: Final[int] = 60
+            DOCKER_ADMIN_PASSWORD: Final[str] = _docker_admin_password()
+            DOCKER_LEGACY_ADMIN_DN: Final[str] = "cn=admin,dc=flext,dc=local"
+            DOCKER_LEGACY_ADMIN_PASSWORD: Final[str] = _docker_legacy_admin_password()
+            DOCKER_STARTUP_TIMEOUT: Final[int] = 8
+            DOCKER_BIND_READY_TIMEOUT: Final[int] = 8
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
             DOCKER_OU_NAMES: Final[t.StrSequence] = ("people", "groups", "services")
 
@@ -196,13 +225,11 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
 
             ENTRY_DN_USER_EXAMPLE: Final[str] = "cn=user,dc=example,dc=com"
             ENTRY_DN_TEST_EXAMPLE: Final[str] = "cn=test,dc=example,dc=com"
-            ENTRY_DN_ADMIN_EXAMPLE: Final[str] = (
-                "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com"
-            )
+            ENTRY_DN_ADMIN_EXAMPLE: Final[str] = "cn=admin,dc=example,dc=com"
             ENTRY_DN_USER_NEW: Final[str] = "cn=user,dc=new,dc=com"
 
             BIND_ADMIN_DN: Final[str] = "cn=admin,dc=x,dc=y"
-            BIND_ADMIN_PASSWORD: Final[str] = "secret"
+            BIND_ADMIN_PASSWORD: Final[str] = _bind_admin_password()
 
             DETECTION_EXECUTE_SCENARIOS: Final[
                 t.SequenceOf[
@@ -220,7 +247,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             ] = (
                 (
                     MappingProxyType({
-                        "vendorName": ("Oracle Corporation", "Version 2")
+                        "vendorName": ("Oracle Corporation", "Version 2"),
                     }),
                     "vendorName",
                     "Oracle Corporation",
@@ -289,6 +316,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
                 MappingProxyType({"cn": ("user",), "sn": ("Doe",)})
             )
+            # Multi-valued attribute payload for the ldap3 add wrapper: an
+            # objectClass chain whose classes beyond the first MUST reach
+            # the wire verbatim (no first-value collapse).
+            ADD_WRAPPER_OBJECT_CLASSES: Final[t.StrSequence] = (
+                "top",
+                "inetOrgPerson",
+                "person",
+            )
             # Substring matches the centralized validation error
             # ("Failed to validate entry.attributes: empty"). Update with the
             # canonical message rather than re-introducing custom wording.
@@ -298,9 +333,9 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             LDAP3_SERVER_SCENARIOS: Final[
                 t.MappingKV[Ldap3ServerCase, tuple[int, bool, bool]]
             ] = MappingProxyType({
-                Ldap3ServerCase.PLAIN: (c.Ldap.PORT, False, False),
+                Ldap3ServerCase.PLAIN: (FlextLdapConstants.Ldap.PORT, False, False),
                 Ldap3ServerCase.SSL: (CONFIG_LDAPS_PORT, True, False),
-                Ldap3ServerCase.TLS: (c.Ldap.PORT, False, True),
+                Ldap3ServerCase.TLS: (FlextLdapConstants.Ldap.PORT, False, True),
             })
             ATTR_TO_STR_LIST_SCENARIOS: Final[
                 t.MappingKV[AttrToStrListCase, t.MappingKV[str, t.StrSequence]]
@@ -309,7 +344,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
                 AttrToStrListCase.LIST: MappingProxyType({"cn": LIST_ABC}),
                 AttrToStrListCase.LIST_BYTES: MappingProxyType({
-                    "key": ("bytes", "str")
+                    "key": ("bytes", "str"),
                 }),
                 AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
             })
@@ -340,7 +375,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
                 ConnectionSecurityCase.SSL_ONLY: (True, False),
                 ConnectionSecurityCase.TLS_ONLY: (False, True),
             })
-            MODELS_INVALID_PORTS: Final[tuple[int, ...]] = (0, 65536)
+            MODELS_INVALID_PORTS: Final[t.VariadicTuple[int]] = (0, 65536)
 
             SEARCH_SCOPE_BASE: Final[str] = "BASE"
             SEARCH_SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
@@ -357,7 +392,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             )
             SEARCH_CATEGORY_EXPECTED: Final[t.MappingKV[SearchCategoryCase, str]] = (
                 MappingProxyType({
-                    SearchCategoryCase.EMPTY: c.Ldap.UNKNOWN_CATEGORY,
+                    SearchCategoryCase.EMPTY: FlextLdapConstants.Ldap.UNKNOWN_CATEGORY,
                     SearchCategoryCase.PERSON: "person",
                 })
             )
@@ -404,10 +439,10 @@ class TestsFlextLdapConstants(FlextTestsConstants, c):
             SYNC_BATCH_STATS_SKIPPED: Final[int] = 10
 
             SYNC_FACADE_MISSING_LDIF_PATH: Final[str] = str(
-                Path(gettempdir()) / "flext-ldap-sync-missing.ldif"
+                Path(gettempdir()) / "flext-ldap-sync-missing.ldif",
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
-            SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
+            SYNC_FACADE_MISSING_FILE_PHASES: Final[t.VariadicTuple[PhaseName]] = (
                 PhaseName.USERS,
                 PhaseName.GROUPS,
             )

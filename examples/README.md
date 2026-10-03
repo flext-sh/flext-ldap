@@ -43,16 +43,20 @@
 
 <!-- TOC END -->
 
-**12 comprehensive examples** demonstrating all functionality of the **flext-ldap** library using the **ldap API** (api.py) as the primary interface.
+**12 comprehensive examples** demonstrating all functionality of the **flext-ldap**
+library using the **ldap API** (api.py) as the primary interface.
 
 ## 📚 Overview
 
-These examples showcase enterprise-grade LDAP operations using clean, maintainable patterns with **100% module coverage**. All examples follow FLEXT standards with r error handling, proper type hints, and zero CLI code.
+These examples showcase enterprise-grade LDAP operations using clean, maintainable
+patterns with **100% module coverage**. All examples follow FLEXT standards with r error
+handling, proper type hints, and zero CLI code.
 
 **Key Principles:**
 
 - ✅ **ALWAYS use api.py (ldap)** as the primary interface
-- ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants, FlextLdapValidations
+- ✅ **Import namespace classes directly**: FlextLdapModels, FlextLdapConstants,
+  FlextLdapValidations
 - ✅ **r patterns** for explicit error handling (NO try/except fallbacks)
 - ✅ **Type-safe** with Python 3.13+ patterns
 - ✅ **Library usage only** - NO CLI tools
@@ -129,7 +133,7 @@ python examples/01_basic_operations.py
 - User entry created, read, updated, and deleted
 - Connection closed gracefully
 
-______________________________________________________________________
+---
 
 ### 02. Search Operations (`02_search_operations.py`)
 
@@ -165,7 +169,7 @@ python examples/02_search_operations.py
 - Different scope demonstrations
 - Attribute filtering examples
 
-______________________________________________________________________
+---
 
 ### 03. Authentication Operations (`03_authentication.py`)
 
@@ -196,7 +200,7 @@ python examples/03_authentication.py
 - Complete authentication workflow (authenticate → search → validate)
 - Security testing (injection attempts handled)
 
-______________________________________________________________________
+---
 
 ### 04. LDIF Operations (`04_ldif_operations.py`)
 
@@ -228,7 +232,7 @@ python examples/04_ldif_operations.py
 - LDIF export with file creation
 - Round-trip demonstration
 
-______________________________________________________________________
+---
 
 ### 05. Universal Operations (`05_universal_operations.py`)
 
@@ -263,7 +267,7 @@ python examples/05_universal_operations.py
 - Entry format conversion between server types
 - Server detection from entry attributes
 
-______________________________________________________________________
+---
 
 ### 06. Validation Patterns (`06_validation_patterns.py`)
 
@@ -297,7 +301,7 @@ python examples/06_validation_patterns.py
 
 **Note**: No LDAP connection required for most validations
 
-______________________________________________________________________
+---
 
 ### 07. Advanced Patterns (`07_advanced_patterns.py`)
 
@@ -332,7 +336,7 @@ python examples/07_advanced_patterns.py
 - Exception handling demonstrations
 - Performance optimization results
 
-______________________________________________________________________
+---
 
 ### 08. ACL Operations (`08_acl_operations.py`)
 
@@ -364,7 +368,7 @@ python examples/08_acl_operations.py
 - Server detection for ACL format selection
 - Complete migration workflow example
 
-______________________________________________________________________
+---
 
 ### 09. Schema Operations (`09_schema_operations.py`)
 
@@ -396,7 +400,7 @@ python examples/09_schema_operations.py
 - Schema search operations
 - Server capabilities comprehensive report
 
-______________________________________________________________________
+---
 
 ### 10. Connection Management (`10_connection_management.py`)
 
@@ -430,7 +434,7 @@ python examples/10_connection_management.py
 - Retry pattern with backoff
 - Multiple connection management
 
-______________________________________________________________________
+---
 
 ### 11. Repository Patterns (`11_repository_patterns.py`)
 
@@ -461,7 +465,7 @@ python examples/11_repository_patterns.py
 - Clean Architecture layer separation
 - Testing benefits explanation
 
-______________________________________________________________________
+---
 
 ### 12. Services (`12_domain_services.py`)
 
@@ -494,7 +498,7 @@ python examples/12_domain_services.py
 - Domain service operations
 - Specification Pattern benefits
 
-______________________________________________________________________
+---
 
 ## 🧪 Comprehensive Validation Examples
 
@@ -528,7 +532,7 @@ python examples/test_data_generator.py --server oud --output test_data_oud.ldif
 - 200 computer accounts
 - 150 additional containers
 
-______________________________________________________________________
+---
 
 ### Validation Helpers (`validation_helpers.py`)
 
@@ -546,7 +550,7 @@ ______________________________________________________________________
 
 **Usage:** Imported by comprehensive validation examples
 
-______________________________________________________________________
+---
 
 ### 99. Comprehensive OpenLDAP Validation (`99_comprehensive_openldap_validation.py`)
 
@@ -588,7 +592,8 @@ ______________________________________________________________________
 
 - Docker Container: flext-openldap-test (port 3390)
 - Base DN: dc=flext,dc=local
-- Admin: cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local / REDACTED_LDAP_BIND_PASSWORD123
+- Admin: cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local /
+  REDACTED_LDAP_BIND_PASSWORD123
 
 **Prerequisites:**
 
@@ -601,7 +606,7 @@ docker-compose -f docker/docker-compose.openldap.yml up -d
 
 # 3. Load test data
 ldapadd -x -H ldap://localhost:3390 \
-  -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" -w REDACTED_LDAP_BIND_PASSWORD123 \
+  -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=flext,dc=local" -w REDACTED_LDAP_BIND_PASSWO ...
   -f test_data_openldap.ldif
 ```
 
@@ -624,11 +629,12 @@ python examples/99_comprehensive_openldap_validation.py
 - All 4 requirements pass
 - > 90% overall success rate
 
-______________________________________________________________________
+---
 
 ### 99. Comprehensive OUD Validation (`99_comprehensive_oud_validation.py`)
 
-**Purpose**: Extensive testing of flext-ldap API against Oracle Unified Directory with ~1000 entries
+**Purpose**: Extensive testing of flext-ldap API against Oracle Unified Directory with
+~1000 entries
 
 **Validates Same 4 Requirements as OpenLDAP:**
 
@@ -653,7 +659,7 @@ python examples/test_data_generator.py --server oud
 docker-compose -f docker/docker-compose.flext-oud-test.yml up -d
 
 # 3. Wait for OUD to be ready (check health)
-docker ps  # Wait for healthy status
+docker ps # Wait for healthy status
 
 # 4. Load test data
 ldapadd -x -H ldap://localhost:3489 \
@@ -681,7 +687,7 @@ python examples/99_comprehensive_oud_validation.py
 - > 90% overall success rate
 - OUD-specific features validated
 
-______________________________________________________________________
+---
 
 ### Validation Best Practices
 
@@ -707,31 +713,31 @@ ______________________________________________________________________
 1. **Low Success Rate**: May indicate breaking changes or server issues
 1. **Timeout Errors**: Increase time limits for large datasets
 
-______________________________________________________________________
+---
 
 ## 🎯 Module Coverage Matrix
 
-| Module                    | Examples               | Functionality Demonstrated                             |
-| ------------------------- | ---------------------- | ------------------------------------------------------ |
-| **api.py (ldap)**         | ALL                    | Primary facade - all operations                        |
-| **models.py**             | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
-| **clients.py**            | 07, 11                 | Advanced direct client usage, repositories             |
-| **settings.py**           | 01, 10                 | FlextLdapSettings configuration, connection management |
-| **constants.py**          | 01, 02                 | Scopes, timeouts, defaults                             |
-| **validations.py**        | 02, 06                 | DN, filter validation                                  |
-| **authentication.py**     | 03                     | User authentication flows                              |
-| **search.py**             | 02                     | Search operations                                      |
-| **entry_adapter.py**      | 04, 05                 | Entry conversion, format conversion, normalization     |
-| **servers/**              | 05                     | Server-specific operations                             |
-| **servers_integration.py** | 05, 09                 | Server servers handling, ACL/paging/timeout servers      |
-| **exceptions.py**         | 07                     | Error handling                                         |
-| **schema.py**             | 09                     | Schema discovery, server detection                     |
-| **acl/manager.py**        | 08                     | ACL management                                         |
-| **acl/converters.py**     | 08                     | ACL format conversion                                  |
-| **acl/parsers.py**        | 08                     | Multi-format ACL parsing                               |
-| **repositories.py**       | 11                     | Repository pattern, DDD                                |
-| **domain.py**             | 12                     | Domain services, Specification Pattern                 |
-| **connection_manager.py** | 10                     | Connection lifecycle (conceptual)                      |
+| Module                     | Examples               | Functionality Demonstrated                             |
+| -------------------------- | ---------------------- | ------------------------------------------------------ |
+| **api.py (ldap)**          | ALL                    | Primary facade - all operations                        |
+| **models.py**              | 01, 02, 04, 06, 11, 12 | Entry, SearchRequest, User, Group, Domain entities     |
+| **clients.py**             | 07, 11                 | Advanced direct client usage, repositories             |
+| **settings.py**            | 01, 10                 | FlextLdapSettings configuration, connection management |
+| **constants.py**           | 01, 02                 | Scopes, timeouts, defaults                             |
+| **validations.py**         | 02, 06                 | DN, filter validation                                  |
+| **authentication.py**      | 03                     | User authentication flows                              |
+| **search.py**              | 02                     | Search operations                                      |
+| **entry_adapter.py**       | 04, 05                 | Entry conversion, format conversion, normalization     |
+| **servers/**               | 05                     | Server-specific operations                             |
+| **servers_integration.py** | 05, 09                 | Server servers handling, ACL/paging/timeout servers    |
+| **exceptions.py**          | 07                     | Error handling                                         |
+| **schema.py**              | 09                     | Schema discovery, server detection                     |
+| **acl/manager.py**         | 08                     | ACL management                                         |
+| **acl/converters.py**      | 08                     | ACL format conversion                                  |
+| **acl/parsers.py**         | 08                     | Multi-format ACL parsing                               |
+| **repositories.py**        | 11                     | Repository pattern, DDD                                |
+| **domain.py**              | 12                     | Domain services, Specification Pattern                 |
+| **connection_manager.py**  | 10                     | Connection lifecycle (conceptual)                      |
 
 **Coverage Summary:**
 
@@ -743,35 +749,39 @@ ______________________________________________________________________
 
 ### Pattern 1: Basic ldap Usage
 
-```python notest
-from flext_ldap import ldap
-from flext_ldap import FlextLdapSettings
+```python
+from flext_ldap import FlextLdapSettings, ldap
 
-# Create and configure
-settings = FlextLdapSettings(
-    ldap_server_uri="ldap://localhost:389",
-    ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
-    ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",
-)
-api = ldap()
 
-# Connect
-result = api.connect()
-if result.is_failure:
-    print(f"Connection failed: {result.error}")
-    return
+def basic_usage():
+    # Create and configure
+    settings = FlextLdapSettings(
+        ldap_server_uri="ldap://localhost:389",
+        ldap_bind_dn="cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com",
+        ldap_bind_password="REDACTED_LDAP_BIND_PASSWORD",
+    )
+    api = ldap()
 
-# Use API
-search_result = api.search(...)
+    # Connect
+    result = api.connect()
+    if result.is_failure:
+        print(f"Connection failed: {result.error}")
+        return
 
-# Disconnect
-api.unbind()
+    # Use API
+    search_result = api.search(...)
+
+    # Disconnect
+    api.unbind()
 ```
 
 ### Pattern 2: Context Manager
 
-```python notest
+```python
+from __future__ import annotations
+
 from contextlib import contextmanager
+
 from flext_ldap import ldap
 
 
@@ -794,14 +804,19 @@ with ldap_connection() as api:
 
 ### Pattern 3: r Error Handling
 
-```python notest
-# Pattern 1: Check before unwrap
-result = api.search(...)
-if result.is_failure:
-    logger.error(f"Failed: {result.error}")
-    return
+```python
+from __future__ import annotations
 
-entries = result.unwrap()
+
+# Pattern 1: Check before unwrap
+def check_before_unwrap():
+    result = api.search(...)
+    if result.is_failure:
+        logger.error(f"Failed: {result.error}")
+        return
+
+    entries = result.unwrap()
+    return entries
 
 
 # Pattern 2: Early return
@@ -816,23 +831,26 @@ def process():
 
 ### Pattern 4: Validation Before Operations
 
-```python notest
+```python
 from flext_ldap import FlextLdapValidations
 
-# Validate DN
-dn_result = FlextLdapValidations.validate_dn(user_dn)
-if dn_result.is_failure:
-    logger.error(f"Invalid DN: {dn_result.error}")
-    return
 
-# Validate filter
-filter_result = FlextLdapValidations.validate_filter(filter_str)
-if filter_result.is_failure:
-    logger.error(f"Invalid filter: {filter_result.error}")
-    return
+def validate_before_operations(user_dn, filter_str, api):
+    # Validate DN
+    dn_result = FlextLdapValidations.validate_dn(user_dn)
+    if dn_result.is_failure:
+        logger.error(f"Invalid DN: {dn_result.error}")
+        return
 
-# Proceed with operation
-result = api.search(base_dn=user_dn, filter_str=filter_str)
+    # Validate filter
+    filter_result = FlextLdapValidations.validate_filter(filter_str)
+    if filter_result.is_failure:
+        logger.error(f"Invalid filter: {filter_result.error}")
+        return
+
+    # Proceed with operation
+    result = api.search(base_dn=user_dn, filter_str=filter_str)
+    return result
 ```
 
 ## 🐛 Troubleshooting
@@ -844,7 +862,9 @@ result = api.search(base_dn=user_dn, filter_str=filter_str)
 docker ps | grep ldap
 
 # Test connection
-ldapsearch -x -H ldap://localhost:389 -D "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w REDACTED_LDAP_BIND_PASSWORD -b "dc=example,dc=com"
+ldapsearch -x -H ldap://localhost:389 -D \
+    "cn=REDACTED_LDAP_BIND_PASSWORD,dc=example,dc=com" -w REDACTED_LDAP_BIND_PASSWORD \
+        -b "dc=example,dc=com"
 
 # Check environment variables
 echo $LDAP_SERVER_URI
@@ -874,7 +894,8 @@ pip install flext-ldif
 ## 📚 Additional Resources
 
 - **[FLEXT-LDAP Documentation](../README.md)** - Main project documentation
-- **[API Reference](../docs/api-reference.md)** - Complete API documentation
+- **[API Reference](../docs/api-reference/README.md)** - Generated API documentation
+  entry point
 - **[Architecture Guide](../docs/architecture.md)** - System design and patterns
 - **[FLEXT Standards](../../AGENTS.md)** - Ecosystem-wide standards
 
@@ -903,5 +924,4 @@ After exploring these examples:
 
 ## 📝 License
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
-SPDX-License-Identifier: MIT
+Copyright (c) 2025 FLEXT Team. All rights reserved. SPDX-License-Identifier: MIT

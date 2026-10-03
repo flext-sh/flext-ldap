@@ -8,23 +8,26 @@ from __future__ import annotations
 
 from flext_tests import FlextTestsTypes
 
-from flext_ldap import t
+from flext_ldap import FlextLdapTypes
 
 
-class TestsFlextLdapTypes(FlextTestsTypes, t):
+class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
     """Type system foundation for flext-ldap tests - extends TestsFlextTypes and t."""
 
-    class Ldap(t.Ldap):
+    class Ldap(FlextLdapTypes.Ldap):
         """LDAP test types."""
 
-        class Tests:
+        class Tests(FlextTestsTypes.Tests):
             """flext-ldap-specific test type definitions namespace.
 
             Consolidates all test types from helpers/typings.py and inline locations.
             Use t.Ldap.Tests.* for all flext-ldap test types.
             """
 
-            type LdapContainerDict = t.MappingKV[str, t.Scalar]
+            type LdapContainerDict = FlextLdapTypes.MappingKV[
+                str,
+                FlextLdapTypes.Scalar,
+            ]
 
 
 t = TestsFlextLdapTypes

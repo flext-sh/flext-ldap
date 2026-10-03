@@ -1,12 +1,22 @@
-"""LDAP conversion utility methods."""
+"""LDAP conversion utility methods.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldap import c, m, p, t
-from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 from flext_ldif import r
+
+from flext_ldap import c, m, t
+
+if TYPE_CHECKING:
+    # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
+    from flext_ldap import p
+
+from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -21,8 +31,12 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         base64_attrs: t.StrSequence,
         original_attrs_dict: t.MappingKV[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
-    ) -> p.Ldap.ConversionMetadata:
-        """Create canonical conversion metadata for LDAP entry adaptation."""
+    ) -> m.Ldap.ConversionMetadata:
+        """Create canonical conversion metadata for LDAP entry adaptation.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata``.
+        """
         return m.Ldap.ConversionMetadata(
             source_attributes=list(dict(original_attrs_dict).keys()),
             source_dn=original_dn,
@@ -32,14 +46,19 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @classmethod
     def search_entry_to_ldif_entry(
-        cls, entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue]
-    ) -> p.Result[p.Ldif.Entry]:
-        """Convert LDAP search-result mappings into canonical LDIF entries."""
+        cls,
+        entry: t.MappingKV[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
+    ) -> p.Result[m.Ldif.Entry]:
+        """Convert LDAP search-result mappings into canonical LDIF entries.
+
+        Returns:
+            The resulting ``p.Result[m.Ldif.Entry]``.
+        """
         raw_entry = dict(entry)
         dn_raw = raw_entry.get("dn")
         dn_values = cls.ldap3_value_to_strings(dn_raw)
         if not dn_values:
-            return r[p.Ldif.Entry].fail("Search entry missing DN")
+            return r[m.Ldif.Entry].fail("Search entry missing DN")
         dn_value = dn_values[0]
         attributes: MutableMapping[str, t.MutableSequenceOf[str] | str] = {
             key: list(cls.ldap3_value_to_strings(value))
@@ -51,14 +70,18 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
     @classmethod
     def track_conversion_differences(
         cls,
-        conversion_metadata: p.Ldap.ConversionMetadata,
+        conversion_metadata: m.Ldap.ConversionMetadata,
         *,
         original_dn: str,
         converted_dn: str,
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: t.MappingKV[str, t.StrSequence],
-    ) -> p.Ldap.ConversionMetadata:
-        """Record DN and attribute changes observed during entry conversion."""
+    ) -> m.Ldap.ConversionMetadata:
+        """Record DN and attribute changes observed during entry conversion.
+
+        Returns:
+            The resulting ``m.Ldap.ConversionMetadata``.
+        """
         updates: MutableMapping[str, bool | str | t.StrSequence] = {}
         if converted_dn != original_dn:
             updates["dn_changed"] = True
@@ -75,16 +98,24 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
             updates["attribute_changes"] = changed_attrs
         if not updates:
             return conversion_metadata
-        return conversion_metadata.model_copy(update=updates)
+        updated: m.Ldap.ConversionMetadata = conversion_metadata.model_copy(
+            update=updates,
+        )
+        return updated
 
     # NOTE (multi-agent): mro-wgwh.2 — entry attribute/category behavior moved here
-    # from m.Ldap.SearchResult (models facet is declaration-only); get_entry_category
+    # from m.Ldap.SearchResult (models facet is declaration-only);
+    # resolve_entry_category
     # composes the two extractions, killing the duplicated objectClass logic.
     @staticmethod
     def extract_attrs_dict_from_entry(
         entry: p.Ldif.Entry,
     ) -> t.MutableStrSequenceMapping:
-        """Extract the plain attributes mapping from an LDIF entry."""
+        """Extract the plain attributes mapping from an LDIF entry.
+
+        Returns:
+            The resulting ``t.MutableStrSequenceMapping``.
+        """
         attributes = entry.attributes
         if attributes is None:
             return {}
@@ -92,30 +123,44 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
     @staticmethod
     def extract_objectclass_category(attrs: t.AttributeMapping) -> str:
-        """Extract the lowercase objectclass category from an attribute mapping."""
+        """Extract the lowercase objectclass category from an attribute mapping.
+
+        Returns:
+            The resulting ``str``.
+        """
         unknown: str = c.Ldap.UNKNOWN_CATEGORY
         if not attrs:
             return unknown
         oc_list = attrs.get("objectClass", attrs.get("objectclass", []))
         if isinstance(oc_list, list) and oc_list:
-            return str(oc_list[0]).lower()
+            first_oc: str = oc_list[0]
+            return first_oc.lower()
         return unknown
 
     @classmethod
-    def get_entry_category(cls, entry: p.Ldif.Entry) -> str:
-        """Get the category (first objectclass, lowercased) of an LDIF entry."""
+    def resolve_entry_category(cls, entry: p.Ldif.Entry) -> str:
+        """Get the category (first objectclass, lowercased) of an LDIF entry.
+
+        Returns:
+            The resulting ``str``.
+        """
         return cls.extract_objectclass_category(
-            cls.extract_attrs_dict_from_entry(entry)
+            cls.extract_attrs_dict_from_entry(entry),
         )
 
     @classmethod
     def group_entries_by_objectclass(
-        cls, entries: t.SequenceOf[p.Ldif.Entry]
-    ) -> p.Ldif.FlexibleCategories:
-        """Group LDIF entries by their objectclass category."""
+        cls,
+        entries: t.SequenceOf[m.Ldif.Entry],
+    ) -> m.Ldif.FlexibleCategories:
+        """Group LDIF entries by their objectclass category.
+
+        Returns:
+            The resulting ``m.Ldif.FlexibleCategories``.
+        """
         result = m.Ldif.FlexibleCategories()
         for entry in entries:
-            result[cls.get_entry_category(entry)].append(entry)
+            result[cls.resolve_entry_category(entry)].append(entry)
         return result
 
 

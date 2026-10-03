@@ -11,11 +11,13 @@
     "object_classes": ["groupOfNames", "top"]
   },
   {
-    "dn": "cn=REDACTED_LDAP_BIND_PASSWORDs,ou=groups,dc=flext,dc=local",
-    "cn": "REDACTED_LDAP_BIND_PASSWORDs",
+    "dn": "cn=admins,ou=groups,dc=flext,dc=local",
+    "cn": "admins",
     "gid_number": 1001,
     "description": "System Administrators",
-    "member_dns": ["uid=REDACTED_LDAP_BIND_PASSWORD,ou=people,dc=flext,dc=local"],
+    "member_dns": [
+      "uid=admin,ou=people,dc=flext,dc=local"
+    ],
     "object_classes": ["groupOfNames", "top"]
   },
   {
