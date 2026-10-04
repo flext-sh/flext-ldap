@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdif
 
-from flext_core import s
+from flext_core import FlextService
 from flext_ldap import (
     FlextLdapModels as m,
     FlextLdapSettings,
@@ -28,7 +28,7 @@ from flext_ldap import (
 class FlextLdapService[
     TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
     | t.SequenceOf[t.JsonPayload],
-](s[TResult]):
+](FlextService[TResult]):
     """Base class for all flext-ldap services.
 
     Services default to the centralized ``m.Ldap.Response`` pipeline and may
