@@ -14,17 +14,17 @@ from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldap._models.config import FlextLdapConfigModels
-    from flext_ldap._models.ldap import FlextLdapModelsLdap
+    from flext_ldap._models.ldap import FlextLdapFlextModelsLdap
 
 
-__all__: tuple[str, ...] = ("FlextLdapConfigModels", "FlextLdapModelsLdap")
+__all__: tuple[str, ...] = ("FlextLdapConfigModels", "FlextLdapFlextModelsLdap")
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
         "FlextLdapConfigModels": ".config",
-        "FlextLdapModelsLdap": ".ldap",
+        "FlextLdapFlextModelsLdap": ".ldap",
     }),
     public_exports=__all__,
 )
