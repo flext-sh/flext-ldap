@@ -141,6 +141,7 @@ class TestsFlextLdapMultivalueAdd:
             changetype=None,
             metadata=None,
             validation_metadata=None,
+            domain_events=[],
         )
         tm.that(ldap.is_connected, eq=False)
         connect_result = ldap.connect(conn_config)

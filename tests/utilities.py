@@ -8,14 +8,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import ClassVar, TypeVar
+from typing import ClassVar
 
 from flext_tests import FlextTestsUtilities, r, tk, tm
+from flext_tests.docker import FlextTestsDocker
 
 from flext_ldap import FlextLdapUtilities
 from tests import c, m, p, t
-
-TResult = TypeVar("TResult", bound=t.Tests.TestResultValue)
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
@@ -42,7 +41,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
                 result: p.Result[TResult],
-                **kwargs: object,
+                **kwargs: p.AttributeProbe,
             ) -> str:
                 """Provide fail.
 
@@ -196,11 +195,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def get_docker_control(
                 _worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
-            ) -> tk:
+            ) -> FlextTestsDocker:
                 """Create Docker test infrastructure controller.
 
                 Returns:
-                    The resulting ``tk``.
+                    The resulting ``FlextTestsDocker``.
                 """
                 return tk.compose(
                     compose_file=c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL,

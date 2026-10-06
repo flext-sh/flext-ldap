@@ -86,6 +86,7 @@ class TestsFlextLdapEntryAdapter:
                 attributes={key: list(values) for key, values in attributes.items()},
                 attribute_metadata={},
             ),
+            domain_events=[],
         )
 
     # ------------------------------------------------------------------

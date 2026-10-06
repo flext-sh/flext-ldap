@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_tests import s as tests_s
+from flext_tests.base import FlextTestsServiceBase
 
 from flext_ldap import m
 from tests.settings import TestsFlextLdapSettings
@@ -17,7 +17,9 @@ if TYPE_CHECKING:
     from tests import p
 
 
-class TestsFlextLdapServiceBase[TDomainResult: p.Base = p.Base](tests_s[TDomainResult]):
+class TestsFlextLdapServiceBase[TDomainResult: p.Base = p.Base](
+    FlextTestsServiceBase[TDomainResult],
+):
     """LDAP test service base with source and test settings namespaces."""
 
     # NOTE (multi-agent): flext-tests owns fetch_settings; this project

@@ -16,15 +16,6 @@ from flext_ldif import m, u
 from flext_ldap import c, t
 
 
-def _empty_phase_results() -> t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]:
-    """Build an immutable, precisely typed empty phase result mapping.
-
-    Returns:
-        The resulting ``t.MappingKV[str, FlextLdapModelsLdap.PhaseSyncResult]``.
-    """
-    return MappingProxyType({})
-
-
 class FlextLdapFlextModelsLdap:
     """Canonical namespace owner."""
 
@@ -63,7 +54,7 @@ class FlextLdapFlextModelsLdap:
                 u.Field(description="Enable auto-range for paged results"),
             ] = True
 
-            @u.model_validator(mode="after")
+            @m.model_validator(mode="after")
             def validate_ssl_tls_exclusion(self) -> Self:
                 """Validate that SSL and TLS are mutually exclusive.
 
@@ -346,7 +337,10 @@ class FlextLdapFlextModelsLdap:
                 str,
                 FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
             ] = u.Field(
-                default_factory=_empty_phase_results,
+                default_factory=lambda: MappingProxyType[
+                    str,
+                    FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
+                ]({}),
                 description="Per-phase sync results keyed by phase name",
             )
             total_entries: t.NonNegativeInt = 0

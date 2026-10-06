@@ -12,10 +12,10 @@ import pytest
 from flext_ldif import r
 
 from flext_ldap.services.operations import FlextLdapOperations
-from tests import c, m, u
+from tests import c, m, p, u
 
 if TYPE_CHECKING:
-    from tests import p, t
+    from tests import t
 
 pytestmark = pytest.mark.unit
 
@@ -27,7 +27,7 @@ class TestsFlextLdapOperations:
         """Deterministic operations service for exercising public batch flow."""
 
         _queued_results: list[p.Result[m.Ldap.LdapOperationResult]] = u.PrivateAttr(
-            default_factory=list,
+            default_factory=list[p.Result[m.Ldap.LdapOperationResult]],
         )
 
         def __init__(
@@ -56,6 +56,7 @@ class TestsFlextLdapOperations:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(attributes={}, attribute_metadata={}),
+            domain_events=[],
         )
 
     @staticmethod
@@ -209,13 +210,14 @@ class TestsFlextLdapOperations:
             attributes=m.Ldif.Attributes(
                 attributes={
                     c.Ldap.AttributeName.CHANGETYPE: [
-                        c.Ldif.LdifChangeType.MODIFY.value,
+                        c.Ldif.ChangeType.MODIFY.value,
                     ],
                     c.Ldif.ChangeOperation.ADD: [c.Ldap.AttributeName.COMMON_NAME],
                     c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE],
                 },
                 attribute_metadata={},
             ),
+            domain_events=[],
         )
 
         error = u.Ldap.Tests.fail(operations.upsert(entry))

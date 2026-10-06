@@ -20,7 +20,7 @@ class TestsFlextLdapModelsUnit:
     def test_entry_exposes_dn_value_and_null_attributes() -> None:
         """Verify entry exposes dn value and null attributes."""
         dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        entry = m.Ldif.Entry(dn=dn, attributes=None)
+        entry = m.Ldif.Entry(dn=dn, attributes=None, domain_events=[])
 
         u.Ldap.Tests.that(entry.dn_str, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(entry.attributes, none=True)
@@ -32,6 +32,7 @@ class TestsFlextLdapModelsUnit:
         entry = m.Ldif.Entry(
             dn=dn,
             attributes=m.Ldif.Attributes(attributes={"cn": ["alice"], "sn": ["smith"]}),
+            domain_events=[],
         )
 
         u.Ldap.Tests.that(entry.attributes_dict, eq={"cn": ["alice"], "sn": ["smith"]})

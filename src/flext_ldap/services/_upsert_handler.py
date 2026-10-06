@@ -95,7 +95,7 @@ class FlextLdapUpsertHandler:
         )
         if not changetype and hasattr(entry, "changetype") and entry.changetype:
             changetype = entry.changetype.lower()
-        return changetype == c.Ldif.LdifChangeType.MODIFY
+        return changetype == c.Ldif.ChangeType.MODIFY
 
     @staticmethod
     def _modify_additions(entry_model: m.Ldif.Entry) -> list[tuple[str, t.StrSequence]]:

@@ -31,7 +31,7 @@ class FlextLdapLdap3OperationExecutor:
         model_config = m.ConfigDict(frozen=True, extra="ignore")
         description: str | None = None
 
-        @u.field_validator("description", mode="before")
+        @m.field_validator("description", mode="before")
         @classmethod
         def normalize_description(
             cls,

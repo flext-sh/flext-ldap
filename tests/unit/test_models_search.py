@@ -6,9 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import t
 
 pytestmark = pytest.mark.unit
 
@@ -24,12 +29,16 @@ class TestsFlextLdapModelsSearch:
     """
 
     @staticmethod
-    def _entry(dn: str, attributes: dict[str, list[str]] | None = None) -> m.Ldif.Entry:
+    def _entry(
+        dn: str,
+        attributes: t.MappingKV[str, t.StrSequence] | None = None,
+    ) -> m.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": attributes or {},
             }),
+            domain_events=[],
         )
 
     @staticmethod
@@ -119,9 +128,8 @@ class TestsFlextLdapModelsSearch:
         Raises:
             ValueError: If Unsupported search category case.
         """
-        attrs: dict[str, list[str] | str]
-        case_obj: object = case
-        match case_obj:
+        attrs: t.AttributeMapping
+        match case:
             case c.Ldap.Tests.SearchCategoryCase.EMPTY:
                 attrs = {}
             case c.Ldap.Tests.SearchCategoryCase.PERSON:
@@ -229,7 +237,7 @@ class TestsFlextLdapModelsSearch:
         )
         exc_types: tuple[type[Exception], ...] = (TypeError, c.ValidationError)
         with pytest.raises(exc_types):
-            result.success = False  # frozen model: assignment must fail
+            setattr(result, "success", False)  # frozen model: assignment must fail
 
 
 class TestsFlextLdapModelsSearchSearch(TestsFlextLdapModelsSearch):

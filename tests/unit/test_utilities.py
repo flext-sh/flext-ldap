@@ -12,13 +12,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import pytest
 from flext_tests import tm
 from ldap3 import MOCK_SYNC, Connection, Server
 
 from tests import c, m, t, u
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 pytestmark = pytest.mark.unit
 
@@ -42,10 +45,11 @@ def _entry(
                 attribute_metadata={},
             )
         ),
+        domain_events=[],
     )
 
 
-class _RootDseProbePayload:
+class TestsFlextLdapRootDseProbePayload:
     """Shared ldap3-shaped ``result``/``entries`` payload for root-DSE probes."""
 
     result_payload: ClassVar[t.JsonMapping] = {}
@@ -81,8 +85,7 @@ class TestsFlextLdapUtilitiesUnit:
             ValueError: If Unsupported attr to str list case.
         """
         expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
-        case_obj: object = case
-        match case_obj:
+        match case:
             case c.Ldap.Tests.AttrToStrListCase.EMPTY:
                 result = u.Ldap.attr_to_str_list({})
             case c.Ldap.Tests.AttrToStrListCase.BYTES:
@@ -160,7 +163,7 @@ class TestsFlextLdapUtilitiesUnit:
     @staticmethod
     def test_compare_entries_identical_entries_have_no_changes() -> None:
         """Verify identical entries compare equal (empty change set)."""
-        entry_data: dict[str, list[str]] = {
+        entry_data: t.MappingKV[str, t.StrSequence] = {
             "cn": [c.Ldap.Tests.STRING_SIMPLE],
             "sn": ["user"],
         }
@@ -313,7 +316,7 @@ class TestsFlextLdapUtilitiesUnitDetect(TestsFlextLdapUtilitiesUnit):
     def test_detect_from_connection_failure() -> None:
         """Verify detect from connection failure."""
 
-        class FailSearch(_RootDseProbePayload):
+        class FailSearch(TestsFlextLdapRootDseProbePayload):
             @staticmethod
             def search(**_kwargs: str | int | bool | None) -> bool:
                 return False
@@ -332,7 +335,9 @@ class TestsFlextLdapUtilitiesUnitDetect(TestsFlextLdapUtilitiesUnit):
             "vendorName": [b"OpenLDAP"],
             "vendorVersion": [b"2.4.57"],
         }
-        conn.bind()
+        method_name = "bind"
+        bind_call: Callable[..., bool] = getattr(conn, method_name)
+        bind_call()
         result = u.Ldap.detect_from_connection(conn)
 
         tm.that(result.success, eq=True)
@@ -570,7 +575,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     @staticmethod
     def test_process_new_attributes_ignored() -> None:
         """Verify process new attributes ignored."""
-        existing_attrs: dict[str, list[str]] = {}
+        existing_attrs: t.MappingKV[str, t.StrSequence] = {}
         changes, _processed = u.Ldap.process_new_attributes(
             {"cn": ["val"]},
             existing_attrs,
@@ -592,7 +597,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     def test_query_root_dse_no_search_method() -> None:
         """Verify query root dse no search method."""
 
-        class NoSearch(_RootDseProbePayload):
+        class NoSearch(TestsFlextLdapRootDseProbePayload):
             search: None = None
 
         result = u.Ldap.query_root_dse(NoSearch())
@@ -602,7 +607,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     def test_query_root_dse_search_returns_false() -> None:
         """Verify query root dse search returns false."""
 
-        class FalseSearch(_RootDseProbePayload):
+        class FalseSearch(TestsFlextLdapRootDseProbePayload):
             @staticmethod
             def search(**_kwargs: str | int | bool | None) -> bool:
                 return False
@@ -614,7 +619,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     def test_query_root_dse_no_entries() -> None:
         """Verify query root dse no entries."""
 
-        class EmptySearch(_RootDseProbePayload):
+        class EmptySearch(TestsFlextLdapRootDseProbePayload):
             result_payload: ClassVar[t.JsonMapping] = {"result": 0}
 
             @staticmethod
@@ -628,7 +633,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     def test_query_root_dse_invalid_entry_type() -> None:
         """Verify query root dse invalid entry type."""
 
-        class BadEntry(_RootDseProbePayload):
+        class BadEntry(TestsFlextLdapRootDseProbePayload):
             result_payload: ClassVar[t.JsonMapping] = {"result": 0}
             entry_payloads: ClassVar[t.SequenceOf[str]] = ["not_ldap3_entry"]
 
@@ -659,7 +664,9 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
             "vendorName": [b"OpenLDAP"],
             "vendorVersion": [b"2.4.57"],
         }
-        conn.bind()
+        method_name = "bind"
+        bind_call: Callable[..., bool] = getattr(conn, method_name)
+        bind_call()
         result = u.Ldap.query_root_dse(conn)
 
         tm.that(result.success, eq=True)
@@ -680,7 +687,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     @staticmethod
     def test_rdn_attribute_names_without_dn_fails() -> None:
         """Verify rdn_attribute_names fails for an entry without DN."""
-        entry = m.Ldif.Entry(dn=None, attributes=None)
+        entry = m.Ldif.Entry(dn=None, attributes=None, domain_events=[])
         u.Ldap.Tests.fail(u.Ldap.rdn_attribute_names(entry))
 
     # --- search_entry_to_ldif_entry ---

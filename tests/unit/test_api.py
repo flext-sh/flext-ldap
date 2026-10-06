@@ -66,7 +66,7 @@ class TestsFlextLdapApi:
         case: c.Ldap.Tests.CallbackGuardCase,
     ) -> t.Ldap.ProgressCallbackUnion | None:
         """Return the callback payload for one callback-guard case."""
-        callbacks: dict[
+        callbacks: t.MappingKV[
             c.Ldap.Tests.CallbackGuardCase,
             t.Ldap.ProgressCallbackUnion | None,
         ] = {
