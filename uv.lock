@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.13.*"
 resolution-markers = [
     "sys_platform == 'linux'",
@@ -638,7 +638,7 @@ dev = [
 [[package]]
 name = "flext-ldif"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-ldif.git?rev=0.12.0-dev#b07ec9a9c7ca5746d719e820a5380bc093b8edc6" }
+source = { git = "https://github.com/flext-sh/flext-ldif.git?rev=0.12.0-dev#b508156125ec9a5688cd09f8a919a5eb4875cbfd" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
