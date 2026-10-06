@@ -14,5 +14,9 @@ from flext_ldap import FlextLdapSettings
 class TestsFlextLdapSettings(FlextLdapSettings, FlextTestsSettings):
     """LDAP settings extended with the shared test namespace."""
 
+    # A ``Tests*``-named non-test helper: without this marker pytest attempts
+    # to collect it from every test-module namespace that imports it.
+    __test__: bool = False
+
 
 __all__: list[str] = ["TestsFlextLdapSettings"]
