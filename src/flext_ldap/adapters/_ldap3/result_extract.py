@@ -112,9 +112,9 @@ class FlextLdapLdap3ResultExtract:
             case m.Ldif.Entry():
                 result = parsed.metadata
             case _:
-                metadata_attr: m.Ldif.ServerMetadata
-                | t.MappingKV[str, t.Scalar | None]
-                | None = getattr(parsed, "metadata", None)
+                metadata_attr: (
+                    m.Ldif.ServerMetadata | t.MappingKV[str, t.Scalar | None] | None
+                ) = getattr(parsed, "metadata", None)
                 match metadata_attr:
                     case None:
                         result = None
