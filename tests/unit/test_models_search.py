@@ -123,11 +123,7 @@ class TestsFlextLdapModelsSearch:
     def test_extract_objectclass_category_maps_expected(
         case: c.Ldap.Tests.SearchCategoryCase,
     ) -> None:
-        """Verify extract objectclass category maps expected.
-
-        Raises:
-            ValueError: If Unsupported search category case.
-        """
+        """Verify extract objectclass category maps expected."""
         attrs: t.AttributeMapping
         match case:
             case c.Ldap.Tests.SearchCategoryCase.EMPTY:

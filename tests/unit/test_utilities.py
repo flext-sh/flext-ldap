@@ -79,11 +79,7 @@ class TestsFlextLdapUtilitiesUnit:
     def test_attr_to_str_list_scenarios(
         case: c.Ldap.Tests.AttrToStrListCase,
     ) -> None:
-        """Verify attr to str list scenarios.
-
-        Raises:
-            ValueError: If Unsupported attr to str list case.
-        """
+        """Verify attr to str list scenarios."""
         expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
         match case:
             case c.Ldap.Tests.AttrToStrListCase.EMPTY:
