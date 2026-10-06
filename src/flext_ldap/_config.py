@@ -12,26 +12,20 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_ldif import m
-
+import flext_ldap._models._ldap_namespace
 from flext_core import FlextConfig
-
-
-class _LdapNamespace(m.BaseModel):
-    """Open, frozen namespace exposing every ``config/*.yaml`` domain model-less."""
-
-    model_config = m.ConfigDict(extra="allow", frozen=True)
+from flext_ldap import m
 
 
 class FlextLdapConfig(FlextConfig):
     """Ldap config auto-loaded model-less from ``config/*.yaml``."""
 
     Ldap: Annotated[
-        _LdapNamespace,
+        flext_ldap._models._ldap_namespace._LdapNamespace,
         m.Field(
             description="Open namespace exposing ``config/*.yaml`` under ``Ldap``.",
         ),
-    ] = _LdapNamespace()
+    ] = flext_ldap._models._ldap_namespace._LdapNamespace()
 
 
 config: FlextLdapConfig = FlextLdapConfig.fetch_global()
