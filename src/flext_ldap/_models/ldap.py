@@ -8,7 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_ldif import m, u
@@ -337,10 +336,7 @@ class FlextLdapFlextModelsLdap:
                 str,
                 FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
             ] = u.Field(
-                default_factory=lambda: MappingProxyType[
-                    str,
-                    FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
-                ]({}),
+                default_factory=dict,
                 description="Per-phase sync results keyed by phase name",
             )
             total_entries: t.NonNegativeInt = 0

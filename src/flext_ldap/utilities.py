@@ -8,8 +8,11 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdifUtilities
 
+from flext_ldap._utilities.base import FlextLdapUtilitiesBase
 from flext_ldap._utilities.comparison import FlextLdapUtilitiesComparison
 from flext_ldap._utilities.conversion import FlextLdapUtilitiesConversion
+from flext_ldap._utilities.detection import FlextLdapUtilitiesDetection
+from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
 from flext_ldap._utilities.root_dse import FlextLdapUtilitiesRootDse
 from flext_ldap._utilities.server import FlextLdapUtilitiesServer
 from flext_ldap._utilities.validation import FlextLdapUtilitiesValidation
@@ -23,6 +26,10 @@ class FlextLdapUtilities(FlextLdifUtilities):
         FlextLdapUtilitiesConversion,
         FlextLdapUtilitiesComparison,
         FlextLdapUtilitiesRootDse,
+        FlextLdapUtilitiesDetection,
+        FlextLdapUtilitiesNormalization,
+        FlextLdapUtilitiesValidation,
+        FlextLdapUtilitiesBase,
     ):
         """LDAP-specific utility namespace."""
 

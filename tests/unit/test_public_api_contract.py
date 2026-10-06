@@ -20,8 +20,6 @@ import pytest
 from flext_tests import tm
 
 import flext_ldap
-import flext_ldap._config
-import flext_ldap._settings
 import flext_ldap.api
 import flext_ldap.base
 import flext_ldap.cli
@@ -50,8 +48,6 @@ pytestmark = pytest.mark.unit
 # ``services``, ``config``, private ``_constants``/``_models``/``_utilities``)
 # are not facade owners.
 _DECLARING_MODULES: tuple[ModuleType, ...] = (
-    flext_ldap._config,
-    flext_ldap._settings,
     flext_ldap.api,
     flext_ldap.base,
     flext_ldap.cli,

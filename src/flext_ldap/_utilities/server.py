@@ -11,13 +11,14 @@ from typing import TYPE_CHECKING, Literal
 import ldap3
 
 from flext_ldap import c
+from flext_ldap._utilities.base import FlextLdapUtilitiesBase
 
 if TYPE_CHECKING:
     # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
     from flext_ldap import p
 
 
-class FlextLdapUtilitiesServer:
+class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
     """LDAP server and connection construction helpers."""
 
     @staticmethod
