@@ -26,7 +26,7 @@ dependencies = [
   "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
   "ldap3>=2.10.2rc4",
   "packaging>=26.3",
-  "pydantic>=2.13.5",
+  "pydantic>=2.13.5,<3",
   "pydantic-settings>=2.15.0",
   "pyyaml>=6.0.3",
   "structlog>=26.1.0",
@@ -177,7 +177,7 @@ include = ["/src/flext_ldap/**"]
 [tool.mypy]
 mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
-disable_error_code = ["prop-decorator", "call-arg", "attr-defined"]
+disable_error_code = ["prop-decorator", "call-arg"]
 python_version = "3.13"
 allow_redefinition = true
 check_untyped_defs = true
@@ -334,7 +334,7 @@ include = ["src", "tests"]
 extraPaths = ["src", "."]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
-reportCallIssue = "none"
+reportCallIssue = "error"
 reportConstantRedefinition = "error"
 reportIncompatibleMethodOverride = "error"
 reportInconsistentConstructor = "error"
