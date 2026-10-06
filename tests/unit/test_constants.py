@@ -151,7 +151,6 @@ class TestsFlextLdapConstantsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
-    @staticmethod
     def test_operation_success_messages_defined_for_every_operation(
         operation: c.Ldap.OperationType,
     ) -> None:
@@ -161,7 +160,6 @@ class TestsFlextLdapConstantsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
-    @staticmethod
     def test_operation_failure_prefixes_defined_for_every_operation(
         operation: c.Ldap.OperationType,
     ) -> None:

@@ -8,15 +8,21 @@ from __future__ import annotations
 
 import pytest
 
-from tests import TestsFlextLdapSettings, c, u
+import tests
+from tests import c, u
 
 pytestmark = pytest.mark.unit
 
-_LdapSettings = TestsFlextLdapSettings.LdapSettings
+# The concrete settings class is reached through its owning module under a
+# non-collectable binding: a ``Tests*``-named class in a test module's
+# namespace makes pytest attempt to collect the non-test settings helper.
+LdapTestSettings = tests.settings.TestsFlextLdapSettings
+
+_LdapSettings = LdapTestSettings.LdapSettings
 
 
 class TestsFlextLdapConfig:
-    """Public-contract behavior of :class:`TestsFlextLdapSettings`.
+    """Public-contract behavior of :class:`tests.settings.TestsFlextLdapSettings`.
 
     Every assertion targets observable state reachable through the public
     Pydantic 2 API (constructor, typed fields, ``model_dump``,
@@ -29,7 +35,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_defaults_expose_local_insecure_ldap() -> None:
         """Verify defaults expose local insecure ldap."""
-        cfg = TestsFlextLdapSettings()
+        cfg = LdapTestSettings()
 
         u.Ldap.Tests.that(cfg.Ldap.host, eq=c.LOCALHOST)
         u.Ldap.Tests.that(
@@ -45,7 +51,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_custom_values_are_retained_on_public_fields() -> None:
         """Verify custom values are retained on public fields."""
-        cfg = TestsFlextLdapSettings(
+        cfg = LdapTestSettings(
             Ldap=_LdapSettings(
                 host=c.Ldap.Tests.CONFIG_EXAMPLE_HOST,
                 port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
@@ -68,7 +74,7 @@ class TestsFlextLdapConfig:
     def test_in_range_port_is_accepted(port: int) -> None:
         """Verify in range port is accepted."""
         u.Ldap.Tests.that(
-            TestsFlextLdapSettings(Ldap=_LdapSettings(port=port)).Ldap.port,
+            LdapTestSettings(Ldap=_LdapSettings(port=port)).Ldap.port,
             eq=port,
         )
 
@@ -79,7 +85,7 @@ class TestsFlextLdapConfig:
     def test_out_of_range_port_is_rejected(port: int) -> None:
         """Verify out of range port is rejected."""
         with pytest.raises(c.ValidationError):
-            TestsFlextLdapSettings(Ldap=_LdapSettings(port=port))
+            LdapTestSettings(Ldap=_LdapSettings(port=port))
 
     # ── Host values ────────────────────────────────────────────────────
 
@@ -88,7 +94,7 @@ class TestsFlextLdapConfig:
     def test_host_is_stored_verbatim(host: str) -> None:
         """Verify host is stored verbatim."""
         u.Ldap.Tests.that(
-            TestsFlextLdapSettings(Ldap=_LdapSettings(host=host)).Ldap.host,
+            LdapTestSettings(Ldap=_LdapSettings(host=host)).Ldap.host,
             eq=host,
         )
 
@@ -98,7 +104,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_ssl_and_tls_flags_are_independent(*, ssl: bool, tls: bool) -> None:
         """Verify ssl and tls flags are independent."""
-        cfg = TestsFlextLdapSettings(Ldap=_LdapSettings(use_ssl=ssl, use_tls=tls))
+        cfg = LdapTestSettings(Ldap=_LdapSettings(use_ssl=ssl, use_tls=tls))
 
         u.Ldap.Tests.that(cfg.Ldap.use_ssl, eq=ssl)
         u.Ldap.Tests.that(cfg.Ldap.use_tls, eq=tls)
@@ -108,7 +114,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_bind_credentials_are_stored() -> None:
         """Verify bind credentials are stored."""
-        cfg = TestsFlextLdapSettings(
+        cfg = LdapTestSettings(
             Ldap=_LdapSettings(
                 bind_dn=c.Ldap.Tests.BIND_ADMIN_DN,
                 bind_password=c.Ldap.Tests.BIND_ADMIN_PASSWORD,
@@ -121,7 +127,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_empty_bind_credentials_are_preserved() -> None:
         """Verify empty bind credentials are preserved."""
-        cfg = TestsFlextLdapSettings(Ldap=_LdapSettings(bind_dn="", bind_password=""))
+        cfg = LdapTestSettings(Ldap=_LdapSettings(bind_dn="", bind_password=""))
 
         u.Ldap.Tests.that(cfg.Ldap.bind_dn, eq="")
         u.Ldap.Tests.that(cfg.Ldap.bind_password, eq="")
@@ -131,7 +137,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_model_dump_round_trips_custom_values() -> None:
         """Verify model dump round trips custom values."""
-        ldap_dump = TestsFlextLdapSettings(
+        ldap_dump = LdapTestSettings(
             Ldap=_LdapSettings(
                 host=c.Ldap.Tests.CONFIG_EXAMPLE_HOST,
                 port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
@@ -152,7 +158,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_default_model_dump_exposes_bind_fields() -> None:
         """Verify default model dump exposes bind fields."""
-        ldap_dump = TestsFlextLdapSettings().model_dump()["Ldap"]
+        ldap_dump = LdapTestSettings().model_dump()["Ldap"]
 
         u.Ldap.Tests.that(
             ldap_dump,
@@ -163,7 +169,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_json_schema_advertises_ldap_section() -> None:
         """Verify json schema advertises ldap section."""
-        schema = TestsFlextLdapSettings.model_json_schema()
+        schema = LdapTestSettings.model_json_schema()
 
         u.Ldap.Tests.that(
             schema,
@@ -176,10 +182,10 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_repeated_construction_shares_settings_state() -> None:
         """Verify repeated construction shares settings state."""
-        first = TestsFlextLdapSettings(
+        first = LdapTestSettings(
             Ldap=_LdapSettings(host=c.Ldap.Tests.CONFIG_FIRST_HOST, port=c.Ldap.PORT),
         )
-        second = TestsFlextLdapSettings(
+        second = LdapTestSettings(
             Ldap=_LdapSettings(
                 host=c.Ldap.Tests.CONFIG_SECOND_HOST,
                 port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
@@ -194,7 +200,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_clone_preserves_public_state() -> None:
         """Verify clone preserves public state."""
-        original = TestsFlextLdapSettings(
+        original = LdapTestSettings(
             Ldap=_LdapSettings(
                 host=c.Ldap.Tests.CONFIG_ORIGINAL_HOST,
                 port=c.Ldap.PORT,
@@ -203,5 +209,5 @@ class TestsFlextLdapConfig:
 
         copied = original.clone()
 
-        u.Ldap.Tests.that(copied, is_=TestsFlextLdapSettings, none=False)
+        u.Ldap.Tests.that(copied, is_=LdapTestSettings, none=False)
         u.Ldap.Tests.that(copied.model_dump()["Ldap"], eq=original.model_dump()["Ldap"])

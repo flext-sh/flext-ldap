@@ -258,8 +258,7 @@ class TestsFlextLdapOperations:
             m.Ldif.DN(value=invalid_dn)
 
     @staticmethod
-    @pytest.mark.parametrize("case", c.Ldap.Tests.EntryOperationCase)
-    @staticmethod
+    pytest.mark.parametrize("case", c.Ldap.Tests.EntryOperationCase)
     def test_delete_with_dn_variations_returns_failure_not_connected(
         case: c.Ldap.Tests.EntryOperationCase,
     ) -> None:
@@ -270,8 +269,7 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.fail(result)
 
     @staticmethod
-    @pytest.mark.parametrize("case", c.Ldap.Tests.SearchFilterCase)
-    @staticmethod
+    pytest.mark.parametrize("case", c.Ldap.Tests.SearchFilterCase)
     def test_search_with_filter_variations_returns_failure_not_connected(
         case: c.Ldap.Tests.SearchFilterCase,
     ) -> None:
@@ -287,8 +285,7 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.fail(result)
 
     @staticmethod
-    @pytest.mark.parametrize("case", c.Ldap.Tests.SearchScopeCase)
-    @staticmethod
+    pytest.mark.parametrize("case", c.Ldap.Tests.SearchScopeCase)
     def test_search_with_scope_variations_returns_failure_not_connected(
         case: c.Ldap.Tests.SearchScopeCase,
     ) -> None:
@@ -304,8 +301,7 @@ class TestsFlextLdapOperations:
         u.Ldap.Tests.fail(result)
 
     @staticmethod
-    @pytest.mark.parametrize("case", c.Ldap.Tests.SearchSizeCase)
-    @staticmethod
+    pytest.mark.parametrize("case", c.Ldap.Tests.SearchSizeCase)
     def test_search_with_size_limit_variations_returns_failure_not_connected(
         case: c.Ldap.Tests.SearchSizeCase,
     ) -> None:
