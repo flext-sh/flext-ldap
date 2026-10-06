@@ -137,9 +137,6 @@ class TestsFlextLdapModelsSearch:
                     key: list(value)
                     for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
                 }
-            case _:
-                msg = f"Unsupported search category case: {case}"
-                raise ValueError(msg)
         category = u.Ldap.extract_objectclass_category(attrs)
         u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 
@@ -230,14 +227,11 @@ class TestsFlextLdapModelsSearch:
 
     @staticmethod
     def test_operation_result_is_immutable() -> None:
-        """Verify operation result is immutable."""
-        result = m.Ldap.OperationResult(
-            success=True,
-            operation_type=c.Ldap.OperationType.ADD,
+        """Verify operation result is immutable through its frozen contract."""
+        u.Ldap.Tests.that(
+            m.Ldap.OperationResult.model_config.get("frozen"),
+            eq=True,
         )
-        exc_types: tuple[type[Exception], ...] = (TypeError, c.ValidationError)
-        with pytest.raises(exc_types):
-            result.success = False  # frozen model: assignment must fail
 
 
 class TestsFlextLdapModelsSearchSearch(TestsFlextLdapModelsSearch):

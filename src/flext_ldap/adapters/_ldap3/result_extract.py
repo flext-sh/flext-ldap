@@ -135,8 +135,6 @@ class FlextLdapLdap3ResultExtract:
                             )
                         else:
                             result = None
-                    case _:
-                        result = None
         return result
 
     @staticmethod

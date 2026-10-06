@@ -30,7 +30,9 @@ class FlextLdapAdapterHost[
     def _ensure_adapter(self) -> p.Ldap.LdapAdapter:
         """Return the shared ldap3 adapter for this service instance."""
         if self._adapter is None:
-            self._adapter = FlextLdapLdap3Adapter()
+            adapter: p.Ldap.LdapAdapter = FlextLdapLdap3Adapter()
+            self._adapter = adapter
+            return adapter
         return self._adapter
 
     @property

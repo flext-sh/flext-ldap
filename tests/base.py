@@ -11,10 +11,8 @@ from typing import TYPE_CHECKING, override
 from flext_tests.base import FlextTestsServiceBase
 
 from flext_ldap import m
+from tests import p
 from tests.settings import TestsFlextLdapSettings
-
-if TYPE_CHECKING:
-    from tests import p
 
 
 class TestsFlextLdapServiceBase[TDomainResult: p.Base = p.Base](
