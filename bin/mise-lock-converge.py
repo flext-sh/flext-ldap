@@ -203,9 +203,7 @@ class MiseLockConverge:
 
     @staticmethod
     def _probe(
-        runtime: Path,
-        stage: Path,
-        environment: dict[str, str],
+        runtime: Path, stage: Path, environment: dict[str, str]
     ) -> tuple[bool, str]:
         """Prove the staged lock installs without mutating tools."""
         completed = subprocess.run(
@@ -366,11 +364,7 @@ class MiseLockConverge:
                     )
                     raise ValueError(message)
                 holds[selector] = cls._hold(
-                    runtime,
-                    stage,
-                    environment,
-                    selector,
-                    failed_version,
+                    runtime, stage, environment, selector, failed_version
                 )
                 print(
                     f"hold: {selector} held at {holds[selector]}: release {failed_version}"
@@ -474,9 +468,7 @@ class MiseLockConverge:
             message = "usage: mise-lock-converge.py STORAGE STAGE RELEASE"
             raise ValueError(message)
         cls.converge(
-            Path(arguments[0]).absolute(),
-            Path(arguments[1]).absolute(),
-            arguments[2],
+            Path(arguments[0]).absolute(), Path(arguments[1]).absolute(), arguments[2]
         )
         return 0
 
