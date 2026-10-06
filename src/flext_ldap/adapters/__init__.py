@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldap.adapters import _ldap3
@@ -38,20 +38,17 @@ __all__: tuple[str, ...] = (
     "_ldap3",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            "._ldap3": ("_ldap3",),
-            "._ldap3.connection_manager": ("FlextLdapLdap3ConnectionManager",),
-            "._ldap3.operation_executor": ("FlextLdapLdap3OperationExecutor",),
-            "._ldap3.result_converter": ("FlextLdapLdap3ResultConverter",),
-            "._ldap3.result_extract": ("FlextLdapLdap3ResultExtract",),
-            "._ldap3.search_executor": ("FlextLdapLdap3SearchExecutor",),
-            "._ldap3.wrappers": ("FlextLdapLdap3Wrappers",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextLdapLdap3ConnectionManager": "._ldap3.connection_manager",
+        "FlextLdapLdap3OperationExecutor": "._ldap3.operation_executor",
+        "FlextLdapLdap3ResultConverter": "._ldap3.result_converter",
+        "FlextLdapLdap3ResultExtract": "._ldap3.result_extract",
+        "FlextLdapLdap3SearchExecutor": "._ldap3.search_executor",
+        "FlextLdapLdap3Wrappers": "._ldap3.wrappers",
+        "_ldap3": "._ldap3",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
