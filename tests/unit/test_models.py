@@ -78,7 +78,8 @@ class TestsFlextLdapModelsUnit:
             m.Ldap.ConnectionConfig(port=c.Ldap.PORT, use_ssl=True, use_tls=True)
 
     @staticmethod
-    pytest.mark.parametrize("case", c.Ldap.Tests.ConnectionSecurityCase)
+    @pytest.mark.parametrize("case", c.Ldap.Tests.ConnectionSecurityCase)
+    @staticmethod
     def test_connection_config_accepts_single_security_mode(
         case: c.Ldap.Tests.ConnectionSecurityCase,
     ) -> None:
@@ -106,7 +107,8 @@ class TestsFlextLdapModelsUnit:
         u.Ldap.Tests.that(settings.port, eq=port)
 
     @staticmethod
-    pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
+    @pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
+    @staticmethod
     def test_connection_config_rejects_out_of_range_ports(
         invalid_port: int,
     ) -> None:
