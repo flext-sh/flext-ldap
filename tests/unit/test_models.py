@@ -20,7 +20,7 @@ class TestsFlextLdapModelsUnit:
     def test_entry_exposes_dn_value_and_null_attributes() -> None:
         """Verify entry exposes dn value and null attributes."""
         dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        entry = m.Ldif.Entry(dn=dn, attributes=None)
+        entry = m.Ldif.Entry(dn=dn, attributes=None, domain_events=[])
 
         u.Ldap.Tests.that(entry.dn_str, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
         u.Ldap.Tests.that(entry.attributes, none=True)
@@ -32,6 +32,7 @@ class TestsFlextLdapModelsUnit:
         entry = m.Ldif.Entry(
             dn=dn,
             attributes=m.Ldif.Attributes(attributes={"cn": ["alice"], "sn": ["smith"]}),
+            domain_events=[],
         )
 
         u.Ldap.Tests.that(entry.attributes_dict, eq={"cn": ["alice"], "sn": ["smith"]})
@@ -78,7 +79,6 @@ class TestsFlextLdapModelsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("case", c.Ldap.Tests.ConnectionSecurityCase)
-    @staticmethod
     def test_connection_config_accepts_single_security_mode(
         case: c.Ldap.Tests.ConnectionSecurityCase,
     ) -> None:
@@ -107,7 +107,6 @@ class TestsFlextLdapModelsUnit:
 
     @staticmethod
     @pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
-    @staticmethod
     def test_connection_config_rejects_out_of_range_ports(
         invalid_port: int,
     ) -> None:

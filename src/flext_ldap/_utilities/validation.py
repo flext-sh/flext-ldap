@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import TypeIs
 
 from flext_ldap import c, t
+from flext_ldap._utilities.base import FlextLdapUtilitiesBase
 
 
-class FlextLdapUtilitiesValidation:
+class FlextLdapUtilitiesValidation(FlextLdapUtilitiesBase):
     """LDAP validation helpers."""
 
     @staticmethod

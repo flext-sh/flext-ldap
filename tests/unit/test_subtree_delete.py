@@ -26,10 +26,12 @@ class TestsFlextLdapSubtreeDelete:
     class SubtreeOperations(FlextLdapOperations):
         """Deterministic operations double for subtree-delete semantics."""
 
-        _subtree_entries: list[m.Ldif.Entry] = u.PrivateAttr(default_factory=list)
+        _subtree_entries: list[m.Ldif.Entry] = u.PrivateAttr(
+            default_factory=list[m.Ldif.Entry],
+        )
         _fail_on_dn: str | None = u.PrivateAttr(default=None)
-        _deleted_dns: list[str] = u.PrivateAttr(default_factory=list)
-        _write_calls: list[str] = u.PrivateAttr(default_factory=list)
+        _deleted_dns: list[str] = u.PrivateAttr(default_factory=list[str])
+        _write_calls: list[str] = u.PrivateAttr(default_factory=list[str])
 
         def __init__(
             self,
@@ -49,20 +51,27 @@ class TestsFlextLdapSubtreeDelete:
             server_type: str = "rfc",
         ) -> p.Result[m.Ldap.SearchResult]:
             _ = server_type
-            if search_options.scope == c.Ldap.SearchScope.BASE:
+            concrete_options = (
+                search_options
+                if isinstance(search_options, m.Ldap.SearchOptions)
+                else m.Ldap.SearchOptions.model_validate(search_options)
+            )
+            if concrete_options.scope == c.Ldap.SearchScope.BASE:
                 matched = [
                     entry
                     for entry in self._subtree_entries
-                    if entry.dn is not None and entry.dn.value == search_options.base_dn
+                    if entry.dn is not None
+                    and entry.dn.value == concrete_options.base_dn
                 ]
                 if not matched:
                     return r[m.Ldap.SearchResult].fail(
-                        f"LDAP search failed: noSuchObject - {search_options.base_dn}",
+                        f"LDAP search failed: noSuchObject "
+                        f"- {concrete_options.base_dn}",
                     )
             else:
                 matched = list(self._subtree_entries)
             return r[m.Ldap.SearchResult].ok(
-                m.Ldap.SearchResult(entries=matched, search_options=search_options),
+                m.Ldap.SearchResult(entries=matched, search_options=concrete_options),
             )
 
         @override
@@ -119,6 +128,7 @@ class TestsFlextLdapSubtreeDelete:
                 attributes={"cn": [cn]},
                 attribute_metadata={},
             ),
+            domain_events=[],
         )
 
     @staticmethod
@@ -198,6 +208,7 @@ class TestsFlextLdapPlanUpsert:
                 attributes={"cn": [cn], "sn": [sn]},
                 attribute_metadata={},
             ),
+            domain_events=[],
         )
 
     def test_plan_classifies_without_writing(self) -> None:
@@ -233,6 +244,7 @@ class TestsFlextLdapPlanUpsert:
                 attributes={"cn": ["orphan"]},
                 attribute_metadata={},
             ),
+            domain_events=[],
         )
         plan_result = operations.plan_upsert([entry])
         u.Ldap.Tests.that(plan_result.failure, eq=True)
@@ -246,14 +258,15 @@ class TestsFlextLdapPlanUpsert:
 
     @staticmethod
     def _modify_entry(dn: str, *, additions: t.MappingKV[str, str]) -> m.Ldif.Entry:
-        attributes: dict[str, list[str]] = {
-            c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.LdifChangeType.MODIFY.value],
+        attributes: t.MutableStrSequenceMapping = {
+            c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.ChangeType.MODIFY.value],
             c.Ldif.ChangeOperation.ADD: list(additions),
         }
         attributes.update({name: [value] for name, value in additions.items()})
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(attributes=attributes, attribute_metadata={}),
+            domain_events=[],
         )
 
     def test_plan_modify_entry_counts_without_reading_the_directory(self) -> None:

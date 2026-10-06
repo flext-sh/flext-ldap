@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import p, s, t, u
+from flext_ldap import s, t, u
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
 
 
@@ -25,10 +25,17 @@ class FlextLdapAdapterHost[
     owner per AGENTS.md §2.7) constructs the concrete implementation.
     """
 
-    _adapter: p.Ldap.LdapAdapter | None = u.PrivateAttr(default_factory=lambda: None)
+    _adapter: FlextLdapLdap3Adapter | None = u.PrivateAttr(
+        default_factory=lambda: None,
+    )
 
-    def _ensure_adapter(self) -> p.Ldap.LdapAdapter:
-        """Return the shared ldap3 adapter for this service instance."""
+    def _ensure_adapter(self) -> FlextLdapLdap3Adapter:
+        """Return the shared ldap3 adapter for this service instance.
+
+        The concrete type is the module-private construction boundary; callers
+        keep depending on the ``p.Ldap.LdapAdapter`` protocol through the
+        service-level signatures that hand the adapter out.
+        """
         if self._adapter is None:
             self._adapter = FlextLdapLdap3Adapter()
         return self._adapter

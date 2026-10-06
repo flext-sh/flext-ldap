@@ -103,8 +103,7 @@ class FlextLdapEntryAdapter(s[bool]):
         )
 
     @override
-    @staticmethod
-    def execute() -> p.Result[bool]:
+    def execute(self) -> p.Result[bool]:
         """Execute method required by s.
 
         Business Rules:

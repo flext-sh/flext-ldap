@@ -58,8 +58,11 @@ class FlextLdapLdap3ResultExtract:
             attrs_dict = FlextLdapLdap3ResultExtract.extract_attrs_dict(
                 parsed.entry_attributes_as_dict,
             )
+            model_attrs: t.MutableStrSequenceMapping = {
+                key: list(values) for key, values in attrs_dict.items()
+            }
             return m.Ldif.Attributes(
-                attributes=attrs_dict,
+                attributes=model_attrs,
                 attribute_metadata={},
                 metadata=None,
             )
@@ -109,7 +112,9 @@ class FlextLdapLdap3ResultExtract:
             case m.Ldif.Entry():
                 result = parsed.metadata
             case _:
-                metadata_attr = getattr(parsed, "metadata", None)
+                metadata_attr: (
+                    m.Ldif.ServerMetadata | t.MappingKV[str, t.Scalar | None] | None
+                ) = getattr(parsed, "metadata", None)
                 match metadata_attr:
                     case None:
                         result = None
@@ -130,8 +135,6 @@ class FlextLdapLdap3ResultExtract:
                             )
                         else:
                             result = None
-                    case _:
-                        result = None
         return result
 
     @staticmethod

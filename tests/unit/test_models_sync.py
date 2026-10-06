@@ -32,6 +32,7 @@ class TestsFlextLdapModelsSync:
             total_processed=c.Ldap.Tests.SYNC_UPSERT_BATCH_TOTAL,
             successful=c.Ldap.Tests.SYNC_UPSERT_BATCH_SUCCESSFUL,
             failed=c.Ldap.Tests.SYNC_UPSERT_BATCH_FAILED,
+            results=[],
         )
         u.Ldap.Tests.that(
             result.total_processed,
@@ -54,13 +55,21 @@ class TestsFlextLdapModelsSync:
         expected_rate: float,
     ) -> None:
         """Verify batch upsert success rate is successful over total."""
-        result = m.Ldap.BatchUpsertResult(total_processed=total, successful=successful)
+        result = m.Ldap.BatchUpsertResult(
+            total_processed=total,
+            successful=successful,
+            results=[],
+        )
         u.Ldap.Tests.that(result.success_rate, eq=expected_rate)
 
     @staticmethod
     def test_batch_upsert_success_rate_appears_in_dump() -> None:
         """Verify batch upsert success rate appears in dump."""
-        result = m.Ldap.BatchUpsertResult(total_processed=100, successful=90)
+        result = m.Ldap.BatchUpsertResult(
+            total_processed=100,
+            successful=90,
+            results=[],
+        )
         u.Ldap.Tests.that(result.model_dump(), kv={"success_rate": 0.9})
 
     @staticmethod
@@ -81,7 +90,7 @@ class TestsFlextLdapModelsSync:
     @staticmethod
     def test_batch_upsert_defaults_to_empty_results() -> None:
         """Verify batch upsert defaults to empty results."""
-        result = m.Ldap.BatchUpsertResult()
+        result = m.Ldap.BatchUpsertResult(results=[])
         u.Ldap.Tests.that(result.results, empty=True)
         u.Ldap.Tests.that(result.success_rate, eq=0.0)
 

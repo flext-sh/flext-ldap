@@ -73,6 +73,7 @@ class TestsFlextLdapLdap3Adapter:
                 entry = m.Ldif.Entry(
                     dn=m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN),
                     attributes=m.Ldif.Attributes(attributes={}),
+                    domain_events=[],
                 )
                 u.Ldap.Tests.fail(adapter.add(entry), has=needle)
             case self.DisconnectedOp.DELETE:

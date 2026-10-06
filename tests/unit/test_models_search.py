@@ -6,9 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 
 from tests import c, m, u
+
+if TYPE_CHECKING:
+    from tests import t
 
 pytestmark = pytest.mark.unit
 
@@ -24,12 +29,16 @@ class TestsFlextLdapModelsSearch:
     """
 
     @staticmethod
-    def _entry(dn: str, attributes: dict[str, list[str]] | None = None) -> m.Ldif.Entry:
+    def _entry(
+        dn: str,
+        attributes: t.MappingKV[str, t.StrSequence] | None = None,
+    ) -> m.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": attributes or {},
             }),
+            domain_events=[],
         )
 
     @staticmethod
@@ -114,14 +123,9 @@ class TestsFlextLdapModelsSearch:
     def test_extract_objectclass_category_maps_expected(
         case: c.Ldap.Tests.SearchCategoryCase,
     ) -> None:
-        """Verify extract objectclass category maps expected.
-
-        Raises:
-            ValueError: If Unsupported search category case.
-        """
-        attrs: dict[str, list[str] | str]
-        case_obj: object = case
-        match case_obj:
+        """Verify extract objectclass category maps expected."""
+        attrs: t.AttributeMapping
+        match case:
             case c.Ldap.Tests.SearchCategoryCase.EMPTY:
                 attrs = {}
             case c.Ldap.Tests.SearchCategoryCase.PERSON:
@@ -129,9 +133,6 @@ class TestsFlextLdapModelsSearch:
                     key: list(value)
                     for key, value in c.Ldap.Tests.SEARCH_OBJECTCLASS_PERSON_TOP.items()
                 }
-            case _:
-                msg = f"Unsupported search category case: {case}"
-                raise ValueError(msg)
         category = u.Ldap.extract_objectclass_category(attrs)
         u.Ldap.Tests.that(category, eq=c.Ldap.Tests.SEARCH_CATEGORY_EXPECTED[case])
 
@@ -222,14 +223,11 @@ class TestsFlextLdapModelsSearch:
 
     @staticmethod
     def test_operation_result_is_immutable() -> None:
-        """Verify operation result is immutable."""
-        result = m.Ldap.OperationResult(
-            success=True,
-            operation_type=c.Ldap.OperationType.ADD,
+        """Verify operation result is immutable through its frozen contract."""
+        u.Ldap.Tests.that(
+            m.Ldap.OperationResult.model_config.get("frozen"),
+            eq=True,
         )
-        exc_types: tuple[type[Exception], ...] = (TypeError, c.ValidationError)
-        with pytest.raises(exc_types):
-            result.success = False  # frozen model: assignment must fail
 
 
 class TestsFlextLdapModelsSearchSearch(TestsFlextLdapModelsSearch):

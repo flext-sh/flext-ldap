@@ -41,6 +41,7 @@ def _ou_entry(dn: str, ou: str) -> m.Ldif.Entry:
         changetype=None,
         metadata=None,
         validation_metadata=None,
+        domain_events=[],
     )
 
 
@@ -65,6 +66,7 @@ def _user_entry(dn: str, identifier: str, *, cn: str) -> m.Ldif.Entry:
         changetype=None,
         metadata=None,
         validation_metadata=None,
+        domain_events=[],
     )
 
 
@@ -78,7 +80,7 @@ def _modify_add_entry(dn: str, attribute: str, value: str) -> m.Ldif.Entry:
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes.model_validate({
             "attributes": {
-                c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.LdifChangeType.MODIFY.value],
+                c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.ChangeType.MODIFY.value],
                 c.Ldif.ChangeOperation.ADD: [attribute],
                 attribute: [value],
             },
@@ -88,6 +90,7 @@ def _modify_add_entry(dn: str, attribute: str, value: str) -> m.Ldif.Entry:
         changetype=None,
         metadata=None,
         validation_metadata=None,
+        domain_events=[],
     )
 
 

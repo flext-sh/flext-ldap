@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdifModels
 
+from flext_ldap._models.base import FlextLdapModelsBase
+from flext_ldap._models.config import FlextLdapConfigModels
 from flext_ldap._models.ldap import FlextLdapFlextModelsLdap
 
 
@@ -32,7 +34,12 @@ class FlextLdapModels(FlextLdifModels):
     NOTE: Collections is inherited from parent - do NOT override.
     """
 
-    class Ldap(FlextLdapFlextModelsLdap.FlextLdapModelsLdap):
+    class Ldap(
+        FlextLdapConfigModels,
+        FlextLdapFlextModelsLdap,
+        FlextLdapFlextModelsLdap.FlextLdapModelsLdap,
+        FlextLdapModelsBase,
+    ):
         """LDAP-specific models namespace via pure MRO composition."""
 
 
