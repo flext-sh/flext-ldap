@@ -2,8 +2,6 @@
 
 <!-- TOC START -->
 
-- No sections found
-
 <!-- TOC END -->
 
 **Security Model and Implementation**
