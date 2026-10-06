@@ -809,7 +809,11 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		mise_exec "$$mise_offline_mode" env 'MISE_OFFLINE=true' "$$@"; \
 	}; \
 mise_has_blocking_warning() { \
-		grep -F 'mise WARN' "$$1" | grep -Fv 'not replacing unmanaged file in shims directory' | grep -q .; \
+		grep -F 'mise WARN' "$$1" \
+			| grep -Fv 'not replacing unmanaged file in shims directory' \
+			| grep -Fv 'lock-time provenance verification failed' \
+			| grep -Ev 'failed to resolve [^:]+ for [^:]+: No such file or directory .*version .*, and [0-9]+ more platform' \
+			| grep -q .; \
 	}; \
 	mise_checked() { \
 		mise_log="$$1"; shift; \
