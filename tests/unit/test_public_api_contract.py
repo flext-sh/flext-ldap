@@ -13,14 +13,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
-import pkgutil
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
 import flext_ldap
+import flext_ldap._config
+import flext_ldap._settings
+import flext_ldap.api
+import flext_ldap.base
+import flext_ldap.cli
+import flext_ldap.constants
+import flext_ldap.models
+import flext_ldap.protocols
+import flext_ldap.typings
+import flext_ldap.utilities
 from flext_ldap import (
     FlextLdap,
     FlextLdapConstants,
@@ -34,6 +43,24 @@ from flext_ldap import (
 if TYPE_CHECKING:
     from flext_ldap import t
 pytestmark = pytest.mark.unit
+
+# Top-level facade-owner modules of ``flext_ldap``, statically enumerated so the
+# propagation contract below stays static and typed: every non-package module
+# except dunder metadata (``__init__``, ``__version__``). Packages (``adapters``,
+# ``services``, ``config``, private ``_constants``/``_models``/``_utilities``)
+# are not facade owners.
+_DECLARING_MODULES: tuple[ModuleType, ...] = (
+    flext_ldap._config,
+    flext_ldap._settings,
+    flext_ldap.api,
+    flext_ldap.base,
+    flext_ldap.cli,
+    flext_ldap.constants,
+    flext_ldap.models,
+    flext_ldap.protocols,
+    flext_ldap.typings,
+    flext_ldap.utilities,
+)
 
 # Canonical single-letter alias -> the domain facade it must resolve to.
 # This identity is the public contract that lets consumers write ``c.Ldap.*``,
@@ -74,13 +101,11 @@ class TestsFlextLdapPublicApiContract:
 
         The owner of each public name is the module that lists it in its own
         ``__all__``; the root only propagates. Dunder metadata modules (for
-        example ``__version__``) are not facade owners and are excluded.
+        example ``__version__``) are not facade owners and are excluded; the
+        owner set is statically enumerated in ``_DECLARING_MODULES``.
         """
         declared: set[str] = set()
-        for module_info in pkgutil.iter_modules(flext_ldap.__path__):
-            if module_info.ispkg or module_info.name.startswith("__"):
-                continue
-            module = importlib.import_module(f"flext_ldap.{module_info.name}")
+        for module in _DECLARING_MODULES:
             declared.update(module.__all__)
         tm.that(declared, empty=False)
         tm.that(declared - frozenset(flext_ldap.__all__), empty=True)

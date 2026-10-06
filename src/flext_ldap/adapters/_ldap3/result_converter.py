@@ -80,6 +80,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
                         entry_raw,
                     ),
                     changetype=None,
+                    domain_events=[],
                     metadata=FlextLdapLdap3ResultConverter.extract_metadata(entry_raw),
                     validation_metadata=None,
                 ),

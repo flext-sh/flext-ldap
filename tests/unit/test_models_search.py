@@ -237,7 +237,7 @@ class TestsFlextLdapModelsSearch:
         )
         exc_types: tuple[type[Exception], ...] = (TypeError, c.ValidationError)
         with pytest.raises(exc_types):
-            setattr(result, "success", False)  # frozen model: assignment must fail
+            result.success = False  # frozen model: assignment must fail
 
 
 class TestsFlextLdapModelsSearchSearch(TestsFlextLdapModelsSearch):

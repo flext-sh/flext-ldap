@@ -22,20 +22,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_ldif import r
 
 from flext_ldap import c, m, p, t, u
-
-if TYPE_CHECKING:
-    from flext_ldap.services.operations import FlextLdapOperations
 
 
 class FlextLdapUpsertHandler:
     """Handle add-or-modify flows for upsert calls."""
 
-    def __init__(self, operations: FlextLdapOperations) -> None:
+    def __init__(self, operations: p.Ldap.LdapOperations) -> None:
         """Initialize upsert handler with operations service.
 
         Business Rules:
@@ -45,12 +40,13 @@ class FlextLdapUpsertHandler:
 
         Architecture:
             - Encapsulates the upsert state machine
-            - Delegates all LDAP operations to parent FlextLdapOperations
+            - Delegates all LDAP operations to the injected operations service
             - Enables testability through dependency injection
 
         Args:
-            operations: FlextLdapOperations instance for LDAP operations.
-                Must have active connection for execute() to succeed.
+            operations: LDAP operations service (``p.Ldap.LdapOperations``)
+                for LDAP operations. Must have active connection for
+                execute() to succeed.
 
         """
         super().__init__()

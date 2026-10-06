@@ -65,7 +65,8 @@ class TestsFlextLdapSubtreeDelete:
                 ]
                 if not matched:
                     return r[m.Ldap.SearchResult].fail(
-                        f"LDAP search failed: noSuchObject - {concrete_options.base_dn}",
+                        f"LDAP search failed: noSuchObject "
+                        f"- {concrete_options.base_dn}",
                     )
             else:
                 matched = list(self._subtree_entries)

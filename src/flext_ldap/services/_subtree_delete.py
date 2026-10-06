@@ -22,25 +22,21 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_ldif import r
 
 from flext_ldap import c, m, p, t, u
-
-if TYPE_CHECKING:
-    from flext_ldap.services.operations import FlextLdapOperations
 
 
 class FlextLdapSubtreeDeleteHandler:
     """Handle deepest-first subtree deletion."""
 
-    def __init__(self, operations: FlextLdapOperations) -> None:
+    def __init__(self, operations: p.Ldap.LdapOperations) -> None:
         """Initialize subtree-delete handler with the owning operations service.
 
         Args:
-            operations: FlextLdapOperations instance used for every LDAP call.
-                Must have an active connection for execute() to succeed.
+            operations: LDAP operations service (``p.Ldap.LdapOperations``)
+                used for every LDAP call. Must have an active connection for
+                execute() to succeed.
 
         """
         super().__init__()

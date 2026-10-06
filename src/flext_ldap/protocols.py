@@ -442,6 +442,61 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Run the connection service health check/default operation."""
                 ...
 
+        @runtime_checkable
+        class LdapOperations(Protocol):
+            """Protocol for LDAP operations services consumed by split handlers.
+
+            Contract injected into the upsert and subtree-delete handlers:
+            handlers declare only the members they delegate to, keeping the
+            operations service substitutable (DIP) without a concrete import.
+            """
+
+            @property
+            def logger(self) -> FlextLdifProtocols.Logger:
+                """Logger for operation traceability."""
+                ...
+
+            @staticmethod
+            def already_exists_error(error_message: str) -> bool:
+                """Whether the error message indicates an existing entry."""
+                ...
+
+            def find_entry(
+                self,
+                dn: str,
+            ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
+                """Read one entry by DN; an absent entry is an empty result."""
+                ...
+
+            def add(
+                self,
+                entry: FlextLdifProtocols.Ldif.Entry,
+            ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+                """Add an LDAP entry, returning the operation result."""
+                ...
+
+            def modify(
+                self,
+                dn: str,
+                changes: t.Ldap.OperationChanges,
+            ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+                """Modify an LDAP entry with the provided change set."""
+                ...
+
+            def delete(
+                self,
+                dn: str,
+            ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+                """Delete an LDAP entry identified by DN."""
+                ...
+
+            def search(
+                self,
+                search_options: FlextLdapProtocols.Ldap.SearchOptions,
+            ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
+                """Perform an LDAP search, returning the search result."""
+                ...
+
         # ── LDAP runtime object contracts ────────────────────────
         # The base structural ldap3 contracts live in flext-ldif (``p.Ldif``)
         # as the single source of truth and are reached through MRO; this
