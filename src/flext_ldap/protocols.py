@@ -353,15 +353,14 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """The active ldap3 connection when one exists."""
                 ...
 
-            @staticmethod
             def connect(
+                self,
                 settings: m.Ldap.ConnectionConfig,
             ) -> FlextLdifProtocols.Result[bool]:
                 """Establish the ldap3 server/connection pair and verify bind."""
                 ...
 
-            @staticmethod
-            def disconnect() -> None:
+            def disconnect(self) -> None:
                 """Close any active adapter connection."""
                 ...
 
