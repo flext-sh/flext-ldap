@@ -22,8 +22,8 @@ dependencies = [
   "annotated-types>=0.8.0",
   "beartype>=0.22.9",
   "dependency-injector>=4.49.1",
-  "flext-core",
-  "flext-ldif",
+  "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
+  "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
   "ldap3>=2.10.2rc4",
   "packaging>=26.3",
   "pydantic>=2.13.5,<3",
@@ -67,14 +67,14 @@ Repository = "https://github.com/flext-sh/flext"
 
 [dependency-groups]
 codegen = [
-  "flext-infra",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
 ]
 dev = [
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
   "editables>=0.6",
-  "flext-tests",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis",
   "mkdocs",
   "mkdocs-autorefs",
@@ -614,12 +614,6 @@ line_length = 88
 preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
-
-[tool.uv.sources]
-flext-core = { workspace = true }
-flext-infra = { workspace = true }
-flext-ldif = { workspace = true }
-flext-tests = { workspace = true }
 
 [tool.uv]
 link-mode = "copy"
