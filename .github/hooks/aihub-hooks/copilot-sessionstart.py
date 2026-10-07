@@ -35,7 +35,7 @@ response = json.loads(
     'invalid consumer; symptom workarounds are defects.\\n\\nHardcodes, norma'
     'lized failure, failover, retry, fallback, compatibility,\\npartial execu'
     'tion, keyring, and unevidenced success are defects. Typed owners\\nkeep '
-    'defaults. The first exception escapes its CLI with traceback and cause.\'
+    'defaults. The first exception escapes its CLI with traceback and cause.'
     '\n\\nGit, runtime, build, and tests are baseline. Auxiliary tracking is '
     'a capability.\\nAuxiliary capabilities apply only when authorized and se'
     'lected; installation\\nnever selects. Do not load, probe, or gate dorman'
