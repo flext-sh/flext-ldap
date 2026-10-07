@@ -400,6 +400,8 @@ testpaths = ["tests"]
 
 [tool.ruff]
 extend-exclude = [
+  "**/.archive/**",
+  "**/protos/**",
   "**/.agents/aihub-hooks/**",
   "**/.claude/aihub-hooks/**",
   "**/.codex/aihub-hooks/**",
