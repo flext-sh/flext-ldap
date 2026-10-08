@@ -1,3 +1,4 @@
+# Copyright 2026 FLEXT
 """Publish a Mise lock with its native sidecars from one physical stage.
 
 This bootstrap runs with the Python selected by the staged Mise lock, before
@@ -17,13 +18,18 @@ import json
 import os
 import shutil
 import stat
-import subprocess
+import subprocess  # ruff: ignore[suspicious-subprocess-import] - stdlib bootstrap: git invocation
 import sys
 import time
 import tomllib
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
+
+if os.name == "nt":
+    import msvcrt
+else:
+    import fcntl
 
 
 class MiseLockTransaction:
@@ -39,12 +45,19 @@ class MiseLockTransaction:
     )
     MUTEX_TIMEOUT_SECONDS = 600.0
     LOCK = "mise.lock"
+    MIN_SIDECAR_PARTS = 4
+    EXPECTED_ARGUMENTS = 3
     NATIVE_GRAPHS = (("aube", "aube-lock.yaml"), ("uv", "uv.lock"))
 
     @staticmethod
     @contextmanager
     def _serialized(project: Path) -> Generator[None]:
-        """Serialize all publisher versions on one declared physical mutex."""
+        """Serialize all publisher versions on one declared physical mutex.
+
+        Raises:
+            ValueError: When the mutex is a symlink or not a physical regular
+                file, or when it stays held elsewhere past the timeout.
+        """
         mutex = project / ".mise-lock-transaction.lock"
         if mutex.is_symlink():
             message = f"Mise transaction mutex is a symlink: {mutex}"
@@ -61,12 +74,8 @@ class MiseLockTransaction:
                 os.fsync(descriptor)
             os.lseek(descriptor, 0, os.SEEK_SET)
             if os.name == "nt":
-                import msvcrt
-
                 msvcrt.locking(descriptor, msvcrt.LK_LOCK, 1)
             else:
-                import fcntl
-
                 deadline = time.monotonic() + MiseLockTransaction.MUTEX_TIMEOUT_SECONDS
                 while True:
                     try:
@@ -74,9 +83,10 @@ class MiseLockTransaction:
                         break
                     except OSError:
                         if time.monotonic() >= deadline:
+                            timeout_seconds = MiseLockTransaction.MUTEX_TIMEOUT_SECONDS
                             message = (
                                 "Mise transaction mutex is held elsewhere for over "
-                                f"{MiseLockTransaction.MUTEX_TIMEOUT_SECONDS:.0f}s: {mutex}"
+                                f"{timeout_seconds:.0f}s: {mutex}"
                             )
                             raise ValueError(message) from None
                         time.sleep(0.2)
@@ -118,7 +128,7 @@ class MiseLockTransaction:
         if (
             selector.is_absolute()
             or selector.as_posix() != relative
-            or len(selector.parts) < 4
+            or len(selector.parts) < MiseLockTransaction.MIN_SIDECAR_PARTS
             or selector.parts[:2] != (".mise", "locks")
             or ".." in selector.parts
         ):
@@ -134,15 +144,24 @@ class MiseLockTransaction:
         annotation: object,
         root: Path,
     ) -> tuple[str, str]:
-        """Authenticate one native-graph annotation against its physical sidecar."""
+        """Authenticate one native-graph annotation against its physical sidecar.
+
+        Returns:
+            The resulting ``tuple[str, str]``.
+
+        Raises:
+            TypeError: When the annotation is not a table or is incomplete.
+            ValueError: When the annotation fails authentication against its
+                physical sidecar.
+        """
         if not isinstance(annotation, dict):
             message = f"{cls.LOCK} {graph} annotation is not a table"
-            raise ValueError(message)
+            raise TypeError(message)
         relative = annotation.get("path")
         digest = annotation.get("digest")
         if not isinstance(relative, str) or not isinstance(digest, str):
             message = f"{cls.LOCK} {graph} annotation is incomplete"
-            raise ValueError(message)
+            raise TypeError(message)
         selector = cls._sidecar_selector(relative)
         if not digest.startswith("sha256:"):
             message = f"invalid {cls.LOCK} sidecar digest: {relative}"
@@ -168,13 +187,13 @@ class MiseLockTransaction:
         tools = payload.get("tools")
         if not isinstance(tools, dict):
             message = f"{cls.LOCK} has no tools table"
-            raise ValueError(message)
+            raise TypeError(message)
         result: dict[str, str] = {}
         for entries in tools.values():
             for entry in entries if isinstance(entries, list) else (entries,):
                 if not isinstance(entry, dict):
                     message = f"{cls.LOCK} tool entry is not a table"
-                    raise ValueError(message)
+                    raise TypeError(message)
                 for graph, filename in cls.NATIVE_GRAPHS:
                     if entry.get(graph) is not None:
                         relative, tree = cls._sidecar_digest(
@@ -194,23 +213,35 @@ class MiseLockTransaction:
         unmerged index retains the exact prior lock; its sidecars must still
         validate against the physical checkout before publication can replace
         them. Ordinary malformed locks continue to fail at the TOML parser.
+
+        Returns:
+            The resulting ``dict[str, str]``.
+
+        Raises:
+            ValueError: When a conflicted lock has no Git stage-2 source.
         """
         if content is None or b"<<<<<<< " not in content:
             return cls._sidecars(content, project)
-        index = subprocess.run(
-            ["git", "-C", str(project), "ls-files", "-u", "--", cls.LOCK],
+        git_exec = shutil.which("git")
+        if git_exec is None:
+            message = "git executable not found on PATH"
+            raise ValueError(message)
+        index = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true] - git resolved via shutil.which
+            [git_exec, "-C", str(project), "ls-files", "-u", "--", cls.LOCK],
             check=True,
             capture_output=True,
+            shell=False,
         ).stdout
         if not any(
             line.split(b"\t", 1)[0].endswith(b" 2") for line in index.splitlines()
         ):
             message = f"conflicted {cls.LOCK} has no Git stage-2 source"
             raise ValueError(message)
-        prior = subprocess.run(
-            ["git", "-C", str(project), "show", f":2:{cls.LOCK}"],
+        prior = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true] - git resolved via shutil.which
+            [git_exec, "-C", str(project), "show", f":2:{cls.LOCK}"],
             check=True,
             capture_output=True,
+            shell=False,
         ).stdout
         return cls._sidecars(prior, project)
 
@@ -248,7 +279,12 @@ class MiseLockTransaction:
 
     @classmethod
     def _sync_tree(cls, root: Path) -> None:
-        """Persist staged payload bytes before publishing the journal."""
+        """Persist staged payload bytes before publishing the journal.
+
+        Raises:
+            ValueError: When the root is not physical or contains a
+                non-regular, non-directory entry.
+        """
         cls._physical_directory(root)
         for path in sorted(root.rglob("*"), reverse=True):
             observed = path.lstat()
@@ -392,7 +428,12 @@ class MiseLockTransaction:
 
     @classmethod
     def _ensure_parent(cls, root: Path, target: Path) -> None:
-        """Materialize physical parents and durably record each directory entry."""
+        """Materialize physical parents and durably record each directory entry.
+
+        Raises:
+            ValueError: When the target escapes the transaction root or a
+                parent is not a physical directory.
+        """
         if not target.is_relative_to(root):
             message = f"Mise sidecar escapes transaction root: {target}"
             raise ValueError(message)
@@ -410,7 +451,11 @@ class MiseLockTransaction:
 
     @classmethod
     def _retire_stage(cls, stage: Path) -> None:
-        """Move a completed journal out of the recovery scan before deleting it."""
+        """Move a completed journal out of the recovery scan before deleting it.
+
+        Raises:
+            ValueError: When the cleanup target already exists.
+        """
         retired = stage.with_name(
             stage.name.replace(".mise-lock-stage.", ".mise-lock-cleanup.", 1),
         )
@@ -442,7 +487,16 @@ class MiseLockTransaction:
         project: Path,
         stage: Path,
     ) -> tuple[dict[str, str], bytes | None, bytes, dict[str, str], dict[str, str]]:
-        """Authenticate a stage journal and the lock copies it recorded."""
+        """Authenticate a stage journal and the lock copies it recorded.
+
+        Returns:
+            The resulting tuple of the journal, the old lock bytes, the new
+            lock bytes, and the old/new sidecar digest mappings.
+
+        Raises:
+            ValueError: When the stage, journal, or recorded lock digests are
+                missing or tampered with.
+        """
         cls._require_roots(project, stage)
         journal = cls._read_journal(stage)
         if journal is None:
@@ -476,7 +530,11 @@ class MiseLockTransaction:
         expected: str,
         old_refs: dict[str, str],
     ) -> None:
-        """Restore one sidecar of a publication whose lock never committed."""
+        """Restore one sidecar of a publication whose lock never committed.
+
+        Raises:
+            ValueError: When the old sidecar changed during recovery.
+        """
         destination = project / relative
         backup = stage / "old-sidecars" / relative
         if (
@@ -509,7 +567,12 @@ class MiseLockTransaction:
         old_refs: dict[str, str],
         new_refs: dict[str, str],
     ) -> None:
-        """Verify the committed sidecars and retire the ones the lock dropped."""
+        """Verify the committed sidecars and retire the ones the lock dropped.
+
+        Raises:
+            ValueError: When a committed or stale sidecar differs from the
+                journaled digest.
+        """
         for relative, expected in new_refs.items():
             destination = project / relative
             if not destination.exists() or cls._tree_digest(destination) != expected:
@@ -539,6 +602,10 @@ class MiseLockTransaction:
         nothing; the journaled pin and launchers are then the publication's
         only change, fully staged and digest-verified before the journal was
         written, so they still move forward instead of being discarded.
+
+        Raises:
+            ValueError: When the live lock matches neither the journaled old
+                nor new digest.
         """
         journal, old, new, old_refs, new_refs = cls._recovery_state(project, stage)
         live = cls._bytes(project / cls.LOCK)
@@ -556,7 +623,11 @@ class MiseLockTransaction:
 
     @classmethod
     def _recover_prior_stages(cls, project: Path, stage: Path) -> None:
-        """Settle every earlier publication before this one starts."""
+        """Settle every earlier publication before this one starts.
+
+        Raises:
+            ValueError: When a cleanup directory is not owned by this project.
+        """
         for prior in sorted(project.parent.glob(f".{project.name}.mise-lock-stage.*")):
             if prior != stage and cls._read_journal(prior) is not None:
                 cls.recover(project, prior)
@@ -576,7 +647,15 @@ class MiseLockTransaction:
         project: Path,
         stage: Path,
     ) -> tuple[dict[str, str], dict[str, str]]:
-        """Copy the staged launcher/pin set into the journal-owned stage area."""
+        """Copy the staged launcher/pin set into the journal-owned stage area.
+
+        Returns:
+            The resulting ``tuple[dict[str, str], dict[str, str]]``.
+
+        Raises:
+            ValueError: When the staged launcher/pin set is incomplete or the
+                artifact stage is not a physical directory.
+        """
         artifact_stage = stage / "artifacts"
         if not (artifact_stage.exists() or artifact_stage.is_symlink()):
             return {}, {}
@@ -599,7 +678,12 @@ class MiseLockTransaction:
         old_refs: dict[str, str],
         new_refs: dict[str, str],
     ) -> None:
-        """Refuse a publication whose sidecar targets changed outside it."""
+        """Refuse a publication whose sidecar targets changed outside it.
+
+        Raises:
+            ValueError: When a target is unowned or changed outside the
+                transaction.
+        """
         for relative in old_refs | new_refs:
             cls._reject_symlink_path(project, relative)
         for relative, expected in new_refs.items():
@@ -636,7 +720,12 @@ class MiseLockTransaction:
 
     @classmethod
     def publish(cls, project: Path, stage: Path) -> None:
-        """Publish sidecars first and make the lock rename the commit point."""
+        """Publish sidecars first and make the lock rename the commit point.
+
+        Raises:
+            ValueError: When the staged lock is absent, a target changed
+                outside the transaction, or a recovery invariant fails.
+        """
         cls._require_roots(project, stage)
         cls._recover_prior_stages(project, stage)
         old = cls._bytes(project / cls.LOCK)
@@ -671,7 +760,17 @@ class MiseLockTransaction:
 
     @classmethod
     def main(cls, arguments: list[str]) -> int:
-        if len(arguments) != 3 or arguments[0] not in {"publish", "recover"}:
+        """Run the publisher subcommand over one project/stage pair.
+
+        Returns:
+            The resulting ``int``.
+
+        Raises:
+            ValueError: When the subcommand arguments are invalid.
+        """
+        if len(arguments) != MiseLockTransaction.EXPECTED_ARGUMENTS or arguments[
+            0
+        ] not in {"publish", "recover"}:
             message = "usage: mise-lock-transaction.py (publish|recover) PROJECT STAGE"
             raise ValueError(message)
         project = Path(arguments[1]).absolute()

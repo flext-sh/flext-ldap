@@ -10,6 +10,9 @@ install and publishes. The committed manifest never changes, so the next
 
 It runs with a host Python before the project's virtual environment exists,
 so it intentionally uses only stdlib.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -17,7 +20,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
-import subprocess
+import subprocess  # ruff: ignore[suspicious-subprocess-import] -- stdlib bootstrap: pinned runtime invocation
 import sys
 import tempfile
 from pathlib import Path
@@ -114,10 +117,18 @@ class MiseLockConverge:
     )
     RUNTIME_INSTALL_RELATIVE_TEMPLATE = "bootstrap/mise-{release}"
     CANDIDATE_LIMIT = 8
+    EXPECTED_ARGUMENTS = 3
 
     @classmethod
     def _runtime(cls, storage: Path, release: str) -> Path:
-        """Locate the pinned Mise runtime the bootstrap installed."""
+        """Locate the pinned Mise runtime the bootstrap installed.
+
+        Returns:
+            The resulting ``Path``.
+
+        Raises:
+            ValueError: When the pinned runtime is missing or not executable.
+        """
         relative = cls.RUNTIME_INSTALL_RELATIVE_TEMPLATE.format(
             release=release.removeprefix("v"),
         )
@@ -131,7 +142,11 @@ class MiseLockConverge:
 
     @classmethod
     def _environment(cls, storage: Path, stage: Path, scratch: Path) -> dict[str, str]:
-        """Build the isolated environment the bootstrap recipe runs Mise in."""
+        """Build the isolated environment the bootstrap recipe runs Mise in.
+
+        Returns:
+            The resulting ``dict[str, str]``.
+        """
         for _name, relative in cls.TRANSIENT_ENVIRONMENT:
             if relative not in cls.EMPTY_FILES:
                 (scratch / relative).mkdir(parents=True, exist_ok=True)
@@ -160,8 +175,15 @@ class MiseLockConverge:
 
     @staticmethod
     def _run(runtime: Path, arguments: list[str], environment: dict[str, str]) -> str:
-        """Run one isolated Mise command; warnings and failures escape loudly."""
-        completed = subprocess.run(
+        """Run one isolated Mise command; warnings and failures escape loudly.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises:
+            ValueError: When Mise exits non-zero or warns unexpectedly.
+        """
+        completed = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true] -- pinned runtime path, no shell
             [str(runtime), *arguments],
             env=environment,
             capture_output=True,
@@ -171,7 +193,10 @@ class MiseLockConverge:
         diagnostics = completed.stdout + completed.stderr
         if completed.returncode != 0:
             sys.stderr.write(diagnostics)
-            message = f"Mise exited {completed.returncode}: {' '.join(arguments)}\n{diagnostics.strip()}"
+            message = (
+                f"Mise exited {completed.returncode}: "
+                f"{' '.join(arguments)}\n{diagnostics.strip()}"
+            )
             raise ValueError(message)
         # The minimum_release_age supply-chain policy emits a deterministic
         # informational warning on every version listing (newer releases are
@@ -207,8 +232,12 @@ class MiseLockConverge:
         stage: Path,
         environment: dict[str, str],
     ) -> tuple[bool, str]:
-        """Prove the staged lock installs without mutating tools."""
-        completed = subprocess.run(
+        """Prove the staged lock installs without mutating tools.
+
+        Returns:
+            The resulting ``tuple[bool, str]``.
+        """
+        completed = subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true] -- pinned runtime path, no shell
             [str(runtime), "-C", str(stage), "install", "--dry-run"],
             env=environment,
             capture_output=True,
@@ -219,7 +248,14 @@ class MiseLockConverge:
 
     @staticmethod
     def failing_install_tools(probe_output: str) -> list[tuple[str, str]]:
-        """Extract the ``selector@version`` pairs a failed install probe named."""
+        """Extract the ``selector@version`` pairs a failed install probe named.
+
+        Returns:
+            The resulting ``list[tuple[str, str]]``.
+
+        Raises:
+            ValueError: When the probe named no parseable failing tool.
+        """
         tools: list[tuple[str, str]] = []
         marker = "Failed to install tools:"
         for line in probe_output.splitlines():
@@ -231,18 +267,20 @@ class MiseLockConverge:
                 if selector and version and version[0].isdigit():
                     tools.append((selector, version))
         if not tools:
-            message = f"staged install failed but named no failing tool: {probe_output.strip()[:400]}"
+            message = (
+                "staged install failed but named no failing tool: "
+                f"{probe_output.strip()[:400]}"
+            )
             raise ValueError(message)
         return tools
 
     @classmethod
-    def release_candidates(
-        cls,
-        listing: str,
-        failed_version: str,
-        selector: str,
-    ) -> list[str]:
-        """List releases of an ``ls-remote`` listing strictly older than the failed one."""
+    def release_candidates(cls, listing: str, failed_version: str) -> list[str]:
+        """List ``ls-remote`` releases strictly older than the failed version.
+
+        Returns:
+            The resulting ``list[str]``.
+        """
 
         def release_key(version: str) -> tuple[int, ...] | None:
             try:
@@ -263,7 +301,11 @@ class MiseLockConverge:
 
     @staticmethod
     def hold_manifest_version(manifest: Path, selector: str, version: str) -> None:
-        """Rewrite one tool's declared version inside the staged manifest copy."""
+        """Rewrite one tool's declared version inside the staged manifest copy.
+
+        Raises:
+            ValueError: When the manifest declares no version to hold.
+        """
         manifest_selector = selector.removeprefix("core:")
         lines = manifest.read_text(encoding="utf-8").splitlines(keepends=True)
         headers = (
@@ -303,6 +345,12 @@ class MiseLockConverge:
         write is guarded: a symlinked or otherwise relocated ``.mise.toml``
         that resolves outside the declared stage stops converge loud instead
         of rewriting an unrelated file.
+
+        Returns:
+            The resulting ``Path``.
+
+        Raises:
+            ValueError: When the manifest escapes the declared stage.
         """
         manifest = (stage / ".mise.toml").resolve()
         if not manifest.is_relative_to(stage.resolve()):
@@ -319,7 +367,14 @@ class MiseLockConverge:
         selector: str,
         failed_version: str,
     ) -> str:
-        """Hold one failing tool at its newest release that installs in the stage."""
+        """Hold one failing tool at its newest release that installs in the stage.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises:
+            ValueError: When no installable release below the failed one exists.
+        """
         listing = cls._run(runtime, ["ls-remote", selector], environment)
         manifest = cls.staged_manifest(stage)
         for candidate in cls.release_candidates(
@@ -344,7 +399,12 @@ class MiseLockConverge:
 
     @classmethod
     def converge(cls, storage: Path, stage: Path, release: str) -> None:
-        """Hold failing tools of the staged lock, then re-prove the whole stage."""
+        """Hold failing tools of the staged lock, then re-prove the whole stage.
+
+        Raises:
+            ValueError: When the staged manifest is missing, a core tool fails,
+                or the held lock still fails its staged install.
+        """
         if not (stage / ".mise.toml").is_file():
             message = f"missing staged Mise manifest: {stage / '.mise.toml'}"
             raise ValueError(message)
@@ -354,7 +414,7 @@ class MiseLockConverge:
             environment = cls._environment(storage, stage, scratch)
             satisfied, probe_output = cls._probe(runtime, stage, environment)
             if satisfied:
-                print("converge: staged lock installs; nothing to hold")
+                sys.stderr.write("converge: staged lock installs; nothing to hold\n")
                 return
             holds: dict[str, str] = {}
             for selector, failed_version in cls.failing_install_tools(probe_output):
@@ -372,16 +432,55 @@ class MiseLockConverge:
                     selector,
                     failed_version,
                 )
-                print(
-                    f"hold: {selector} held at {holds[selector]}: release {failed_version}"
-                    " failed install; the next upg retries the newest release",
+                sys.stderr.write(
+                    f"hold: {selector} held at {holds[selector]}: "
+                    f"release {failed_version}"
+                    " failed install; the next upg retries the newest release\n",
                 )
             if not cls._probe(runtime, stage, environment)[0]:
                 message = f"converge: held lock still fails install: {sorted(holds)}"
                 raise ValueError(message)
-            print(f"converge: staged lock installs with holds {sorted(holds)}")
+            sys.stderr.write(
+                f"converge: staged lock installs with holds {sorted(holds)}\n",
+            )
         finally:
             shutil.rmtree(scratch, ignore_errors=True)
+
+    @classmethod
+    def _merge_committed_entries(
+        cls,
+        lock_path: Path,
+        lock: str,
+        committed_lock: Path,
+        present: set[str],
+        resolved: dict[str, str],
+    ) -> str:
+        """Merge committed blocks the fresh provenance pass could not verify.
+
+        Returns:
+            The resulting ``str``.
+        """
+        if not committed_lock.is_file():
+            return lock
+        committed = committed_lock.read_text(encoding="utf-8")
+        for name, body in re.findall(
+            r"(\[\[tools\.(\S+?)\]\]\n.*?)(?=\n\[\[|\Z)",
+            committed,
+            re.DOTALL,
+        ):
+            entry_name = name
+            if entry_name not in present:
+                lock = lock.rstrip("\n") + "\n\n" + name.rstrip("\n") + "\n"
+                lock_path.write_text(lock, encoding="utf-8")
+                present.add(entry_name)
+                found = re.search(r'^version = "([^"]+)"', body, re.MULTILINE)
+                if found:
+                    resolved[entry_name.removeprefix("core:")] = found.group(1)
+                sys.stderr.write(
+                    f"INFO: merged committed {entry_name} entries the fresh "
+                    "pass could not verify\n",
+                )
+        return lock
 
     @classmethod
     def pin_stage_manifest(
@@ -402,6 +501,9 @@ class MiseLockConverge:
         verified committed entries unresolvable; fix-forward merges the
         committed blocks for exactly those tools back into the staged lock
         before pinning.
+
+        Returns:
+            The resulting ``int``.
         """
         lock_path = stage / "mise.lock"
         lock = lock_path.read_text(encoding="utf-8")
@@ -416,26 +518,14 @@ class MiseLockConverge:
             found = re.search(r'^version = "([^"]+)"', body, re.MULTILINE)
             if found:
                 resolved[name.removeprefix("core:")] = found.group(1)
-        if committed_lock is not None and committed_lock.is_file():
-            committed = committed_lock.read_text(encoding="utf-8")
-            for name, body in re.findall(
-                r"(\[\[tools\.(\S+?)\]\]\n.*?)(?=\n\[\[|\Z)",
-                committed,
-                re.DOTALL,
-            ):
-                entry_name = name
-                if entry_name not in present:
-                    lock = lock.rstrip("\n") + "\n\n" + name.rstrip("\n") + "\n"
-                    lock_path.write_text(lock, encoding="utf-8")
-                    present.add(entry_name)
-                    found = re.search(r'^version = "([^"]+)"', body, re.MULTILINE)
-                    if found:
-                        resolved[entry_name.removeprefix("core:")] = found.group(1)
-                    print(
-                        f"INFO: merged committed {entry_name} entries the fresh "
-                        "pass could not verify",
-                        file=sys.stderr,
-                    )
+        if committed_lock is not None:
+            lock = cls._merge_committed_entries(
+                lock_path,
+                lock,
+                committed_lock,
+                present,
+                resolved,
+            )
         manifest_path = cls.staged_manifest(stage)
         lines = manifest_path.read_text(encoding="utf-8").splitlines(
             keepends=True,
@@ -453,24 +543,38 @@ class MiseLockConverge:
                     lines[index] = f'{tool} = "{resolved[tool]}"\n'
                     pinned += 1
         manifest_path.write_text("".join(lines), encoding="utf-8")
-        print(
-            f"INFO: pinned {pinned} staged tools to their locked resolutions",
-            file=sys.stderr,
+        sys.stderr.write(
+            f"INFO: pinned {pinned} staged tools to their locked resolutions\n",
         )
         return 0
 
     @classmethod
     def main(cls, arguments: list[str]) -> int:
+        """Run the converge or pin subcommand.
+
+        Returns:
+            The resulting ``int``.
+
+        Raises:
+            ValueError: When the subcommand arguments are invalid.
+        """
         if arguments and arguments[0] == "pin":
             if len(arguments) not in {2, 3}:
                 message = "usage: mise-lock-converge.py pin STAGE [COMMITTED_LOCK]"
                 raise ValueError(message)
-            committed = Path(arguments[2]).absolute() if len(arguments) == 3 else None
+            committed = (
+                Path(arguments[2]).absolute()
+                if len(
+                    arguments,
+                )
+                == cls.EXPECTED_ARGUMENTS
+                else None
+            )
             return cls.pin_stage_manifest(
                 Path(arguments[1]).absolute(),
                 committed,
             )
-        if len(arguments) != 3:
+        if len(arguments) != cls.EXPECTED_ARGUMENTS:
             message = "usage: mise-lock-converge.py STORAGE STAGE RELEASE"
             raise ValueError(message)
         cls.converge(
