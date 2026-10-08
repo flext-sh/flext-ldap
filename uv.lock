@@ -448,7 +448,7 @@ dependencies = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#5d92035190041ed3d383c4d1ae27f7e09e90d3e8" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#d57bdfb6570135d24856a733250a6c2aec573376" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
@@ -638,7 +638,7 @@ dev = [
 [[package]]
 name = "flext-ldif"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-ldif.git?rev=0.12.0-dev#2c8d0cd631cb8df0e9f7e26f102698e9a32c2be8" }
+source = { git = "https://github.com/flext-sh/flext-ldif.git?rev=0.12.0-dev#5ca1e785d019ec7be3d6650f93a53b6a0ec5ef22" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
