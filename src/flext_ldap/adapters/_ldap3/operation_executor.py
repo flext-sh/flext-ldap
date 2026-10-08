@@ -123,7 +123,7 @@ class FlextLdapLdap3OperationExecutor:
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
         """
-        dn_str = u.Ldif.get_dn_value(dn)
+        dn_str = u.Ldif.resolve_dn_value(dn)
         return FlextLdapLdap3OperationExecutor._execute(
             connection,
             c.Ldap.OperationType.DELETE,
@@ -141,7 +141,7 @@ class FlextLdapLdap3OperationExecutor:
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
         """
-        dn_str = u.Ldif.get_dn_value(dn)
+        dn_str = u.Ldif.resolve_dn_value(dn)
         return FlextLdapLdap3OperationExecutor._execute(
             connection,
             c.Ldap.OperationType.MODIFY,

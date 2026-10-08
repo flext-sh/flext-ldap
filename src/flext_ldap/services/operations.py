@@ -352,7 +352,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         """
         return u.try_(
             lambda: (
-                m.Ldif.DN(value=u.Ldif.get_dn_value(dn))
+                m.Ldif.DN(value=u.Ldif.resolve_dn_value(dn))
                 if isinstance(dn, str)
                 else (dn if isinstance(dn, m.Ldif.DN) else m.Ldif.DN.model_validate(dn))
             ),
@@ -365,7 +365,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         Business Rules:
             - Entry must exist before deletion (LDAP error 32 if not found)
             - Entry must not have children (LDAP error 66 if has children)
-            - DN normalization is applied using u.Ldif.get_dn_value()
+            - DN normalization is applied using u.Ldif.resolve_dn_value()
             - String DNs are converted to DN models for type safety
             - Deletion is permanent - no undo capability
 
@@ -486,7 +486,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             - Entry must exist before modification (LDAP error 32 if not found)
             - Changes use ldap3 format:
               {attr_name: [(MODIFY_ADD|MODIFY_DELETE|MODIFY_REPLACE, [values])]}
-            - DN normalization is applied using u.Ldif.get_dn_value()
+            - DN normalization is applied using u.Ldif.resolve_dn_value()
             - String DNs are converted to DN models for type safety
             - Schema constraints are validated by LDAP server
 

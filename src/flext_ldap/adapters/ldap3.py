@@ -105,7 +105,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 .flat_map(
                     lambda attrs: self.OperationExecutor.execute_add(
                         conn,
-                        u.Ldif.get_dn_value(entry.dn)
+                        u.Ldif.resolve_dn_value(entry.dn)
                         if entry.dn is not None
                         else "unknown",
                         attrs,
