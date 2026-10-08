@@ -20,7 +20,7 @@ class FlextLdapLdap3ResultExtract:
     def extract_dn(parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue) -> m.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
-        Delegates to ``u.Ldif.get_dn_value()`` for normalization. Returns
+        Delegates to ``u.Ldif.resolve_dn_value()`` for normalization. Returns
         canonical empty DN via ``m.Ldif.DN.empty()`` when extraction fails.
 
         Returns:
