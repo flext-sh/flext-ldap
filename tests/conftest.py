@@ -18,6 +18,14 @@ from tests import c, t, u
 logger = u.fetch_logger(__name__)
 
 
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Only LDAP service consumers require external transport readiness."""
+    for item in items:
+        if "ldap_container" in getattr(item, "fixturenames", ()):
+            item.add_marker(pytest.mark.docker)
+            item.add_marker(pytest.mark.ldap)
+
+
 class WorkerInputConfig(Protocol):
     """Provide the test double for worker input config."""
 
@@ -100,7 +108,7 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                 f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} startup "
                 f"failed (LDAP server unavailable): {execute_result.error}"
             )
-            pytest.skip(msg)
+            pytest.fail(msg)
         waited: float = 0.0
         admin_dn = ""
         admin_password = ""
@@ -149,7 +157,7 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                 f"within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s{detail}"
                 f"(LDAP server unavailable)"
             )
-            pytest.skip(msg)
+            pytest.fail("LDAP authentication failed after transport readiness")
     with lock:
         u.Ldap.Tests.ensure_basic_ldap_structure()
     return {

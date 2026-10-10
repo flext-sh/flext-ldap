@@ -20,7 +20,7 @@ classifiers = [
 ]
 dependencies = [
   "annotated-types>=0.8.0",
-  "beartype>=0.22.9",
+  "beartype>=0.23.0",
   "dependency-injector>=4.49.1",
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
@@ -535,6 +535,7 @@ split-on-trailing-comma = false
 "**/test_public_contracts_cov.py" = ["line-too-long"]
 "**/tests/**" = [
   "boolean-positional-value-in-call",
+  "boolean-type-hint-positional-argument",
   "compare-to-empty-string",
   "import-private-name",
   "magic-value-comparison",
@@ -610,11 +611,27 @@ split-on-trailing-comma = false
   "subprocess-without-shell-equals-true",
   "suspicious-subprocess-import",
 ]
+"src/flext_tests/_utilities/environment.py" = [
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
 "tests/**/*.py" = ["assert"]
 "tests/test_snapshot_drill.py" = ["import-private-name"]
+"tests/unit/test_capability_collection.py" = [
+  "line-too-long",
+  "missing-copyright-notice",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+  "undocumented-public-method",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.pylint]
+allow-dunder-method-names = ["__base__", "__bases__"]
 
 [tool.tomlsort]
 all = true
