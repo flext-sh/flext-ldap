@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from flext_tests import FlextTestsSettings
 
-from flext_ldap import FlextLdapSettings
+from flext_ldap._settings import FlextLdapSettings
 
 
 class TestsFlextLdapSettings(FlextLdapSettings, FlextTestsSettings):

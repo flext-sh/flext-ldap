@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import FlextConfig
-from flext_ldap import m
+from flext_core import m
 from flext_ldap._models._ldap_namespace import FlextLdapModelsLdapNamespace
 
 
