@@ -21,7 +21,7 @@ logger = u.fetch_logger(__name__)
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """Only LDAP service consumers require external transport readiness."""
     for item in items:
-        if "ldap_container" in item.fixturenames:
+        if "ldap_container" in getattr(item, "fixturenames", ()):
             item.add_marker(pytest.mark.docker)
             item.add_marker(pytest.mark.ldap)
 
