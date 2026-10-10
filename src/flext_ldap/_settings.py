@@ -18,7 +18,7 @@ from typing import Annotated, ClassVar
 
 from flext_ldif import FlextLdifSettings
 
-from flext_ldap import m
+from flext_core import m
 
 
 class FlextLdapSettings(FlextLdifSettings):
