@@ -7,9 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap import FlextLdapSettings, ldap, settings
+from tests import tm
 
 pytestmark = pytest.mark.unit
 

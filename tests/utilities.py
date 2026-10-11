@@ -8,12 +8,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import ClassVar
 
-from flext_tests import FlextTestsUtilities, r, tk, tm
+from flext_tests import FlextTestsUtilities, tk, tm
 from flext_tests.docker import FlextTestsDocker
 
-from flext_ldap import FlextLdapUtilities
+from flext_ldap import FlextLdapUtilities, settings
 from tests import c, m, p, t
 
 
@@ -25,8 +24,6 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
         class Tests(FlextTestsUtilities.Tests):
             """Direct test utility surface for flext-ldap."""
-
-            _resolved_admin_credentials: ClassVar[list[tuple[str, str] | None]] = [None]
 
             @staticmethod
             def that(
@@ -214,80 +211,21 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 )
 
             @staticmethod
-            def _admin_credentials_from_candidate(
-                candidate_dn: str,
-                candidate_password: str,
-            ) -> p.Result[tuple[str, str]]:
-                try:
-                    server = u.Ldap.create_server_from_url(
-                        f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                        get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                    )
-                    connection = u.Ldap.create_connection(
-                        server,
-                        user=candidate_dn,
-                        password=candidate_password,
-                        auto_bind=True,
-                        receive_timeout=1,
-                    )
-                    if not connection.bound:
-                        return r[tuple[str, str]].fail(
-                            f"candidate bind failed for {candidate_dn}",
-                        )
-                    connection.unbind()
-                except (
-                    ConnectionError,
-                    OSError,
-                    ValueError,
-                    t.Ldap.LDAPException,
-                ) as exc:
-                    return r[tuple[str, str]].fail(str(exc), exception=exc)
-                else:
-                    return r[tuple[str, str]].ok((candidate_dn, candidate_password))
+            def get_admin_credentials() -> tuple[str, str]:
+                """Read explicitly configured LDAP credentials without probing.
 
-            @classmethod
-            def get_admin_credentials(cls) -> tuple[str, str]:
-                """Resolve working LDAP admin credentials.
+                Both environment keys are required; missing keys propagate unchanged.
 
                 Returns:
                     The resulting ``tuple[str, str]``.
-
-                Raises:
-                    RuntimeError: If Failed to resolve a valid LDAP admin credential for
-                        test LDAP container. Check that the LDAP container is running
-                        and credentials are correct.
                 """
-                cache = cls._resolved_admin_credentials
-                if cache[0] is not None:
-                    return cache[0]
-                env_dn = os.getenv("FLEXT_LDAP_BIND_DN")
-                env_password = os.getenv("FLEXT_LDAP_BIND_PASSWORD")
-                candidates: list[tuple[str, str]] = []
-                if env_dn and env_password:
-                    candidates.append((env_dn, env_password))
-                candidates.extend([
-                    (c.Ldap.Tests.DOCKER_ADMIN_DN, c.Ldap.Tests.DOCKER_ADMIN_PASSWORD),
-                    (
-                        c.Ldap.Tests.DOCKER_LEGACY_ADMIN_DN,
-                        c.Ldap.Tests.DOCKER_LEGACY_ADMIN_PASSWORD,
-                    ),
-                ])
-                for candidate_dn, candidate_password in candidates:
-                    resolved = cls._admin_credentials_from_candidate(
-                        candidate_dn,
-                        candidate_password,
-                    )
-                    if resolved.failure:
-                        continue
-                    resolved_credentials = resolved.unwrap()
-                    cache[0] = resolved_credentials
-                    return resolved_credentials
-                error_message = (
-                    "Failed to resolve a valid LDAP admin credential for test "
-                    "LDAP container. Check that the LDAP container is running "
-                    "and credentials are correct."
+                configured = settings.clone(
+                    Ldap={
+                        "bind_dn": os.environ["FLEXT_LDAP_BIND_DN"],
+                        "bind_password": os.environ["FLEXT_LDAP_BIND_PASSWORD"],
+                    },
                 )
-                raise RuntimeError(error_message)
+                return configured.Ldap.bind_dn, configured.Ldap.bind_password
 
             @classmethod
             def ensure_basic_ldap_structure(cls) -> None:

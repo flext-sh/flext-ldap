@@ -11,13 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
 from flext_ldif import FlextLdifConstants
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
-
-from flext_ldap._constants.enums import FlextLdapConstantsEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -25,8 +24,131 @@ if TYPE_CHECKING:
     from flext_ldap import t
 
 
-class FlextLdapConstantsBase(FlextLdapConstantsEnums):
+class FlextLdapConstantsBase:
     """Private constants owner for LDAP defaults, sets, and lookup tables."""
+
+    @unique
+    class Status(StrEnum):
+        """LDAP operation status values."""
+
+        PENDING = "pending"
+        RUNNING = "running"
+        COMPLETED = "completed"
+        FAILED = "failed"
+
+    @unique
+    class OperationName(StrEnum):
+        """LDAP operation name constants."""
+
+        CONNECT = "connect"
+        DETECT_FROM_CONNECTION = "detect_from_connection"
+        LDAP3_TO_LDIF_ENTRY = "ldap3_to_ldif_entry"
+        LDIF_ENTRY_TO_LDAP3_ATTRIBUTES = "ldif_entry_to_ldap3_attributes"
+        BIND = "bind"
+        UNBIND = "unbind"
+        SYNC = "sync"
+        BATCH_UPSERT = "batch_upsert"
+        PLAN_UPSERT = "plan_upsert"
+        SUBTREE_DELETE = "subtree_delete"
+
+    @unique
+    class ResultCode(IntEnum):
+        """LDAP result codes."""
+
+        SUCCESS = 0
+        OPERATIONS_ERROR = 1
+        PROTOCOL_ERROR = 2
+        REFERRAL = 10
+        NO_SUCH_OBJECT = 32
+
+    @unique
+    class ErrorMessage(StrEnum):
+        """Closed-set LDAP error message constants."""
+
+        NOT_CONNECTED = "Not connected to LDAP server"
+        CONNECTION_FAILED = "Connection failed"
+        UNKNOWN_ERROR = "unknown error"
+        MODIFY_ENTRY_WITHOUT_ADDITIONS = "Schema modify entry missing add operations"
+
+    @unique
+    class AttributeName(StrEnum):
+        """LDAP protocol-level attribute names."""
+
+        ALL_ATTRIBUTES = "*"
+        NO_ATTRIBUTES = "1.1"
+        OBJECT_CLASS = "objectClass"
+        DN = "dn"
+        CHANGETYPE = "changetype"
+        COMMON_NAME = "cn"
+
+    @unique
+    class OperationType(StrEnum):
+        """LDAP operation types."""
+
+        ADD = "add"
+        MODIFY = "modify"
+        DELETE = "delete"
+        SEARCH = "search"
+
+    @unique
+    class UpsertOperation(StrEnum):
+        """Upsert operation types."""
+
+        ADD = "add"
+        MODIFY = "modify"
+        SKIPPED = "skipped"
+        ADDED = "added"
+        MODIFIED = "modified"
+
+    @unique
+    class SearchScope(StrEnum):
+        """LDAP search scopes."""
+
+        BASE = "BASE"
+        ONELEVEL = "ONELEVEL"
+        SUBTREE = "SUBTREE"
+
+    @unique
+    class SearchScopeValue(IntEnum):
+        """ldap3-compatible search scope integer values."""
+
+        BASE = 0
+        LEVEL = 1
+        SUBTREE = 2
+
+    @unique
+    class ModifyOperation(IntEnum):
+        """ldap3-compatible modify operation integer values."""
+
+        ADD = 0
+        DELETE = 1
+        REPLACE = 2
+
+    @unique
+    class Ldap3SearchScope(StrEnum):
+        """ldap3-compatible search scope string values."""
+
+        BASE = "BASE"
+        LEVEL = "LEVEL"
+        SUBTREE = "SUBTREE"
+
+    @unique
+    class Ldap3GetInfo(StrEnum):
+        """ldap3-compatible get-info option string values."""
+
+        ALL = "ALL"
+        DSA = "DSA"
+        NO_INFO = "NO_INFO"
+        SCHEMA = "SCHEMA"
+
+    @unique
+    class RootDseAttribute(StrEnum):
+        """rootDSE query attribute names for server type detection."""
+
+        VENDOR_NAME = "vendorName"
+        VENDOR_VERSION = "vendorVersion"
+        NAMING_CONTEXTS = "namingContexts"
+        SUPPORTED_EXTENSIONS = "supportedExtension"
 
     NAME: ClassVar[str] = "FLEXT_LDAP"
     VENDOR_STRING_MAX_TOKENS: Final[int] = 2
@@ -48,19 +170,17 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
     DN_TRUNCATION_LENGTH: Final[int] = 100
     BATCH_SIZE: Final[int] = 100
 
-    VALID_STATUSES: Final[frozenset[FlextLdapConstantsEnums.Status]] = frozenset({
-        FlextLdapConstantsEnums.Status.PENDING,
-        FlextLdapConstantsEnums.Status.RUNNING,
-        FlextLdapConstantsEnums.Status.COMPLETED,
-        FlextLdapConstantsEnums.Status.FAILED,
+    VALID_STATUSES: Final[frozenset[Status]] = frozenset({
+        Status.PENDING,
+        Status.RUNNING,
+        Status.COMPLETED,
+        Status.FAILED,
     })
 
-    PARTIAL_SUCCESS_CODES: Final[frozenset[FlextLdapConstantsEnums.ResultCode]] = (
-        frozenset({
-            FlextLdapConstantsEnums.ResultCode.SUCCESS,
-            FlextLdapConstantsEnums.ResultCode.REFERRAL,
-        })
-    )
+    PARTIAL_SUCCESS_CODES: Final[frozenset[ResultCode]] = frozenset({
+        ResultCode.SUCCESS,
+        ResultCode.REFERRAL,
+    })
 
     ENTRY_ALREADY_EXISTS_RE: Final[t.RegexPattern] = re.compile(
         r"entry already exists|already exists|entryalreadyexists|ldap_already_exists",
@@ -72,24 +192,24 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
         re.IGNORECASE,
     )
 
-    OPERATION_SUCCESS_MESSAGES: ClassVar[
-        Mapping[FlextLdapConstantsEnums.OperationType, str]
-    ] = MappingProxyType({
-        FlextLdapConstantsEnums.OperationType.ADD: "Entry added successfully",
-        FlextLdapConstantsEnums.OperationType.MODIFY: "Entry modified successfully",
-        FlextLdapConstantsEnums.OperationType.DELETE: "Entry deleted successfully",
-        FlextLdapConstantsEnums.OperationType.SEARCH: "Search completed successfully",
-    })
+    OPERATION_SUCCESS_MESSAGES: ClassVar[Mapping[OperationType, str]] = (
+        MappingProxyType({
+            OperationType.ADD: "Entry added successfully",
+            OperationType.MODIFY: "Entry modified successfully",
+            OperationType.DELETE: "Entry deleted successfully",
+            OperationType.SEARCH: "Search completed successfully",
+        })
+    )
     "Per-operation success messages used by the ldap3 operation executor."
 
-    OPERATION_FAILURE_PREFIXES: ClassVar[
-        Mapping[FlextLdapConstantsEnums.OperationType, str]
-    ] = MappingProxyType({
-        FlextLdapConstantsEnums.OperationType.ADD: "Add failed",
-        FlextLdapConstantsEnums.OperationType.MODIFY: "Modify failed",
-        FlextLdapConstantsEnums.OperationType.DELETE: "Delete failed",
-        FlextLdapConstantsEnums.OperationType.SEARCH: "Search failed",
-    })
+    OPERATION_FAILURE_PREFIXES: ClassVar[Mapping[OperationType, str]] = (
+        MappingProxyType({
+            OperationType.ADD: "Add failed",
+            OperationType.MODIFY: "Modify failed",
+            OperationType.DELETE: "Delete failed",
+            OperationType.SEARCH: "Search failed",
+        })
+    )
     "Per-operation error message prefixes used by the ldap3 operation executor."
 
     EXC_CONNECTION: Final[tuple[type[Exception], ...]] = (
@@ -98,25 +218,17 @@ class FlextLdapConstantsBase(FlextLdapConstantsEnums):
     )
     "Boundary catch for ldap3 connect/bind: c.EXC_BROAD_IO_TYPE plus LDAPException."
 
-    DEFAULT_SCOPE: Final[FlextLdapConstantsEnums.SearchScope] = (
-        FlextLdapConstantsEnums.SearchScope.SUBTREE
-    )
+    DEFAULT_SCOPE: Final[SearchScope] = SearchScope.SUBTREE
 
     LDAP3_SCOPE_BY_SEARCH_SCOPE: Final[
         t.MappingKV[
-            FlextLdapConstantsEnums.SearchScope,
-            FlextLdapConstantsEnums.SearchScopeValue,
+            SearchScope,
+            SearchScopeValue,
         ]
     ] = MappingProxyType({
-        FlextLdapConstantsEnums.SearchScope.BASE: (
-            FlextLdapConstantsEnums.SearchScopeValue.BASE
-        ),
-        FlextLdapConstantsEnums.SearchScope.ONELEVEL: (
-            FlextLdapConstantsEnums.SearchScopeValue.LEVEL
-        ),
-        FlextLdapConstantsEnums.SearchScope.SUBTREE: (
-            FlextLdapConstantsEnums.SearchScopeValue.SUBTREE
-        ),
+        SearchScope.BASE: (SearchScopeValue.BASE),
+        SearchScope.ONELEVEL: (SearchScopeValue.LEVEL),
+        SearchScope.SUBTREE: (SearchScopeValue.SUBTREE),
     })
 
     DEFAULT_TYPE: Final[FlextLdifConstants.Ldif.ServerTypes] = (
