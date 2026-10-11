@@ -177,12 +177,10 @@ class FlextLdapConstantsBase:
         Status.FAILED,
     })
 
-    PARTIAL_SUCCESS_CODES: Final[frozenset[ResultCode]] = (
-        frozenset({
-            ResultCode.SUCCESS,
-            ResultCode.REFERRAL,
-        })
-    )
+    PARTIAL_SUCCESS_CODES: Final[frozenset[ResultCode]] = frozenset({
+        ResultCode.SUCCESS,
+        ResultCode.REFERRAL,
+    })
 
     ENTRY_ALREADY_EXISTS_RE: Final[t.RegexPattern] = re.compile(
         r"entry already exists|already exists|entryalreadyexists|ldap_already_exists",
@@ -194,24 +192,24 @@ class FlextLdapConstantsBase:
         re.IGNORECASE,
     )
 
-    OPERATION_SUCCESS_MESSAGES: ClassVar[
-        Mapping[OperationType, str]
-    ] = MappingProxyType({
-        OperationType.ADD: "Entry added successfully",
-        OperationType.MODIFY: "Entry modified successfully",
-        OperationType.DELETE: "Entry deleted successfully",
-        OperationType.SEARCH: "Search completed successfully",
-    })
+    OPERATION_SUCCESS_MESSAGES: ClassVar[Mapping[OperationType, str]] = (
+        MappingProxyType({
+            OperationType.ADD: "Entry added successfully",
+            OperationType.MODIFY: "Entry modified successfully",
+            OperationType.DELETE: "Entry deleted successfully",
+            OperationType.SEARCH: "Search completed successfully",
+        })
+    )
     "Per-operation success messages used by the ldap3 operation executor."
 
-    OPERATION_FAILURE_PREFIXES: ClassVar[
-        Mapping[OperationType, str]
-    ] = MappingProxyType({
-        OperationType.ADD: "Add failed",
-        OperationType.MODIFY: "Modify failed",
-        OperationType.DELETE: "Delete failed",
-        OperationType.SEARCH: "Search failed",
-    })
+    OPERATION_FAILURE_PREFIXES: ClassVar[Mapping[OperationType, str]] = (
+        MappingProxyType({
+            OperationType.ADD: "Add failed",
+            OperationType.MODIFY: "Modify failed",
+            OperationType.DELETE: "Delete failed",
+            OperationType.SEARCH: "Search failed",
+        })
+    )
     "Per-operation error message prefixes used by the ldap3 operation executor."
 
     EXC_CONNECTION: Final[tuple[type[Exception], ...]] = (
@@ -220,9 +218,7 @@ class FlextLdapConstantsBase:
     )
     "Boundary catch for ldap3 connect/bind: c.EXC_BROAD_IO_TYPE plus LDAPException."
 
-    DEFAULT_SCOPE: Final[SearchScope] = (
-        SearchScope.SUBTREE
-    )
+    DEFAULT_SCOPE: Final[SearchScope] = SearchScope.SUBTREE
 
     LDAP3_SCOPE_BY_SEARCH_SCOPE: Final[
         t.MappingKV[
@@ -230,15 +226,9 @@ class FlextLdapConstantsBase:
             SearchScopeValue,
         ]
     ] = MappingProxyType({
-        SearchScope.BASE: (
-            SearchScopeValue.BASE
-        ),
-        SearchScope.ONELEVEL: (
-            SearchScopeValue.LEVEL
-        ),
-        SearchScope.SUBTREE: (
-            SearchScopeValue.SUBTREE
-        ),
+        SearchScope.BASE: (SearchScopeValue.BASE),
+        SearchScope.ONELEVEL: (SearchScopeValue.LEVEL),
+        SearchScope.SUBTREE: (SearchScopeValue.SUBTREE),
     })
 
     DEFAULT_TYPE: Final[FlextLdifConstants.Ldif.ServerTypes] = (
