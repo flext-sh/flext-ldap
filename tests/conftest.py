@@ -23,8 +23,10 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
         if "ldap_container" in getattr(item, "fixturenames", ()):
             item.add_marker(pytest.mark.docker)
             item.add_marker(
-                pytest.mark.ldap(
+                pytest.mark.connectivity(
                     required_vars=("FLEXT_LDAP_BIND_DN", "FLEXT_LDAP_BIND_PASSWORD"),
+                    host=c.LOCALHOST,
+                    port=c.Ldap.Tests.DOCKER_PORT,
                 ),
             )
 
