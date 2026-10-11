@@ -4,7 +4,7 @@ Frozen Pydantic shapes for the ``config/ldap.yaml`` business-rule SSOT.
 The ``_config.py`` facade validates the model-less YAML slice into these
 classes and exposes the ready objects under ``config.Ldap``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

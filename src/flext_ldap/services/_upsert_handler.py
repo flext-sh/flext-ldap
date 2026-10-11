@@ -16,7 +16,7 @@ Audit Implications:
     - All operations return r for consistent error handling
     - Error messages preserve original LDAP error context
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

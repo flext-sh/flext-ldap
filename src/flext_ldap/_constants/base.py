@@ -4,7 +4,7 @@ Owns every LDAP constant value so the public ``constants.py`` facade module
 declares no constant directly (ENFORCE-079); the facade re-exports them via
 ``c.Ldap.*`` through inheritance.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

@@ -7,7 +7,7 @@ Exercises only the observable public contract of the LDAP service base:
 - project settings stay isolated from the root ``FlextSettings`` singleton.
 - distinct service instances resolve independently.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

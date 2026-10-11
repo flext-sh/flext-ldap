@@ -21,7 +21,7 @@ connection cannot be passed through it without a typing violation. The success
 model state is therefore asserted through the type-clean public method
 ``detect_from_connection`` and cannot be exercised via ``execute``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

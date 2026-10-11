@@ -3,7 +3,7 @@
 Per AGENTS.md §2.7 (library abstraction): only this directory may import
 ``ldap3`` directly; consumers depend on the ``p.Ldap`` protocols.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

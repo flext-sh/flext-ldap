@@ -8,7 +8,7 @@ Modules: FlextLdapSettings
 Scope: LDAP connection configuration, environment variable loading
 Pattern: Singleton with dependency injection support, Pydantic v2 BaseSettings
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

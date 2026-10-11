@@ -7,7 +7,7 @@ single-letter aliases, and the operations the ``FlextLdap`` facade
 promises its callers. It deliberately avoids internal implementation
 details (MRO ordering, private attributes, adapter modules).
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

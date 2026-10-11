@@ -3,7 +3,7 @@
 This module provides a single flat namespace of typed constants (c.Ldap.Tests.*),
 organized for data-driven testing, maximum reuse, and composition.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

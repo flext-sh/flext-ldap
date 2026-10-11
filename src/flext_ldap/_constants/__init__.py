@@ -14,17 +14,15 @@ from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldap._constants.base import FlextLdapConstantsBase
-    from flext_ldap._constants.enums import FlextLdapConstantsEnums
 
 
-__all__: tuple[str, ...] = ("FlextLdapConstantsBase", "FlextLdapConstantsEnums")
+__all__: tuple[str, ...] = ("FlextLdapConstantsBase",)
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
         "FlextLdapConstantsBase": ".base",
-        "FlextLdapConstantsEnums": ".enums",
     }),
     public_exports=__all__,
 )

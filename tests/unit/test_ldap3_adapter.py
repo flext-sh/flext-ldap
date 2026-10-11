@@ -5,7 +5,7 @@ operations, public properties, idempotence of ``disconnect``, and the
 configuration of the ldap3 ``Server`` produced by ``create_server``. No
 private attribute/method access, no internal-collaborator spying.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

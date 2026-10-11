@@ -5,7 +5,7 @@ execute / is_connected / context manager) through observable return values,
 ``r[T]`` outcomes, and public state only. No private attributes, collaborator
 spying, or internal patching.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

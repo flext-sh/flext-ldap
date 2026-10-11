@@ -33,9 +33,8 @@ class FlextLdapConstants(FlextLdifConstants):
         """LDAP-related constants.
 
         Every constant and enumeration is owned by the private ``_constants``
-        tier (``FlextLdapConstantsBase`` over ``FlextLdapConstantsEnums``,
-        ENFORCE-079) and re-exported here via inheritance; ``c.Ldap.*``
-        resolves through the MRO.
+        tier (``FlextLdapConstantsBase``, ENFORCE-079) and re-exported here via
+        inheritance; ``c.Ldap.*`` resolves through the MRO.
         """
 
 
