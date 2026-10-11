@@ -174,8 +174,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            @staticmethod
             def add(
+                self,
                 entry: FlextLdifProtocols.Ldif.Entry,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
                 """Add LDAP entry.
@@ -189,8 +189,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            @staticmethod
             def batch_upsert(
+                self,
                 entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
                 *,
                 progress_callback: t.Ldap.LdapProgressCallback | None = None,
@@ -201,22 +201,22 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Upsert multiple entries and report canonical batch statistics."""
                 ...
 
-            @staticmethod
             def delete_subtree(
+                self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
             ) -> FlextLdifProtocols.Result[m.Ldap.SubtreeDeleteResult]:
                 """Delete an entry and its descendants, deepest-first."""
                 ...
 
-            @staticmethod
             def plan_upsert(
+                self,
                 entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
             ) -> FlextLdifProtocols.Result[m.Ldap.UpsertPlan]:
                 """Classify entries for upsert without writing (dry plan)."""
                 ...
 
-            @staticmethod
             def find_entry(
+                self,
                 dn: str,
                 *,
                 attributes: t.StrSequence | None = None,
@@ -224,8 +224,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Read one entry by DN; an absent entry is an empty result."""
                 ...
 
-            @staticmethod
             def connect(
+                self,
                 connection_config: FlextLdapProtocols.Ldap.ConnectionConfig,
                 *,
                 auto_retry: bool = False,
@@ -264,13 +264,14 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Exit the LDAP client context manager and release resources."""
                 ...
 
-            @staticmethod
-            def disconnect() -> None:
+            def disconnect(
+                self,
+            ) -> None:
                 """Disconnect from LDAP server and release resources."""
                 ...
 
-            @staticmethod
             def delete(
+                self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
                 """Delete LDAP entry.
@@ -284,8 +285,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            @staticmethod
             def execute(
+                self,
                 **kwargs: t.Scalar,
             ) -> FlextLdifProtocols.Result[m.Ldap.Response]:
                 """Execute health check or default operation.
@@ -300,8 +301,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            @staticmethod
             def modify(
+                self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
                 changes: t.Ldap.LdapModifyChanges,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
@@ -317,8 +318,8 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            @staticmethod
             def search(
+                self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
             ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
