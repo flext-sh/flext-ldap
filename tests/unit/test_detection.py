@@ -30,10 +30,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap.services.detection import FlextLdapServerDetector
-from tests import c, p, u
+from tests import c, p, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

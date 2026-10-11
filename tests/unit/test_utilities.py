@@ -15,10 +15,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
-from flext_tests import tm
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

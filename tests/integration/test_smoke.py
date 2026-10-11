@@ -19,10 +19,9 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap import ldap, m
-from tests import c, u
+from tests import c, tm, u
 
 if TYPE_CHECKING:
     from tests import t

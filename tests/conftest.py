@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Protocol, TypeGuard
@@ -23,7 +22,11 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
         if "ldap_container" in getattr(item, "fixturenames", ()):
             item.add_marker(pytest.mark.docker)
-            item.add_marker(pytest.mark.ldap)
+            item.add_marker(
+                pytest.mark.ldap(
+                    required_vars=("FLEXT_LDAP_BIND_DN", "FLEXT_LDAP_BIND_PASSWORD"),
+                ),
+            )
 
 
 class WorkerInputConfig(Protocol):
@@ -100,8 +103,6 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
     )
     docker_control = u.Ldap.Tests.get_docker_control(worker_id)
     with lock:
-        # Start the container before probing credentials — bind probes require
-        # a listening LDAP server (get_admin_credentials fails closed otherwise).
         execute_result = docker_control.execute()
         if execute_result.failure:
             msg = (
@@ -109,55 +110,7 @@ def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
                 f"failed (LDAP server unavailable): {execute_result.error}"
             )
             pytest.fail(msg)
-        waited: float = 0.0
-        admin_dn = ""
-        admin_password = ""
-        last_bind_error: Exception | None = None
-        while waited < c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT:
-            try:
-                admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-                srv = u.Ldap.create_server_from_url(
-                    f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                    get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                )
-                conn = u.Ldap.create_connection(
-                    srv,
-                    user=admin_dn,
-                    password=admin_password,
-                    auto_bind=True,
-                    receive_timeout=1,
-                )
-            except (
-                RuntimeError,
-                t.Ldap.LDAPException,
-                ConnectionError,
-                TimeoutError,
-                OSError,
-            ) as exc:
-                last_bind_error = exc
-            else:
-                try:
-                    if conn.bound:
-                        conn.unbind()
-                        break
-                except (
-                    RuntimeError,
-                    t.Ldap.LDAPException,
-                    ConnectionError,
-                    TimeoutError,
-                    OSError,
-                ) as exc:
-                    last_bind_error = exc
-            time.sleep(1.0)
-            waited += 1.0
-        else:
-            detail = f"; last bind error: {last_bind_error}" if last_bind_error else ""
-            msg = (
-                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} LDAP not ready "
-                f"within {c.Ldap.Tests.DOCKER_BIND_READY_TIMEOUT}s{detail}"
-                f"(LDAP server unavailable)"
-            )
-            pytest.fail("LDAP authentication failed after transport readiness")
+        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
     with lock:
         u.Ldap.Tests.ensure_basic_ldap_structure()
     return {

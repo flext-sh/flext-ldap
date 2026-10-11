@@ -17,7 +17,6 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 import flext_ldap
 import flext_ldap.api
@@ -37,6 +36,7 @@ from flext_ldap import (
     FlextLdapTypes,
     FlextLdapUtilities,
 )
+from tests import tm
 
 if TYPE_CHECKING:
     from flext_ldap import t
