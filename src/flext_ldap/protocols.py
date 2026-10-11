@@ -165,7 +165,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
             """Protocol for LDAP clients that support CRUD operations."""
 
             @property
-            def is_connected(self) -> bool:
+            def is_connected(self, self) -> bool:
                 """Whether client is connected.
 
                 Returns:
@@ -174,7 +174,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            def add(
+            def add(self, 
                 self,
                 entry: FlextLdifProtocols.Ldif.Entry,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
@@ -189,7 +189,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            def batch_upsert(
+            def batch_upsert(self, 
                 self,
                 entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
                 *,
@@ -201,21 +201,21 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Upsert multiple entries and report canonical batch statistics."""
                 ...
 
-            def delete_subtree(
+            def delete_subtree(self, 
                 self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
             ) -> FlextLdifProtocols.Result[m.Ldap.SubtreeDeleteResult]:
                 """Delete an entry and its descendants, deepest-first."""
                 ...
 
-            def plan_upsert(
+            def plan_upsert(self, 
                 self,
                 entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
             ) -> FlextLdifProtocols.Result[m.Ldap.UpsertPlan]:
                 """Classify entries for upsert without writing (dry plan)."""
                 ...
 
-            def find_entry(
+            def find_entry(self, 
                 self,
                 dn: str,
                 *,
@@ -224,7 +224,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Read one entry by DN; an absent entry is an empty result."""
                 ...
 
-            def connect(
+            def connect(self, 
                 self,
                 connection_config: FlextLdapProtocols.Ldap.ConnectionConfig,
                 *,
@@ -264,13 +264,13 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """Exit the LDAP client context manager and release resources."""
                 ...
 
-            def disconnect(
+            def disconnect(self, 
                 self,
             ) -> None:
                 """Disconnect from LDAP server and release resources."""
                 ...
 
-            def delete(
+            def delete(self, 
                 self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
@@ -285,7 +285,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            def execute(
+            def execute(self, 
                 self,
                 **kwargs: t.Scalar,
             ) -> FlextLdifProtocols.Result[m.Ldap.Response]:
@@ -301,7 +301,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            def modify(
+            def modify(self, 
                 self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
                 changes: t.Ldap.LdapModifyChanges,
@@ -318,7 +318,7 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 """
                 ...
 
-            def search(
+            def search(self, 
                 self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
                 server_type: str = "rfc",
