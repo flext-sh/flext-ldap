@@ -22,12 +22,12 @@ class FlextLdapUtilities(FlextLdifUtilities):
     """LDAP-specific utility facade."""
 
     class Ldap(
-        FlextLdapUtilitiesServer,
-        FlextLdapUtilitiesConversion,
         FlextLdapUtilitiesComparison,
+        FlextLdapUtilitiesConversion,
         FlextLdapUtilitiesRootDse,
         FlextLdapUtilitiesDetection,
         FlextLdapUtilitiesNormalization,
+        FlextLdapUtilitiesServer,
         FlextLdapUtilitiesValidation,
         FlextLdapUtilitiesBase,
     ):
