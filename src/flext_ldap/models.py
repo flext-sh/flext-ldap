@@ -11,9 +11,7 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdifModels
 
-from flext_ldap._models import (
-    FlextLdapModelsBase,
-)
+from flext_ldap._models import FlextLdapModelsBase
 from flext_ldap._models.config import FlextLdapConfigModels
 from flext_ldap._models.ldap import FlextLdapFlextModelsLdap
 
