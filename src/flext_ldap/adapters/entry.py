@@ -31,9 +31,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import e, r
-
-from flext_ldap import c, m, p, s, t, u
+from flext_ldap import c, e, m, p, r, s, t, u
 
 
 class FlextLdapEntryAdapter(s[bool]):

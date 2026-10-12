@@ -9,11 +9,11 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from flext_tests import FlextTestsUtilities, tk, tm
+from flext_tests import FlextTestsUtilities
 from flext_tests.docker import FlextTestsDocker
 
 from flext_ldap import FlextLdapUtilities, settings
-from tests import c, m, p, t
+from tests import c, m, p, t, tk, tm
 
 
 class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):

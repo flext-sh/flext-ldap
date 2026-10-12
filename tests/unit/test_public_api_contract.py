@@ -29,17 +29,16 @@ import flext_ldap.typings
 import flext_ldap.utilities
 from flext_ldap import (
     FlextLdap,
-    FlextLdapConstants,
     FlextLdapModels,
     FlextLdapProtocols,
     FlextLdapService,
     FlextLdapTypes,
     FlextLdapUtilities,
 )
-from tests import tm
+from tests import c, tm
 
 if TYPE_CHECKING:
-    from flext_ldap import t
+    from tests import t
 pytestmark = pytest.mark.unit
 
 # Top-level facade-owner modules of ``flext_ldap``, statically enumerated so the
@@ -62,7 +61,7 @@ _DECLARING_MODULES: tuple[ModuleType, ...] = (
 # This identity is the public contract that lets consumers write ``c.Ldap.*``,
 # ``m.Ldap.*`` etc. without importing the long facade names.
 _ALIAS_FACADE_CASES: tuple[tuple[str, type], ...] = (
-    ("c", FlextLdapConstants),
+    ("c", c),
     ("m", FlextLdapModels),
     ("p", FlextLdapProtocols),
     ("s", FlextLdapService),

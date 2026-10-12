@@ -11,18 +11,14 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif import e, r
-
-from flext_ldap import c, m, p, s, t, u
-from flext_ldap.adapters._ldap3.connection_manager import (
+from flext_ldap import c, e, m, p, r, s, t, u
+from flext_ldap.adapters._ldap3 import (
     FlextLdapLdap3ConnectionManager,
-)
-from flext_ldap.adapters._ldap3.operation_executor import (
     FlextLdapLdap3OperationExecutor,
+    FlextLdapLdap3ResultConverter,
+    FlextLdapLdap3SearchExecutor,
+    FlextLdapLdap3Wrappers,
 )
-from flext_ldap.adapters._ldap3.result_converter import FlextLdapLdap3ResultConverter
-from flext_ldap.adapters._ldap3.search_executor import FlextLdapLdap3SearchExecutor
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 

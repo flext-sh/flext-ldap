@@ -16,10 +16,10 @@ from __future__ import annotations
 from operator import not_
 
 import pytest
-from flext_tests import FlextTestsSettings, tm
+from flext_tests import FlextTestsSettings
 
 from flext_core import FlextSettings
-from tests import c, m
+from tests import c, m, tm
 
 pytestmark = pytest.mark.unit
 

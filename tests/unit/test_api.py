@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldap import ldap
-from flext_ldap.services.sync import FlextLdapSync
+from flext_ldap.services import FlextLdapSync
 from tests import c, m, u
 
 if TYPE_CHECKING:

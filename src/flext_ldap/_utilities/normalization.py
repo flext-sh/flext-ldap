@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 
 from flext_ldap import c, m, t
-from flext_ldap._utilities.base import FlextLdapUtilitiesBase
+from flext_ldap._utilities import FlextLdapUtilitiesBase
 
 
 class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):

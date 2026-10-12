@@ -15,8 +15,8 @@ from uuid import uuid4
 
 import pytest
 
-from flext_ldap import ldap, m
-from tests import c, tm, u
+from flext_ldap import ldap
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import t

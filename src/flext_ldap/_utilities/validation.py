@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TypeIs
 
 from flext_ldap import c, t
-from flext_ldap._utilities.base import FlextLdapUtilitiesBase
+from flext_ldap._utilities import FlextLdapUtilitiesBase
 
 
 class FlextLdapUtilitiesValidation(FlextLdapUtilitiesBase):

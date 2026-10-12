@@ -22,7 +22,7 @@ from flext_tests import FlextTestsConstants
 from flext_ldap import FlextLdapConstants
 
 if TYPE_CHECKING:
-    from flext_cli import t
+    from tests import t
 
 
 def _docker_admin_password() -> str:

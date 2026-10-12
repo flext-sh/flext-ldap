@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     # every import of the api facade.
     from flext_ldap import p
 
-from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
+from flext_ldap._utilities import FlextLdapUtilitiesNormalization
 
 
 class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):

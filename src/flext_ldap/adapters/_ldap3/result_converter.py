@@ -9,10 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import r
-
-from flext_ldap import m, p, t
-from flext_ldap.adapters._ldap3.result_extract import FlextLdapLdap3ResultExtract
+from flext_ldap import m, p, r, t
+from flext_ldap.adapters._ldap3 import FlextLdapLdap3ResultExtract
 
 
 class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
