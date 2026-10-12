@@ -10,22 +10,23 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
-from flext_ldap.__version__ import (
-    __author__,
-    __author_email__,
-    __description__,
-    __license__,
-    __title__,
-    __url__,
-    __version__,
-    __version_info__,
-)
+from flext_core.lazy import install_lazy_exports
+from flext_ldap.__version__ import __version__
 
 if TYPE_CHECKING:
     from flext_ldif import d, e, h, r, x
 
-    from flext_ldap import adapters, services
+    from flext_ldap import _constants, _models, _utilities, adapters, services
+    from flext_ldap.__version__ import (
+        FlextLdapVersion,
+        __author__,
+        __author_email__,
+        __description__,
+        __license__,
+        __title__,
+        __url__,
+        __version_info__,
+    )
     from flext_ldap._config import FlextLdapConfig, config
     from flext_ldap._settings import FlextLdapSettings, settings
     from flext_ldap.api import FlextLdap, ldap
@@ -34,24 +35,21 @@ if TYPE_CHECKING:
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
     from flext_ldap.protocols import FlextLdapProtocols, p
-    from flext_ldap.services.api_runtime import FlextLdapApiRuntime
-    from flext_ldap.services.sync import FlextLdapSync
     from flext_ldap.typings import FlextLdapTypes, t
     from flext_ldap.utilities import FlextLdapUtilities, u
 
 
 __all__: tuple[str, ...] = (
     "FlextLdap",
-    "FlextLdapApiRuntime",
     "FlextLdapConfig",
     "FlextLdapConstants",
     "FlextLdapModels",
     "FlextLdapProtocols",
     "FlextLdapService",
     "FlextLdapSettings",
-    "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
+    "FlextLdapVersion",
     "__author__",
     "__author_email__",
     "__description__",
@@ -60,6 +58,9 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
+    "_constants",
+    "_models",
+    "_utilities",
     "adapters",
     "c",
     "config",
@@ -84,16 +85,25 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextLdap": ".api",
-        "FlextLdapApiRuntime": ".services.api_runtime",
         "FlextLdapConfig": "._config",
         "FlextLdapConstants": ".constants",
         "FlextLdapModels": ".models",
         "FlextLdapProtocols": ".protocols",
         "FlextLdapService": ".base",
         "FlextLdapSettings": "._settings",
-        "FlextLdapSync": ".services.sync",
         "FlextLdapTypes": ".typings",
         "FlextLdapUtilities": ".utilities",
+        "FlextLdapVersion": ".__version__",
+        "__author__": ".__version__",
+        "__author_email__": ".__version__",
+        "__description__": ".__version__",
+        "__license__": ".__version__",
+        "__title__": ".__version__",
+        "__url__": ".__version__",
+        "__version_info__": ".__version__",
+        "_constants": "._constants",
+        "_models": "._models",
+        "_utilities": "._utilities",
         "adapters": ".adapters",
         "c": ".constants",
         "config": "._config",

@@ -1,6 +1,6 @@
 """LDIF-to-LDAP synchronization mixin for the public LDAP facade.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -9,9 +9,7 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING
 
-from flext_ldif import r
-
-from flext_ldap import c, m, p, t, u
+from flext_ldap import c, m, p, r, t, u
 from flext_ldap.services.operations import FlextLdapOperations
 
 if TYPE_CHECKING:

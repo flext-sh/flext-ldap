@@ -10,7 +10,7 @@ No private attribute/method access, no internal-collaborator spying, no
 patching of the unit under test. The only test double is a structural ldap3
 Entry standing in for the genuine external ldap3 boundary.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

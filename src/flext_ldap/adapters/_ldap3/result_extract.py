@@ -1,6 +1,6 @@
 """LDAP3 adapter — FlextLdapLdap3ResultConverter extract helpers.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from datetime import datetime
 
 from flext_ldap import c, m, p, t
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
+from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
 
 
 class FlextLdapLdap3ResultExtract:

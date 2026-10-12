@@ -3,7 +3,7 @@
 Provides TestsFlextLdapProtocols, extending TestsFlextProtocols with flext-ldap-specific
 protocols. All generic test protocols come from flext_tests.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

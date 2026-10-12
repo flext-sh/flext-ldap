@@ -3,7 +3,7 @@
 This module provides a single flat namespace of typed constants (c.Ldap.Tests.*),
 organized for data-driven testing, maximum reuse, and composition.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -22,7 +22,7 @@ from flext_tests import FlextTestsConstants
 from flext_ldap import FlextLdapConstants
 
 if TYPE_CHECKING:
-    from flext_cli import t
+    from tests import t
 
 
 def _docker_admin_password() -> str:

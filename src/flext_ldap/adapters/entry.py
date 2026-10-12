@@ -23,7 +23,7 @@ Architecture Notes:
     - Extends s[bool] for health check capability
     - Value normalization and base64 detection delegate to ``u.Ldap``
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -31,9 +31,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import e, r
-
-from flext_ldap import c, m, p, s, t, u
+from flext_ldap import c, e, m, p, r, s, t, u
 
 
 class FlextLdapEntryAdapter(s[bool]):

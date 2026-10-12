@@ -10,10 +10,9 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap._utilities.base import FlextLdapUtilitiesBase
     from flext_ldap._utilities.comparison import FlextLdapUtilitiesComparison
     from flext_ldap._utilities.conversion import FlextLdapUtilitiesConversion
     from flext_ldap._utilities.detection import FlextLdapUtilitiesDetection
@@ -24,7 +23,6 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "FlextLdapUtilitiesBase",
     "FlextLdapUtilitiesComparison",
     "FlextLdapUtilitiesConversion",
     "FlextLdapUtilitiesDetection",
@@ -38,7 +36,6 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextLdapUtilitiesBase": ".base",
         "FlextLdapUtilitiesComparison": ".comparison",
         "FlextLdapUtilitiesConversion": ".conversion",
         "FlextLdapUtilitiesDetection": ".detection",

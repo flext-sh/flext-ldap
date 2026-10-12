@@ -5,7 +5,7 @@ consumers import ``FlextLdap`` or ``ldap`` from ``flext_ldap`` and reach
 domain concerns through canonical aliases and namespaces, not private adapter
 modules.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

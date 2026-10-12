@@ -11,8 +11,7 @@ from typing import override
 from flext_tests.base import FlextTestsServiceBase
 
 from flext_ldap import m
-from tests import p
-from tests.settings import TestsFlextLdapSettings
+from tests import TestsFlextLdapSettings, p
 
 
 class TestsFlextLdapServiceBase[TDomainResult: p.Base = p.Base](

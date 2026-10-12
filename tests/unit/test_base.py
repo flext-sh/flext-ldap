@@ -7,7 +7,7 @@ Exercises only the observable public contract of the LDAP service base:
 - project settings stay isolated from the root ``FlextSettings`` singleton.
 - distinct service instances resolve independently.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -16,10 +16,10 @@ from __future__ import annotations
 from operator import not_
 
 import pytest
-from flext_tests import FlextTestsSettings, tm
+from flext_tests import FlextTestsSettings
 
 from flext_core import FlextSettings
-from tests import c, m
+from tests import c, m, tm
 
 pytestmark = pytest.mark.unit
 

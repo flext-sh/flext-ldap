@@ -5,7 +5,7 @@ protocol surface to :class:`~flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter`. T
 mixin keeps retries and optional heuristic server detection close to the
 connection so the composed facade interacts with a single, typed entry point.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -13,9 +13,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import r
-
-from flext_ldap import c, m, p, t, u
+from flext_ldap import c, m, p, r, t, u
 from flext_ldap.adapters.host import FlextLdapAdapterHost
 from flext_ldap.services.detection import FlextLdapServerDetector
 

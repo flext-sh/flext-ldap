@@ -6,7 +6,7 @@ Defines the canonical LDAP service root used by service mixins and the API facad
 
 Settings access goes through ``settings`` from the service runtime.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

@@ -1,6 +1,6 @@
 """LDAP3 adapter — FlextLdapLdap3OperationExecutor.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_ldif import r
-
-from flext_ldap import c, m, p, t, u
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
+from flext_ldap import c, m, p, r, t, u
+from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
 
 if TYPE_CHECKING:
     from collections.abc import Callable

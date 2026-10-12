@@ -20,13 +20,13 @@
 - Project class: `domain`
 - Keywords: `adapter`, `clean-architecture`, `ddd`, `enterprise`, `flext`,
   `integration`, `ldap`, `typed`
-- Main facades: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
-  `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
-  `FlextLdapSettings` (+3 more)
+- Main facades: `FlextLdap`, `FlextLdapConfig`, `FlextLdapConstants`, `FlextLdapModels`,
+  `FlextLdapProtocols`, `FlextLdapService`, `FlextLdapSettings`, `FlextLdapTypes` (+2
+  more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextLdap`, `FlextLdapApiRuntime`, `FlextLdapConfig`,
-  `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`,
-  `FlextLdapSettings`, `FlextLdapSync`, `FlextLdapTypes` (+5 more)
+- Public symbol exports: `FlextLdap`, `FlextLdapConfig`, `FlextLdapConstants`,
+  `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`, `FlextLdapSettings`,
+  `FlextLdapTypes`, `FlextLdapUtilities`, `FlextLdapVersion` (+4 more)
 - Exported module shortcuts: `adapters`, `services`
 - Generated module pages: `8`
 

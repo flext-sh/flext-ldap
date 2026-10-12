@@ -35,9 +35,9 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import ldif, r
+from flext_ldif import ldif
 
-from flext_ldap import c, m, p, t, u
+from flext_ldap import c, m, p, r, t, u
 from flext_ldap.adapters.host import FlextLdapAdapterHost
 from flext_ldap.services._subtree_delete import FlextLdapSubtreeDeleteHandler
 from flext_ldap.services._upsert_handler import FlextLdapUpsertHandler
