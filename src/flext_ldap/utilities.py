@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdifUtilities
 
-from flext_ldap._utilities import FlextLdapUtilitiesBase
+from flext_ldap._utilities.base import FlextLdapUtilitiesBase
 from flext_ldap._utilities.comparison import FlextLdapUtilitiesComparison
 from flext_ldap._utilities.conversion import FlextLdapUtilitiesConversion
 from flext_ldap._utilities.detection import FlextLdapUtilitiesDetection
