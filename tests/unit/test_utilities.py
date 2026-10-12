@@ -48,6 +48,30 @@ def _entry(
     )
 
 
+def _bound_mock_connection() -> Connection:
+    """Build a bound ldap3 ``MOCK_SYNC`` connection exposing a rootDSE.
+
+    The offline DIT publishes the rootDSE under its empty DN with raw BER
+    string (``bytes``) values, exactly as the real offline strategy decodes
+    them.
+
+    Returns:
+        The bound ``Connection`` with the rootDSE attributes in place.
+    """
+    server = Server("mock")
+    conn = Connection(server, client_strategy=MOCK_SYNC)
+    conn.server.dit[""] = {
+        "objectClass": [b"top"],
+        "namingContexts": [b"dc=example,dc=com"],
+        "vendorName": [b"OpenLDAP"],
+        "vendorVersion": [b"2.4.57"],
+    }
+    method_name = "bind"
+    bind_call: Callable[..., bool] = getattr(conn, method_name)
+    bind_call()
+    return conn
+
+
 class TestsFlextLdapRootDseProbePayload:
     """Shared ldap3-shaped ``result``/``entries`` payload for root-DSE probes."""
 
@@ -319,18 +343,7 @@ class TestsFlextLdapUtilitiesUnitDetect(TestsFlextLdapUtilitiesUnit):
     @staticmethod
     def test_detect_from_connection_with_ldap3_offline_strategy() -> None:
         """detect_from_connection classifies the vendor from real rootDSE data."""
-        server = Server("mock")
-        conn = Connection(server, client_strategy=MOCK_SYNC)
-        conn.server.dit[""] = {
-            "objectClass": [b"top"],
-            "namingContexts": [b"dc=example,dc=com"],
-            "vendorName": [b"OpenLDAP"],
-            "vendorVersion": [b"2.4.57"],
-        }
-        method_name = "bind"
-        bind_call: Callable[..., bool] = getattr(conn, method_name)
-        bind_call()
-        result = u.Ldap.detect_from_connection(conn)
+        result = u.Ldap.detect_from_connection(_bound_mock_connection())
 
         tm.that(result.success, eq=True)
         tm.that(result.value, eq="openldap")
@@ -640,26 +653,12 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     def test_query_root_dse_with_ldap3_offline_strategy() -> None:
         """query_root_dse reads rootDSE attributes through a real ldap3 connection.
 
-        ldap3's ``MOCK_SYNC`` is the library's own offline runtime: connection,
-        strategy, DIT and entries are real ldap3 objects, so the exercised path
-        is the production path against the real external boundary. The rootDSE
-        is published in the offline DIT under its empty DN (the DN form of the
-        real rootDSE); attribute values are raw BER strings (``bytes``) exactly
-        as the offline strategy decodes them. The outcome is asserted
-        deterministically, never as ``success or failure``.
+        The bound ``MOCK_SYNC`` connection from ``_bound_mock_connection`` is
+        ldap3's own offline runtime, so the exercised path matches production.
+        The outcome is asserted deterministically, never as ``success or
+        failure``.
         """
-        server = Server("mock")
-        conn = Connection(server, client_strategy=MOCK_SYNC)
-        conn.server.dit[""] = {
-            "objectClass": [b"top"],
-            "namingContexts": [b"dc=example,dc=com"],
-            "vendorName": [b"OpenLDAP"],
-            "vendorVersion": [b"2.4.57"],
-        }
-        method_name = "bind"
-        bind_call: Callable[..., bool] = getattr(conn, method_name)
-        bind_call()
-        result = u.Ldap.query_root_dse(conn)
+        result = u.Ldap.query_root_dse(_bound_mock_connection())
 
         tm.that(result.success, eq=True)
         tm.that(
