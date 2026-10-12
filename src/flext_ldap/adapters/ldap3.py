@@ -117,6 +117,10 @@ class FlextLdapLdap3Adapter(s[bool]):
             The resulting ``p.Result[bool]``.
         """
         try:
+            # A second connect() on a live adapter orphans the previous
+            # connection's socket (dropped without unbind). Release it first.
+            if self._connection is not None:
+                self.disconnect()
             connection = self._create_connection(settings)
         except c.Ldap.EXC_CONNECTION as exc:
             return r[bool].fail_op("Connection", exc)
