@@ -10,14 +10,14 @@ from flext_ldif import FlextLdifUtilities
 
 from flext_ldap._utilities import (
     FlextLdapUtilitiesBase,
-    FlextLdapUtilitiesComparison,
-    FlextLdapUtilitiesConversion,
-    FlextLdapUtilitiesDetection,
-    FlextLdapUtilitiesNormalization,
-    FlextLdapUtilitiesRootDse,
-    FlextLdapUtilitiesServer,
-    FlextLdapUtilitiesValidation,
-)
+    )
+from flext_ldap._utilities.comparison import FlextLdapUtilitiesComparison
+from flext_ldap._utilities.conversion import FlextLdapUtilitiesConversion
+from flext_ldap._utilities.detection import FlextLdapUtilitiesDetection
+from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
+from flext_ldap._utilities.root_dse import FlextLdapUtilitiesRootDse
+from flext_ldap._utilities.server import FlextLdapUtilitiesServer
+from flext_ldap._utilities.validation import FlextLdapUtilitiesValidation
 
 
 class FlextLdapUtilities(FlextLdifUtilities):

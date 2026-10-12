@@ -12,10 +12,10 @@ from __future__ import annotations
 from flext_ldif import FlextLdifModels
 
 from flext_ldap._models import (
-    FlextLdapConfigModels,
-    FlextLdapFlextModelsLdap,
     FlextLdapModelsBase,
 )
+from flext_ldap._models.config import FlextLdapConfigModels
+from flext_ldap._models.ldap import FlextLdapFlextModelsLdap
 
 
 class FlextLdapModels(FlextLdifModels):
