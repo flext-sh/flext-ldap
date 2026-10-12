@@ -136,7 +136,7 @@ class TestsFlextLdapPublicApiContract:
         """Verify ldap facade is a service."""
         # FlextLdapService is exported as the service base; the public facade
         # honouring that relationship is part of the contract.
-        tm.that(FlextLdapService in FlextLdap.__mro__, eq=True)
+        tm.that(issubclass(FlextLdap, FlextLdapService), eq=True)
 
     @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
     @staticmethod
