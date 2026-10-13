@@ -1,6 +1,7 @@
 """Detect LDAP server type from a bound ``ldap3`` connection.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_ldap/services/detection
 SPDX-License-Identifier: MIT
 """
 
