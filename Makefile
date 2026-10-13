@@ -479,18 +479,11 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	$$credential_env $(UV) sync --project "$(UV_PROJECT)" --python "$$desired_python" $(UV_SYNC_FLAGS) --frozen --link-mode "$(UV_LINK_MODE)"; \
 	$(UV) pip check --python "$(RUNTIME_PYTHON)"; \
 	$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"; \
-	$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)" --config-only; \
-	for member in $(WORKSPACE_SUBPROJECTS); do \
-		$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)/$$member" --config-only; \
-	done; \
-	$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)"; \
-	if [ "$(strip $(CI))" != "Y" ]; then \
-		for member in $(WORKSPACE_SUBPROJECTS); do \
-			if [ -f "$(PROJECT_ROOT)/$$member/.envrc" ]; then \
-				$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)/$$member"; \
-			fi; \
-		done; \
-	fi
+	setup_scope="self"; \
+	if [ "$(strip $(CI))" = "Y" ]; then setup_scope=self; fi; \
+	$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)" --config-only --scope "$$setup_scope"; \
+	$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)" --scope "$$setup_scope"; \
+	$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --what runtime-bindings --scope "$$setup_scope" --mode apply
 
 # Reject borrowed environments before bootstrap, activation or custom hooks.
 # Members may use their containing workspace, never an unrelated checkout.
@@ -541,9 +534,12 @@ override UV_SYNC_FLAGS := $(UV_SYNC_FLAGS) --no-editable
 endif
 
 ifeq ($(GEN_INIT_ONLY),)
-ifneq ($(strip $(CI)),Y)
+# Why (fleet-automation 2026-10-12): the custom surface loads in every
+# non-bootstrap context, CI included — RUN_PUBLIC_POST fires post-<verb>
+# hooks whenever the declared-targets list names them, so a CI-excluded
+# include made every member with a post hook fail with "no rule for
+# post-<verb>" exactly when the pipeline ran the activation half.
 -include custom.mk
-endif
 endif
 ifeq ($(APPROVAL_CONTEXT),Y)
 override CI := Y
@@ -1496,8 +1492,8 @@ _builtin-help:
 
 # === SECTION: submodule setup (managed) ===
 # Source: template (submodule_setup_recipe.j2)
-# Computed: workspace uses MANAGED_GITLINKS from config; standalone discovers
-#           submodules with flext-managed=true from .gitmodules at runtime.
+# Computed: every checkout discovers governed paths from its own .gitmodules.
+#           An absent management flag participates; an explicit false does not.
 # Rule: setup PROVISIONS an absent or proven unfinished initial clone and
 #       VERIFIES an established checkout. An initial clone has no physical index,
 #       no worktree content, and only its clone reflog entry. Established work
@@ -1526,33 +1522,36 @@ _builtin_setup_submodules:
 	umask 022; \
 	root="$(PROJECT_ROOT)"; \
 	if [ ! -f "$$root/.gitmodules" ]; then exit 0; fi; \
-	profile="$(MAKE_PROFILE)"; \
-	if [ "$$profile" = "workspace" ]; then \
-		managed="$(MANAGED_GITLINKS)"; \
+	managed=""; \
+	keys=""; \
+	if keys=$$(git -C "$$root" config -f .gitmodules --name-only --get-regexp '^submodule\..*\.path$$'); then \
+		keys_status=0; \
 	else \
-		managed=""; \
-		keys=""; \
-		if keys=$$(git -C "$$root" config -f .gitmodules --name-only --get-regexp '^submodule\..*\.flext-managed$$'); then \
-			keys_status=0; \
-		else \
-			keys_status=$$?; \
-		fi; \
-		if [ "$$keys_status" -ne 0 ] && [ "$$keys_status" -ne 1 ]; then \
-			printf 'ERROR: cannot enumerate governed gitlinks\n' >&2; \
-			exit "$$keys_status"; \
-		fi; \
-		for key in $$keys; do \
-			value=$$(git -C "$$root" config -f .gitmodules --get "$$key"); \
-			if [ "$$value" = "true" ]; then \
-				section=$${key%.flext-managed}; \
-				path=$$(git -C "$$root" config -f .gitmodules --get --default "" "$$section.path"); \
-				if [ -n "$$path" ]; then \
-					managed="$$managed $$path"; \
-				fi; \
-			fi; \
-		done; \
+		keys_status=$$?; \
 	fi; \
-	managed=$$(printf '%s' "$$managed" | tr ' ' '\n' | sort -u | tr '\n' ' '); \
+	if [ "$$keys_status" -ne 0 ] && [ "$$keys_status" -ne 1 ]; then \
+		printf 'ERROR: cannot enumerate governed gitlinks\n' >&2; \
+		exit "$$keys_status"; \
+	fi; \
+	for key in $$keys; do \
+		section=$${key%.path}; \
+		value=$$(git -C "$$root" config -f .gitmodules --type=bool --get --default true "$$section.flext-managed"); \
+		case "$$value" in \
+			true) ;; \
+			false) continue ;; \
+			*) printf 'ERROR: Git returned an invalid management boolean for %s\n' "$$section" >&2; exit 2 ;; \
+		esac; \
+		path=$$(git -C "$$root" config -f .gitmodules --get "$$key"); \
+		case "$$path" in \
+			""|/*|..|../*|*/../*|*/..|*[[:space:]]*) \
+				printf 'ERROR: governed gitlink path is not a safe relative Make path: %s\n' "$$path" >&2; \
+				exit 2 ;; \
+		esac; \
+		case " $$managed " in \
+			*" $$path "*) printf 'ERROR: governed gitlink path is duplicated: %s\n' "$$path" >&2; exit 2 ;; \
+		esac; \
+		managed="$$managed $$path"; \
+	done; \
 	if [ -z "$$managed" ]; then exit 0; fi; \
 	if [ "$${GIT_INDEX_FILE+x}" = x ]; then \
 		printf 'ERROR: submodule setup cannot authenticate a relocated Git index\n' >&2; \
@@ -1748,9 +1747,8 @@ endif
 
 # === SECTION: setup environment (managed) ===
 # Source: computed (MAKE_PROFILE routing)
-# Setup PROVISIONS tooling only — mise, venv, dependencies.
-# It never generates, conforms, or mutates project code; `make gen` is the
-# single public conformance/generation surface.
+# Setup provisions tooling, dependencies and declared runtime-local bindings.
+# It never generates or mutates project source; `make gen` owns source generation.
 # Setup installs the committed uv.lock and never writes it (lock law: only
 # `make upg` writes locks); uv owns the venv: `uv sync --python` creates or
 # replaces it against the declared interpreter.
@@ -1882,7 +1880,7 @@ _builtin_check_all: _builtin_require_environment
 			printf 'ERROR: no active check gates remain in the selected context\n' >&2; \
 			exit 2; \
 		fi; \
-		$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates"
+		$(PROJECT_FLEXT_INFRA) workspace capture-gate --repository-root "$(PROJECT_ROOT)" --gates "$$gates"
 
 _builtin_test_all: _builtin_require_environment
 	@set -eu; \
@@ -2015,8 +2013,7 @@ profile-mypy-report: _builtin_require_environment
 .PHONY: profile-gen
 profile-gen: _builtin_require_environment
 	@mkdir -p "$(PROFILE_REPORTS_DIR)"
-	@$(RUNTIME_PYTHON) -c \
-		'import cProfile, signal, sys; signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum)); profile = cProfile.Profile(); exec("try:\n with profile:\n  from flext_infra.cli import main\n  status = main(sys.argv[2:])\nfinally:\n profile.dump_stats(sys.argv[1])"); raise SystemExit(status)' \
+	@$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry \
 		"$(PROFILE_REPORTS_DIR)/conform.pstats" codegen conform \
 		--root "$(PROJECT_ROOT)" --scope all --mode check
 
@@ -2080,7 +2077,7 @@ _builtin-profile-test-report: _builtin_require_environment
 
 _builtin_status_import_observation: _builtin_require_interpreter
 	@$(RUNTIME_PYTHON) -c 'import json, sys; exec(json.loads(sys.argv[1]))' \
-		'"\nimport importlib\nimport inspect\nimport json\nimport sys\n\ndeclared = json.loads(sys.argv[2])\nnames = tuple(name for name, root in declared)\nprint(f\"runtime-import-observation executable={sys.executable!r} prefix={sys.prefix!r}\", flush=True)\ntry:\n    for name, root in declared:\n        print(f\"runtime-import-declaration module={name!r} source={root!r}\", flush=True)\n        importlib.import_module(name)\nfinally:\n    for name, module in tuple(sys.modules.items()):\n        if not any(name == package or name.startswith(package + \".\") for package in names):\n            continue\n        spec = getattr(module, \"__spec__\", None)\n        print(\n            f\"runtime-import-module name={name!r} \"\n            f\"origin={getattr(spec, \u0027origin\u0027, None)!r} \"\n            f\"file={getattr(module, \u0027__file__\u0027, None)!r} \"\n            f\"path={getattr(module, \u0027__path__\u0027, None)!r} \"\n            f\"cached={getattr(module, \u0027__cached__\u0027, None)!r}\",\n            flush=True,\n        )\n        for symbol, value in tuple(vars(module).items()):\n            function = value.__func__ if inspect.ismethod(value) else value\n            if inspect.isfunction(function):\n                print(\n                    f\"runtime-import-code module={name!r} symbol={symbol!r} \"\n                    f\"co_filename={function.__code__.co_filename!r}\",\n                    flush=True,\n                )\n"' '[["flext_ldap", "/home/marlonsc/flext/flext-ldap"]]'
+		'"\nimport importlib\nimport inspect\nimport json\nimport sys\n\ndeclared = json.loads(sys.argv[2])\nnames = tuple(name for name, root in declared)\nprint(f\"runtime-import-observation executable={sys.executable!r} prefix={sys.prefix!r}\", flush=True)\ntry:\n    for name, root in declared:\n        print(f\"runtime-import-declaration module={name!r} source={root!r}\", flush=True)\n        importlib.import_module(name)\nfinally:\n    for name, module in tuple(sys.modules.items()):\n        if not any(name == package or name.startswith(package + \".\") for package in names):\n            continue\n        spec = getattr(module, \"__spec__\", None)\n        print(\n            f\"runtime-import-module name={name!r} \"\n            f\"origin={getattr(spec, \u0027origin\u0027, None)!r} \"\n            f\"file={getattr(module, \u0027__file__\u0027, None)!r} \"\n            f\"path={getattr(module, \u0027__path__\u0027, None)!r} \"\n            f\"cached={getattr(module, \u0027__cached__\u0027, None)!r}\",\n            flush=True,\n        )\n        for symbol, value in tuple(vars(module).items()):\n            function = value.__func__ if inspect.ismethod(value) else value\n            if inspect.isfunction(function):\n                print(\n                    f\"runtime-import-code module={name!r} symbol={symbol!r} \"\n                    f\"co_filename={function.__code__.co_filename!r}\",\n                    flush=True,\n                )\n"' '[["flext_ldap", "."]]'
 
 _builtin_status_diagnostics: _builtin_require_environment
 	@$(GITHUB_AUTH_DIAGNOSTICS)
@@ -2185,15 +2182,15 @@ _builtin-census-constants: _builtin_require_environment
 		--json-output "$(PROJECT_ROOT)/.reports/constants-census.json" --apply
 
 _builtin_mod_text: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod-text --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod-text --repository-root "$(PROJECT_ROOT)" --apply
 
 _builtin_mod_text_candidate: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod-text-candidate --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod-text-candidate --repository-root "$(PROJECT_ROOT)" --apply
 
 # `mod` verifies committed rule-test snapshots and never rewrites them; this is
 # the one explicit regeneration, whose diff is reviewed and committed.
 _builtin_mod_snapshots: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod-snapshots --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod-snapshots --repository-root "$(PROJECT_ROOT)" --apply
 
 # Namespace and accessor migration are the same selector-free refactor surface
 # as `mod`: each public verb owns one fixed rewrite of every resolved consumer.
@@ -2240,6 +2237,7 @@ endif
 	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope self --mode check
 _builtin-status: _builtin_status_diagnostics
+	@$(PROJECT_FLEXT_INFRA) workspace signing-identity --repo-root "$(PROJECT_ROOT)"
 _builtin-verify-clean: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --mode check
 	@$(PROJECT_FLEXT_INFRA) docs audit --repository-root "$(PROJECT_ROOT)" --output-dir ".reports/docs" --projects .

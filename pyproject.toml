@@ -367,6 +367,7 @@ addopts = [
   "--strict-markers",
   "--markdown-docs",
   "--durations=10",
+  "--flext-enforce-strict",
   "--timeout=10",
 ]
 flext_slow_timeout_seconds = "30"
@@ -440,6 +441,7 @@ ignore = [
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
+  "unsorted-imports",
 ]
 select = ["ALL"]
 unfixable = [
@@ -462,8 +464,8 @@ runtime-evaluated-base-classes = [
   "flext_core.FlextConfig",
   "flext_core.FlextService",
   "flext_core.m.BaseModel",
+  "flext_ldap.FlextLdapSettings",
   "flext_ldap._models.ldap.LdapBatchStats",
-  "flext_ldap._settings.FlextLdapSettings",
   "flext_ldap.adapters.host.FlextLdapAdapterHost",
   "flext_ldap.m.BaseModel",
   "flext_ldap.s",
