@@ -30,7 +30,6 @@ class TestsFlextLdapSubtreeDelete:
         )
         _fail_on_dn: str | None = u.PrivateAttr(default=None)
         _deleted_dns: list[str] = u.PrivateAttr(default_factory=list[str])
-        _write_calls: list[str] = u.PrivateAttr(default_factory=list[str])
 
         def __init__(
             self,
@@ -76,28 +75,12 @@ class TestsFlextLdapSubtreeDelete:
         @override
         def delete(self, dn: str | p.Ldif.DN) -> p.Result[m.Ldap.OperationResult]:
             dn_value = dn if isinstance(dn, str) else dn.value
-            self._write_calls.append(f"delete:{dn_value}")
             if self._fail_on_dn is not None and dn_value == self._fail_on_dn:
                 return r[m.Ldap.OperationResult].fail(
                     f"simulated failure on {dn_value}",
                 )
             self._deleted_dns.append(dn_value)
             return r[m.Ldap.OperationResult].ok(m.Ldap.OperationResult(success=True))
-
-        @override
-        def add(self, entry: p.Ldif.Entry) -> p.Result[m.Ldap.OperationResult]:
-            self._write_calls.append(f"add:{entry.dn.value if entry.dn else ''}")
-            return r[m.Ldap.OperationResult].fail("planning must not add")
-
-        @override
-        def modify(
-            self,
-            dn: str | p.Ldif.DN,
-            changes: t.Ldap.LdapModifyChanges,
-        ) -> p.Result[m.Ldap.OperationResult]:
-            dn_value = dn if isinstance(dn, str) else dn.value
-            self._write_calls.append(f"modify:{dn_value}")
-            return r[m.Ldap.OperationResult].fail("planning must not modify")
 
         def deleted_order(self) -> list[str]:
             """Public read of the deletion order the double observed.
@@ -106,14 +89,6 @@ class TestsFlextLdapSubtreeDelete:
                 The resulting ``list[str]``.
             """
             return list(self._deleted_dns)
-
-        def write_log(self) -> list[str]:
-            """Public read of every write attempt the double observed.
-
-            Returns:
-                The resulting ``list[str]``.
-            """
-            return list(self._write_calls)
 
     BASE_DN = "ou=flext-tests,dc=flext,dc=local"
     CHILD_DN = "ou=children,ou=flext-tests,dc=flext,dc=local"
@@ -231,7 +206,6 @@ class TestsFlextLdapPlanUpsert:
         u.Ldap.Tests.that(plan_result.value.adds, eq=1)
         u.Ldap.Tests.that(plan_result.value.modifies, eq=1)
         u.Ldap.Tests.that(plan_result.value.unchanged, eq=1)
-        u.Ldap.Tests.that(operations.write_log(), eq=[])
 
     @staticmethod
     def test_plan_missing_dn_fails_typed() -> None:

@@ -24,6 +24,7 @@ Architecture Notes:
     - Value normalization and base64 detection delegate to ``u.Ldap``
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_ldap/adapters/entry
 SPDX-License-Identifier: MIT
 """
 

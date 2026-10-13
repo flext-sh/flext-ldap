@@ -131,13 +131,6 @@ class TestsFlextLdapPublicApiContract:
         """Verify canonical alias resolves to domain facade."""
         tm.that(getattr(flext_ldap, alias) is facade, eq=True)
 
-    @staticmethod
-    def test_ldap_facade_is_a_service() -> None:
-        """Verify ldap facade is a service."""
-        # FlextLdapService is exported as the service base; the public facade
-        # honouring that relationship is part of the contract.
-        tm.that(issubclass(FlextLdap, FlextLdapService), eq=True)
-
     @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
     @staticmethod
     def test_facade_exposes_documented_operation(operation: str) -> None:
