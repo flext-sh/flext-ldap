@@ -87,6 +87,7 @@ class TestsFlextLdapSubtreeDelete:
 
             Returns:
                 The resulting ``list[str]``.
+
             """
             return list(self._deleted_dns)
 

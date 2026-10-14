@@ -29,6 +29,7 @@ class FlextLdapSync(FlextLdapOperations):
 
         Raises:
             TypeError: If progress_callback.
+
         """
         if callback is None:
             return False
@@ -68,6 +69,7 @@ class FlextLdapSync(FlextLdapOperations):
 
         Raises:
             TypeError: If progress_callback.
+
         """
         callback = settings.progress_callback
         if callback is None:
@@ -80,6 +82,15 @@ class FlextLdapSync(FlextLdapOperations):
                 dn: str,
                 stats: p.Ldap.LdapBatchStats,
             ) -> None:
+                """Forward single-phase progress prefixed with the phase name.
+
+                Args:
+                    current: Number of entries processed so far.
+                    total: Total number of entries in the phase.
+                    dn: DN of the entry just processed.
+                    stats: Batch statistics accumulated so far.
+
+                """
                 callback(phase, current, total, dn, stats)
 
             return progress_callback
@@ -109,8 +120,15 @@ class FlextLdapSync(FlextLdapOperations):
     ) -> p.Result[m.Ldap.MultiPhaseSyncResult]:
         """Synchronize multiple LDIF phase files sequentially.
 
+        Args:
+            phase_files: Ordered mapping of phase name to LDIF file path.
+            settings: Optional phase sync configuration; defaults apply when
+                omitted.
+
         Returns:
-            The resulting ``p.Result[m.Ldap.MultiPhaseSyncResult]``.
+            The resulting ``p.Result[m.Ldap.MultiPhaseSyncResult]`` holding
+            per-phase outcomes and aggregate counters.
+
         """
         sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = u.now()
@@ -176,8 +194,16 @@ class FlextLdapSync(FlextLdapOperations):
     ) -> p.Result[m.Ldap.PhaseSyncResult]:
         """Synchronize a single phase file into LDAP.
 
+        Args:
+            ldif_file_path: Path to the parsed LDIF phase file.
+            phase_name: Name assigned to the phase in the result.
+            settings: Optional phase sync configuration; defaults apply when
+                omitted.
+
         Returns:
-            The resulting ``p.Result[m.Ldap.PhaseSyncResult]``.
+            The resulting ``p.Result[m.Ldap.PhaseSyncResult]`` with per-entry
+            counters and timing for the phase.
+
         """
         sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = u.now()
@@ -247,6 +273,7 @@ class FlextLdapSync(FlextLdapOperations):
 
         Raises:
             TypeError: If progress_callback.
+
         """
         phase_callback = (
             FlextLdapSync._make_phase_progress_callback(phase_name, settings)
@@ -264,6 +291,15 @@ class FlextLdapSync(FlextLdapOperations):
                 dn: str,
                 stats: p.Ldap.LdapBatchStats,
             ) -> None:
+                """Forward single-phase progress prefixed with the phase name.
+
+                Args:
+                    current: Number of entries processed so far.
+                    total: Total number of entries in the phase.
+                    dn: DN of the entry just processed.
+                    stats: Batch statistics accumulated so far.
+
+                """
                 phase_callback(phase_name, current, total, dn, stats)
 
             return wrapped_callback
@@ -293,6 +329,7 @@ class FlextLdapSync(FlextLdapOperations):
 
         Returns:
             The resulting ``p.Result[m.Ldap.PhaseSyncResult]``.
+
         """
         phase_callback = self._prepare_phase_callback(phase_name, settings)
         return self.sync_phase_entries(

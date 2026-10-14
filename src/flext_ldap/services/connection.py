@@ -37,8 +37,18 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
     ) -> p.Result[bool]:
         """Establish an LDAP connection with optional automatic retry.
 
+        Args:
+            connection_config: Connection settings, either a typed
+                ``m.Ldap.ConnectionConfig`` or a mapping validated into one.
+            auto_retry: When ``True``, retry transient bind failures.
+            max_retries: Maximum number of connection attempts.
+            retry_delay: Delay in seconds between retry attempts.
+            **kwargs: Accepted for signature compatibility; ignored.
+
         Returns:
-            The resulting ``p.Result[bool]``.
+            The resulting ``p.Result[bool]``, ``True`` when the connection is
+            bound and server detection succeeded.
+
         """
         _ = kwargs
         adapter = self._ensure_adapter()
@@ -49,6 +59,12 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         )
 
         def connect_once() -> p.Result[bool]:
+            """Attempt a single adapter connection without retry.
+
+            Returns:
+                The resulting ``p.Result[bool]`` for the single attempt.
+
+            """
             connect_result = adapter.connect(concrete_config)
             if connect_result.success:
                 return r[bool].ok(value=connect_result.value)
@@ -90,6 +106,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldap.Response]``.
+
         """
         _ = kwargs
         if self.is_connected:
@@ -110,6 +127,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         Raises:
             RuntimeError: If No active connection available for server detection; or if
                 ``detection_result.failure``.
+
         """
         adapter = self._ensure_adapter()
         connection = adapter.connection

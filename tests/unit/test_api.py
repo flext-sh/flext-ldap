@@ -43,6 +43,7 @@ class TestsFlextLdapApi:
 
         Raises:
             RuntimeError: Always.
+
         """
         with pytest.raises(RuntimeError), ldap:
             raise RuntimeError(c.Ldap.Tests.RFC_DEFAULT_FILTER)

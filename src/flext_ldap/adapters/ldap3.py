@@ -73,6 +73,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[int]``.
+
         """
         scope_enum: c.Ldap.SearchScope
         if isinstance(scope, c.Ldap.SearchScope):
@@ -92,6 +93,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         return self._get_connection().flat_map(
             lambda conn: (
@@ -115,6 +117,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         try:
             # A second connect() on a live adapter orphans the previous
@@ -149,6 +152,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         return self._get_connection().flat_map(
             lambda conn: self.OperationExecutor.execute_delete(conn, dn),
@@ -169,6 +173,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         if not self.is_connected:
             return r[bool].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
@@ -183,6 +188,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         return self._get_connection().flat_map(
             lambda conn: self.OperationExecutor.execute_modify(conn, dn, changes),
@@ -197,6 +203,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[m.Ldap.SearchResult]``.
+
         """
         return (
             self
@@ -232,6 +239,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[p.Ldap.Ldap3Connection]``.
+
         """
         if not self.is_connected or self._connection is None:
             return r[p.Ldap.Ldap3Connection].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
@@ -245,6 +253,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
         Returns:
             The resulting ``p.Ldap.Ldap3Connection``.
+
         """
         self._server = self.ConnectionManager.create_server(settings)
         connection = self.ConnectionManager.create_connection(self._server, settings)

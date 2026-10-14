@@ -38,6 +38,7 @@ class TestsFlextLdapConnection:
 
         Returns:
             The resulting ``m.Ldap.ConnectionConfig``.
+
         """
         return m.Ldap.ConnectionConfig(
             host=c.Ldap.Tests.CONFIG_INVALID_HOST,

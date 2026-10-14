@@ -29,6 +29,7 @@ def _ou_entry(dn: str, ou: str) -> m.Ldif.Entry:
 
     Returns:
         The resulting ``m.Ldif.Entry``.
+
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
@@ -49,6 +50,7 @@ def _user_entry(dn: str, identifier: str, *, cn: str) -> m.Ldif.Entry:
 
     Returns:
         The resulting ``m.Ldif.Entry``.
+
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
@@ -74,6 +76,7 @@ def _modify_add_entry(dn: str, attribute: str, value: str) -> m.Ldif.Entry:
 
     Returns:
         The resulting ``m.Ldif.Entry``.
+
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
@@ -98,6 +101,7 @@ def _attribute_values(dn: str, attribute: str) -> t.StrSequence:
 
     Returns:
         The resulting ``t.StrSequence``.
+
     """
     found = ldap.find_entry(dn, attributes=[attribute])
     tm.ok(found)

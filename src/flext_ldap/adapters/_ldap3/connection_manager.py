@@ -43,6 +43,7 @@ class FlextLdapLdap3ConnectionManager:
 
         Raises:
             TypeError: If Expected ldap3.Server, got.
+
         """
         if not isinstance(server, Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"

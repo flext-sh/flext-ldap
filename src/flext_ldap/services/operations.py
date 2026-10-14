@@ -334,6 +334,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         folded: p.Result[m.Ldap.OperationResult] = result.fold(
             on_failure=lambda e: r[m.Ldap.OperationResult].fail(
@@ -349,6 +350,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.DN]``.
+
         """
         return u.try_(
             lambda: (
@@ -630,6 +632,12 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             return result
 
         def wrapped_execute() -> p.Result[m.Ldap.LdapOperationResult]:
+            """Re-run the upsert handler once for a retry attempt.
+
+            Returns:
+                The resulting ``p.Result[m.Ldap.LdapOperationResult]``.
+
+            """
             return self._upsert_handler.execute(entry)
 
         retry_result: p.Result[m.Ldap.LdapOperationResult] = u.retry(
@@ -663,6 +671,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
         Returns:
             The resulting ``bool``.
+
         """
         entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
         upsert_result = self.upsert(
