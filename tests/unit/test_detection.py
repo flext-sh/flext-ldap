@@ -104,6 +104,7 @@ class TestsFlextLdapDetection:
 
         Returns:
             The resulting ``p.Ldif.RootDseConnection``.
+
         """
         attributes: t.MutableMappingKV[str, t.Ldap.Ldap3EntryValue] = {}
         if vendor_name is not None:

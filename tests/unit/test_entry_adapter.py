@@ -78,6 +78,7 @@ class TestsFlextLdapEntryAdapter:
 
         Returns:
             The resulting ``m.Ldif.Entry``.
+
         """
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE),

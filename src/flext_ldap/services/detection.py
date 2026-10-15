@@ -21,6 +21,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
 
         Returns:
             The resulting ``str | None``.
+
         """
         value: str | None = u.Ldap.resolve_first_attribute_value(attrs, key)
         return value
@@ -37,6 +38,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         _ = supported_controls
         return r[str].ok(
@@ -56,6 +58,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         detection_result: p.Result[str] = u.Ldap.detect_from_connection(connection)
         return detection_result
@@ -66,6 +69,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
 
         Returns:
             The resulting ``p.Result[m.Ldap.Response]``.
+
         """
         connection_raw = kwargs.get("connection")
         if connection_raw is None:

@@ -33,6 +33,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``t.MappingKV[str, t.StrSequence]``.
+
         """
         attrs = entry.attributes
         if attrs is None:
@@ -49,6 +50,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``t.StrSequence | None``.
+
         """
         normalized_target = cls.norm_str(attr_name, case="lower")
         for key, values in existing_attrs.items():
@@ -62,6 +64,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``set[str]``.
+
         """
         return {value.lower() for value in values if value}
 
@@ -76,6 +79,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``t.Pair[t.Ldap.OperationChanges, set[str]]``.
+
         """
         changes: t.Ldap.OperationChanges = {}
         processed: set[str] = set()
@@ -104,6 +108,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``t.Ldap.OperationChanges``.
+
         """
         empty_values: t.StrSequence = []
         ignored = {value.lower() for value in ignore}
@@ -120,6 +125,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``p.Result[frozenset[str]]``.
+
         """
         if entry.dn is None:
             return r[frozenset[str]].fail("Entry has no DN")
@@ -150,6 +156,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``p.Result[t.Ldap.OperationChanges]``.
+
         """
         existing_rdn_result = cls.rdn_attribute_names(existing_entry)
         if existing_rdn_result.failure:

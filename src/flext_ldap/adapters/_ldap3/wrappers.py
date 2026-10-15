@@ -25,6 +25,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``t.MutableSequenceOf[str]``.
+
         """
         return list(u.Ldap.ldap3_value_to_strings(value))
 
@@ -40,6 +41,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``Callable[..., bool]``.
+
         """
         method: Callable[..., bool] = getattr(connection, method_name)
         return method
@@ -63,6 +65,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``bool``.
+
         """
         add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
         return add_fn(dn, object_class, dict(attributes))
@@ -73,6 +76,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``bool``.
+
         """
         delete_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "delete")
         return delete_fn(dn)
@@ -83,6 +87,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``bool``.
+
         """
         bound_state: bool = getattr(connection, "bound", False)
         return bound_state
@@ -93,6 +98,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``bool``.
+
         """
         bind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "bind")
         return bind_fn()
@@ -107,6 +113,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``bool``.
+
         """
         modify_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "modify")
         return modify_fn(dn, changes)
@@ -117,6 +124,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``bool``.
+
         """
         scope_map: t.MappingKV[int, c.Ldap.Ldap3SearchScope] = {
             c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
@@ -142,6 +150,7 @@ class FlextLdapLdap3Wrappers:
 
         Raises:
             AttributeError: If start_tls method not available on connection object.
+
         """
         start_tls_fn = getattr(connection, "start_tls", None)
         if start_tls_fn is None:
@@ -156,6 +165,7 @@ class FlextLdapLdap3Wrappers:
 
         Returns:
             The resulting ``bool``.
+
         """
         unbind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "unbind")
         return unbind_fn()

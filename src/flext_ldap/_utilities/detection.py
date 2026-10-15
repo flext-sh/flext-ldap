@@ -25,6 +25,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``str``.
+
         """
         ext_str = str(cls.map_str(supported_extensions, case="lower", join=" "))
         context_str = cls.norm_join(naming_contexts, case="lower")
@@ -60,6 +61,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``bool``.
+
         """
         required_markers = c.Ldap.ROOT_DSE_VENDOR_REQUIRED_MARKERS.get(
             server_name,
@@ -91,6 +93,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``str | None``.
+
         """
         vendor_parts = [
             u.to_str(value)
@@ -121,6 +124,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``str``.
+
         """
         return cls.detect_from_vendor(
             vendor_name,

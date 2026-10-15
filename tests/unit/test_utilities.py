@@ -33,6 +33,7 @@ def _entry(
 
     Returns:
         The resulting ``m.Ldif.Entry``.
+
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
@@ -57,6 +58,7 @@ def _bound_mock_connection() -> Connection:
 
     Returns:
         The bound ``Connection`` with the rootDSE attributes in place.
+
     """
     server = Server("mock")
     conn = Connection(server, client_strategy=MOCK_SYNC)

@@ -25,6 +25,7 @@ class FlextLdapLdap3ResultExtract:
 
         Returns:
             The resulting ``m.Ldif.DN``.
+
         """
         if parsed is None:
             return m.Ldif.DN.empty()
@@ -48,6 +49,7 @@ class FlextLdapLdap3ResultExtract:
 
         Returns:
             The resulting ``m.Ldif.Attributes``.
+
         """
         empty = m.Ldif.Attributes(attributes={}, attribute_metadata={}, metadata=None)
         if parsed is None:
@@ -81,6 +83,7 @@ class FlextLdapLdap3ResultExtract:
 
         Returns:
             The resulting ``t.Ldap.OperationAttributes``.
+
         """
         if isinstance(attrs, p.Ldap.HasAttributesProperty):
             return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
@@ -105,6 +108,7 @@ class FlextLdapLdap3ResultExtract:
 
         Returns:
             The resulting ``m.Ldif.ServerMetadata | None``.
+
         """
         match parsed:
             case None:
@@ -149,6 +153,7 @@ class FlextLdapLdap3ResultExtract:
 
         Returns:
             The resulting ``t.Ldap.OperationAttributes``.
+
         """
         if attrs_dict is None:
             return {}
@@ -173,6 +178,7 @@ class FlextLdapLdap3ResultExtract:
 
         Returns:
             The resulting ``t.MappingKV[str, t.Scalar | t.ScalarList] | None``.
+
         """
         if not metadata:
             return None
