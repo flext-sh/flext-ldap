@@ -126,3 +126,6 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
             operation=c.Ldap.OperationName.CONNECT,
             detected_server_type=detection_result.value,
         )
+
+
+__all__: list[str] = ["FlextLdapConnection"]

@@ -139,3 +139,6 @@ class FlextLdapSubtreeDeleteHandler:
             The resulting ``int``.
         """
         return dn.count(",")
+
+
+__all__: list[str] = ["FlextLdapSubtreeDeleteHandler"]

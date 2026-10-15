@@ -21,8 +21,6 @@ __all__: tuple[str, ...] = ("FlextLdapConstantsBase",)
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextLdapConstantsBase": ".base",
-    }),
+    MappingProxyType({"FlextLdapConstantsBase": ".base"}),
     public_exports=__all__,
 )

@@ -251,3 +251,6 @@ class FlextLdapLdap3Adapter(s[bool]):
         """Unbind and close LDAP connection."""
         if self._connection is not None:
             _ = FlextLdapLdap3Wrappers.unbind(self._connection)
+
+
+__all__: list[str] = ["FlextLdapLdap3Adapter"]

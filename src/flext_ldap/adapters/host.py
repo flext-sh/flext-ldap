@@ -48,3 +48,6 @@ class FlextLdapAdapterHost[
             return False
         connected: bool = adapter.is_connected
         return connected
+
+
+__all__: list[str] = ["FlextLdapAdapterHost"]

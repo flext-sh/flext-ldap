@@ -343,3 +343,6 @@ class FlextLdapUpsertHandler:
         return r[m.Ldap.UpsertPlan].ok(
             m.Ldap.UpsertPlan(adds=adds, modifies=modifies, unchanged=unchanged),
         )
+
+
+__all__: list[str] = ["FlextLdapUpsertHandler"]
