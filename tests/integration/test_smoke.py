@@ -19,15 +19,14 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
-from flext_tests import tm
 
-from flext_ldap import ldap, m
-from tests import c, u
+from flext_ldap import ldap
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import t
 
-pytestmark = [pytest.mark.smoke, pytest.mark.docker]
+pytestmark = pytest.mark.smoke
 
 
 class TestsFlextLdapSmoke:

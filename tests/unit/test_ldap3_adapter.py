@@ -5,7 +5,7 @@ operations, public properties, idempotence of ``disconnect``, and the
 configuration of the ldap3 ``Server`` produced by ``create_server``. No
 private attribute/method access, no internal-collaborator spying.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -14,11 +14,10 @@ from __future__ import annotations
 from enum import StrEnum, unique
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap.adapters.host import FlextLdapAdapterHost
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
-from tests import c, m, u
+from tests import c, m, tm, u
 
 pytestmark = pytest.mark.unit
 

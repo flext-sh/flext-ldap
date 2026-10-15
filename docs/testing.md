@@ -25,7 +25,7 @@
 | `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed)                                                      |
 | Integration tests          | 1 smoke test (`tests/integration/test_smoke.py`)                                               |
 | Current failures           | 0 unit failures                                                                                |
-| Skipped tests              | Integration tests gated by the `docker`/`integration` markers when no LDAP server is available |
+| Skipped tests              | Connectivity prerequisites are checked before service-dependent fixtures run |
 
 > These figures are a historical report, not validation of the current checkout. Run
 > `make test` from the workspace root for current test and coverage evidence.
@@ -69,9 +69,10 @@ logic, value objects, entities, adapter behaviour.
 
 #### 2. Integration Tests (`tests/integration/`)
 
-**Purpose**: Real LDAP server testing with Docker container. **Current Status**: 1 smoke
-test file, gated by `docker`/`integration` markers. **Coverage Focus**: End-to-end LDAP
-operations, server-specific behaviours.
+**Purpose**: Real LDAP server testing with Docker container. Tests consuming
+`ldap_container` declare Docker and connectivity prerequisites. Pure integration tests
+remain active without a service. **Coverage Focus**: End-to-end LDAP operations and
+server-specific behaviours.
 
 ## Current Test Coverage
 
@@ -108,8 +109,19 @@ running.
 
 ### Skipped Tests
 
-Integration tests under `tests/integration/` are gated by `@pytest.mark.integration` /
-`@pytest.mark.docker`. They run only when the LDAP test container is available.
+Service-dependent tests require a local, untracked `.env` in the member checkout,
+Docker availability, a reachable LDAP endpoint, and explicitly configured
+`FLEXT_LDAP_BIND_DN` and `FLEXT_LDAP_BIND_PASSWORD`. The shared applicability plugin
+skips unmet prerequisites before fixtures execute; Docker connectivity is also skipped
+in CI. Neither an integration directory nor an `integration` marker alone selects
+these skips.
+
+The credential utility reads the current environment through typed LDAP settings on
+each call. It does not cache credentials, probe identities, or select default or legacy
+credentials. After transport readiness, authentication executes without retries or
+exception replacement. A rejected bind remains an LDAP error, and established
+connections are unbound during fixture cleanup. Availability skips do not demonstrate
+successful connectivity or production readiness.
 
 ## Coverage Targets
 

@@ -7,7 +7,7 @@ single-letter aliases, and the operations the ``FlextLdap`` facade
 promises its callers. It deliberately avoids internal implementation
 details (MRO ordering, private attributes, adapter modules).
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -17,7 +17,6 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 import flext_ldap
 import flext_ldap.api
@@ -37,9 +36,10 @@ from flext_ldap import (
     FlextLdapTypes,
     FlextLdapUtilities,
 )
+from tests import tm
 
 if TYPE_CHECKING:
-    from flext_ldap import t
+    from tests import t
 pytestmark = pytest.mark.unit
 
 # Top-level facade-owner modules of ``flext_ldap``, statically enumerated so the
@@ -130,13 +130,6 @@ class TestsFlextLdapPublicApiContract:
     ) -> None:
         """Verify canonical alias resolves to domain facade."""
         tm.that(getattr(flext_ldap, alias) is facade, eq=True)
-
-    @staticmethod
-    def test_ldap_facade_is_a_service() -> None:
-        """Verify ldap facade is a service."""
-        # FlextLdapService is exported as the service base; the public facade
-        # honouring that relationship is part of the contract.
-        tm.that(FlextLdapService in FlextLdap.__mro__, eq=True)
 
     @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
     @staticmethod

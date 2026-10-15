@@ -4,7 +4,7 @@ Service mixins inherit this host to obtain the adapter behind the
 ``p.Ldap.LdapAdapter`` contract; the concrete ldap3 implementation stays in
 ``adapters/ldap3.py`` (the sole ldap3 owner per AGENTS.md §2.7).
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

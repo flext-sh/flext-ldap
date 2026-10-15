@@ -1,6 +1,7 @@
 """Tests for models.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
+tests/unit/test_models
 SPDX-License-Identifier: MIT
 """
 

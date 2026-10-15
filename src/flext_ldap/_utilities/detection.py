@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_ldif import u
 
 from flext_ldap import c, t
-from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
+from flext_ldap._utilities import FlextLdapUtilitiesNormalization
 
 
 class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):

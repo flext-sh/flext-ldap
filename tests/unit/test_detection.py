@@ -21,7 +21,7 @@ connection cannot be passed through it without a typing violation. The success
 model state is therefore asserted through the type-clean public method
 ``detect_from_connection`` and cannot be exercised via ``execute``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -30,10 +30,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap.services.detection import FlextLdapServerDetector
-from tests import c, p, u
+from tests import c, p, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

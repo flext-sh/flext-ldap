@@ -3,16 +3,14 @@
 Composes ``FlextLdapLdap3ResultExtract`` for DN/attribute/metadata extraction
 and exposes the public ``convert_*`` API consumed by ``FlextLdapLdap3SearchExecutor``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from flext_ldif import r
-
-from flext_ldap import m, p, t
-from flext_ldap.adapters._ldap3.result_extract import FlextLdapLdap3ResultExtract
+from flext_ldap import m, p, r, t
+from flext_ldap.adapters._ldap3 import FlextLdapLdap3ResultExtract
 
 
 class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):

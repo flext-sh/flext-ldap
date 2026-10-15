@@ -22,9 +22,7 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
-from flext_ldif import r
-
-from flext_ldap import c, m, p, t, u
+from flext_ldap import c, m, p, r, t, u
 
 
 class FlextLdapSubtreeDeleteHandler:

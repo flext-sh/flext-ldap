@@ -257,7 +257,7 @@ class FlextLdapFlextModelsLdap:
             )
             server_type: str = c.Ldap.DEFAULT_TYPE
             progress_callback: t.Ldap.ProgressCallbackUnion | None = None
-            retry_on_errors: t.StrSequence = u.Field(default_factory=list)
+            retry_on_errors: t.StrSequence = u.Field(default_factory=list[str])
             max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
             stop_on_error: bool = False
 
@@ -265,22 +265,22 @@ class FlextLdapFlextModelsLdap:
             """Conversion metadata."""
 
             source_attributes: t.StrSequence = u.Field(
-                default_factory=list,
+                default_factory=list[str],
                 description="Source attribute names",
             )
             source_dn: str = ""
             removed_attributes: t.StrSequence = u.Field(
-                default_factory=list,
+                default_factory=list[str],
                 description="Attributes removed during conversion",
             )
             base64_encoded_attributes: t.StrSequence = u.Field(
-                default_factory=list,
+                default_factory=list[str],
                 description="Attributes that were base64-encoded",
             )
             dn_changed: bool = False
             converted_dn: str = ""
             attribute_changes: t.StrSequence = u.Field(
-                default_factory=list,
+                default_factory=list[str],
                 description="Tracked attribute change descriptions",
             )
 
@@ -336,7 +336,10 @@ class FlextLdapFlextModelsLdap:
                 str,
                 FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
             ] = u.Field(
-                default_factory=dict,
+                default_factory=dict[
+                    str,
+                    "FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult",
+                ],
                 description="Per-phase sync results keyed by phase name",
             )
             total_entries: t.NonNegativeInt = 0

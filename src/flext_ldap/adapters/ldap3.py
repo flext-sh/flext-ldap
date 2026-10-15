@@ -3,7 +3,7 @@
 Per AGENTS.md §2.7 (library abstraction): only this directory may import
 ``ldap3`` directly; consumers depend on the ``p.Ldap`` protocols.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -11,18 +11,14 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_ldif import e, r
-
-from flext_ldap import c, m, p, s, t, u
-from flext_ldap.adapters._ldap3.connection_manager import (
+from flext_ldap import c, e, m, p, r, s, t, u
+from flext_ldap.adapters._ldap3 import (
     FlextLdapLdap3ConnectionManager,
-)
-from flext_ldap.adapters._ldap3.operation_executor import (
     FlextLdapLdap3OperationExecutor,
+    FlextLdapLdap3ResultConverter,
+    FlextLdapLdap3SearchExecutor,
+    FlextLdapLdap3Wrappers,
 )
-from flext_ldap.adapters._ldap3.result_converter import FlextLdapLdap3ResultConverter
-from flext_ldap.adapters._ldap3.search_executor import FlextLdapLdap3SearchExecutor
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 
@@ -105,7 +101,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 .flat_map(
                     lambda attrs: self.OperationExecutor.execute_add(
                         conn,
-                        u.Ldif.get_dn_value(entry.dn)
+                        u.Ldif.resolve_dn_value(entry.dn)
                         if entry.dn is not None
                         else "unknown",
                         attrs,
@@ -121,6 +117,10 @@ class FlextLdapLdap3Adapter(s[bool]):
             The resulting ``p.Result[bool]``.
         """
         try:
+            # A second connect() on a live adapter orphans the previous
+            # connection's socket (dropped without unbind). Release it first.
+            if self._connection is not None:
+                self.disconnect()
             connection = self._create_connection(settings)
         except c.Ldap.EXC_CONNECTION as exc:
             return r[bool].fail_op("Connection", exc)

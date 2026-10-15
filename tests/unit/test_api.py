@@ -1,6 +1,6 @@
 """Unit tests for ldap API facade (MRO-based).
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_ldap import ldap
-from flext_ldap.services.sync import FlextLdapSync
+from flext_ldap.services import FlextLdapSync
 from tests import c, m, u
 
 if TYPE_CHECKING:

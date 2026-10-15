@@ -5,7 +5,7 @@ enum member values, closed-set membership invariants, keyed-mapping completeness
 the ``ENTRY_ALREADY_EXISTS_RE`` matching behaviour, the boundary exception tuple,
 and the status-validation contract that consumes ``c.Ldap.Status``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 

@@ -10,17 +10,16 @@ No private attribute/method access, no internal-collaborator spying, no
 patching of the unit under test. The only test double is a structural ldap3
 Entry standing in for the genuine external ldap3 boundary.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_ldap.adapters.entry import FlextLdapEntryAdapter
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 
 pytestmark = pytest.mark.unit
 

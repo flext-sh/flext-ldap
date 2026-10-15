@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
     from flext_ldap import p
 
-from flext_ldap._utilities.normalization import FlextLdapUtilitiesNormalization
+from flext_ldap._utilities import FlextLdapUtilitiesNormalization
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping

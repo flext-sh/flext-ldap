@@ -1,6 +1,7 @@
 """Detect LDAP server type from a bound ``ldap3`` connection.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_ldap/services/detection
 SPDX-License-Identifier: MIT
 """
 
@@ -8,9 +9,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldif import e, r
-
-from flext_ldap import c, m, p, s, t, u
+from flext_ldap import c, e, m, p, r, s, t, u
 
 
 class FlextLdapServerDetector(s[m.Ldap.Response]):

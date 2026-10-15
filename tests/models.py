@@ -4,7 +4,7 @@ This module provides test-specific model extensions that inherit from
 src/flext_ldap/models.py classes. This centralizes test objects without
 duplicating parent class functionality.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_tests import FlextTestsModels, r
+from flext_tests import FlextTestsModels
 
 from flext_ldap import FlextLdapModels
-from tests.base import TestsFlextLdapServiceBase
+from tests import TestsFlextLdapServiceBase, r
 
 if TYPE_CHECKING:
     from tests import p

@@ -1,6 +1,7 @@
 """Tests for models sync.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
+tests/unit/test_models_sync
 SPDX-License-Identifier: MIT
 """
 

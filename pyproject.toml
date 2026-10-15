@@ -20,13 +20,13 @@ classifiers = [
 ]
 dependencies = [
   "annotated-types>=0.8.0",
-  "beartype>=0.22.9",
+  "beartype>=0.23.1",
   "dependency-injector>=4.49.1",
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
   "ldap3>=2.10.2rc4",
   "packaging>=26.3",
-  "pydantic>=2.13.5,<3",
+  "pydantic>=2.14.1,<3",
   "pydantic-settings>=2.15.0",
   "pyyaml>=6.0.3",
   "structlog>=26.1.0",
@@ -87,6 +87,7 @@ dev = [
   "mkdocs-section-index>=0.3.12",
   "mkdocstrings>=1.0.6",
   "mkdocstrings-python>=2.0.8",
+  "msgpack-types",
   "mypy>=2.3.1",
   "platformdirs>=4.12.0",
   "pymdown-extensions",
@@ -109,7 +110,7 @@ dev = [
   "types-click>=7.1.8",
   "types-defusedxml>=0.7.0.20260504",
   "types-docker>=7.2.0.20260827",
-  "types-flask>=1.1.6",
+  "types-grpcio",
   "types-jsonschema>=4.26.0.20260518",
   "types-ldap3>=2.9.13.20260827",
   "types-openpyxl>=3.1.5.20260827",
@@ -207,12 +208,11 @@ warn_required_dynamic_aliases = true
 [tool.pyrefly]
 disable-project-excludes-heuristics = true
 project-excludes = [
-  "**/*_pb2*.py",
-  "**/*_pb2_grpc*.py",
   "**/.venv/**",
   "**/__pycache__",
   "**/__pyrefly_virtual__/**",
   "**/node_modules",
+  "**/protos/**",
   "**/site-packages/**",
   "**/typings/**",
   "**/vendor/**",
@@ -321,6 +321,7 @@ exclude = [
   "**/dist-packages",
   "**/dist-packages/**",
   "**/node_modules",
+  "**/protos/**",
   "**/site-packages",
   "**/site-packages/**",
   "**/venv",
@@ -366,6 +367,7 @@ addopts = [
   "--strict-markers",
   "--markdown-docs",
   "--durations=10",
+  "--flext-enforce-strict",
   "--timeout=10",
 ]
 flext_slow_timeout_seconds = "30"
@@ -373,6 +375,7 @@ asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
+  "once::pytest.PytestAssertRewriteWarning",
 ]
 markers = [
   "smoke: public-interface smoke tests",
@@ -400,12 +403,12 @@ testpaths = ["tests"]
 [tool.ruff]
 extend-exclude = [
   "**/.archive/**",
-  "**/protos/**",
   "**/.agents/aihub-hooks/**",
   "**/.claude/aihub-hooks/**",
   "**/.codex/aihub-hooks/**",
   "**/.cursor/aihub-hooks/**",
   "**/.gemini/aihub-hooks/**",
+  "**/protos/**",
 ]
 fix = false
 line-length = 88
@@ -433,10 +436,12 @@ ignore = [
   "camelcase-imported-as-lowercase",
   "implicit-namespace-package",
   "missing-required-import",
+  "missing-trailing-comma",
   "runtime-import-in-type-checking-block",
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
+  "unsorted-imports",
 ]
 select = ["ALL"]
 unfixable = [
@@ -458,6 +463,7 @@ notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
 runtime-evaluated-base-classes = [
   "flext_core.FlextConfig",
   "flext_core.FlextService",
+  "flext_core.m.BaseModel",
   "flext_ldap.FlextLdapSettings",
   "flext_ldap._models.ldap.LdapBatchStats",
   "flext_ldap.adapters.host.FlextLdapAdapterHost",
@@ -472,7 +478,7 @@ runtime-evaluated-base-classes = [
   "flext_tests.FlextTestsUtilities.Tests",
   "flext_tests.base.FlextTestsServiceBase",
   "pydantic.BaseModel",
-  "tests.base.TestsFlextLdapServiceBase",
+  "tests.TestsFlextLdapServiceBase",
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
@@ -500,84 +506,82 @@ known-first-party = ["flext_core", "flext_ldap"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
+"**/.agents/skills/webapp-testing/scripts/with_server.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
 "**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
 "**/_config.py" = ["invalid-function-name"]
+"**/bin/**" = [
+  "docstring-missing-exception",
+  "docstring-missing-returns",
+  "import-outside-top-level",
+  "line-too-long",
+  "magic-value-comparison",
+  "missing-copyright-notice",
+  "print",
+  "type-check-without-type-error",
+  "undocumented-public-method",
+  "unused-class-method-argument",
+]
 "**/docx.py" = ["import-outside-top-level"]
 "**/file_test_helpers.py" = ["line-too-long"]
+"**/flext_core/_models/pydantic.py" = [
+  "any-type",
+  "builtin-argument-shadowing",
+  "too-many-arguments",
+]
 "**/flextcliutilitiesfiletesthelpersmixin_part_03.py" = ["line-too-long"]
 "**/framework.py" = ["banned-api", "import-outside-top-level"]
 "**/pptx.py" = ["import-outside-top-level"]
 "**/test_public_contracts_cov.py" = ["line-too-long"]
-"**/tests/python/**" = [
-  "raise-vanilla-args",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
+"**/tests/**" = [
+  "boolean-positional-value-in-call",
+  "boolean-type-hint-positional-argument",
+  "compare-to-empty-string",
+  "import-private-name",
+  "magic-value-comparison",
+  "mutable-class-default",
+  "no-self-use",
+  "private-member-access",
+  "pytest-fixture-autouse",
+  "too-many-public-methods",
 ]
 "**/xlsx.py" = ["import-outside-top-level"]
-"scripts/**" = [
-  "any-type",
-  "avoidable-escaped-quote",
-  "banned-api",
-  "blank-line-after-function",
-  "boolean-default-value-positional-argument",
-  "boolean-type-hint-positional-argument",
-  "builtin-open",
-  "commented-out-code",
-  "error-instead-of-exception",
-  "f-string-in-exception",
-  "if-exp-instead-of-or-operator",
-  "import-private-name",
-  "invalid-module-name",
-  "literal-membership",
-  "logging-string-concat",
-  "magic-value-comparison",
-  "manual-list-comprehension",
-  "manual-list-copy",
-  "missing-blank-line-after-summary",
-  "missing-maxsplit-arg",
-  "multi-line-summary-first-line",
-  "multiple-starts-ends-with",
-  "non-lowercase-variable-in-function",
-  "noqa-comments",
-  "os-path-abspath",
-  "os-path-dirname",
-  "os-path-exists",
-  "os-path-join",
-  "path-constructor-current-directory",
-  "print",
-  "raise-vanilla-args",
-  "raw-string-in-exception",
-  "read-whole-file",
-  "relative-imports",
-  "repeated-append",
-  "runtime-cast-value",
-  "shebang-not-executable",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-  "undocumented-public-class",
-  "undocumented-public-function",
-  "undocumented-public-init",
-  "undocumented-public-method",
-  "unnecessary-multiline-docstring",
-  "unsorted-dunder-all",
-  "unspecified-encoding",
-  "unused-function-argument",
-  "unused-noqa",
-  "used-dummy-variable",
-  "verbose-raise",
-  "write-whole-file",
-]
 "scripts/**/*.py" = [
   "commented-out-code",
   "line-too-long",
   "typing-only-first-party-import",
 ]
+"src/flext_cli/_utilities/processes.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
+"src/flext_cli/_utilities/runtime.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
+"src/flext_tests/_utilities/environment.py" = [
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
 "tests/**/*.py" = ["assert"]
+"tests/test_snapshot_drill.py" = ["import-private-name"]
+"tests/unit/test_capability_collection.py" = [
+  "line-too-long",
+  "missing-copyright-notice",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+  "undocumented-public-method",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.lint.pylint]
+allow-dunder-method-names = ["__base__", "__bases__"]
 
 [tool.tomlsort]
 all = true
@@ -598,6 +602,6 @@ section_whitelines = 1
 whitelines = 1
 
 [tool.uv]
-link-mode = "copy"
 constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
+link-mode = "copy"

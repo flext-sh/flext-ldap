@@ -1,16 +1,16 @@
 """LDAP3 adapter — FlextLdapLdap3SearchExecutor.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from flext_ldif import r
-
-from flext_ldap import c, m, p, t
-from flext_ldap.adapters._ldap3.result_converter import FlextLdapLdap3ResultConverter
-from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
+from flext_ldap import c, m, p, r, t
+from flext_ldap.adapters._ldap3 import (
+    FlextLdapLdap3ResultConverter,
+    FlextLdapLdap3Wrappers,
+)
 
 
 class FlextLdapLdap3SearchExecutor:

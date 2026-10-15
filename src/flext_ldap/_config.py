@@ -4,7 +4,7 @@ Model-less: business rules live in ``config/*.yaml`` under the ``Ldap:`` key and
 are exposed through the open ``config.Ldap`` namespace (``extra="allow"``), with
 no per-domain model. Access is ``config.Ldap.<domain>[<key>...]``.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -12,20 +12,19 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextConfig
-from flext_ldap import m
-from flext_ldap._models._ldap_namespace import FlextLdapModelsLdapNamespace
+from flext_core import FlextConfig, m
+from flext_ldap._models.base import FlextLdapModelsBase
 
 
 class FlextLdapConfig(FlextConfig):
     """Ldap config auto-loaded model-less from ``config/*.yaml``."""
 
     Ldap: Annotated[
-        FlextLdapModelsLdapNamespace,
+        FlextLdapModelsBase.ConfigNamespace,
         m.Field(
             description="Open namespace exposing ``config/*.yaml`` under ``Ldap``.",
         ),
-    ] = FlextLdapModelsLdapNamespace()
+    ] = FlextLdapModelsBase.ConfigNamespace()
 
 
 config: FlextLdapConfig = FlextLdapConfig.fetch_global()

@@ -1,6 +1,6 @@
 """Behavioral unit tests for LDAP sync via the public facade.
 
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_ldap import ldap, t
-from tests import c, m, u
+from flext_ldap import ldap
+from tests import c, m, t, u
 
 pytestmark = pytest.mark.unit
 
