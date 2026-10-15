@@ -90,3 +90,6 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                 entries_affected=0,
             ),
         )
+
+
+__all__: list[str] = ["FlextLdapServerDetector"]
