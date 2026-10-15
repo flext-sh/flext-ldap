@@ -31,6 +31,7 @@ class FlextLdapLdap3SearchExecutor:
 
         Returns:
             The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]``.
+
         """
         try:
             _ = FlextLdapLdap3Wrappers.search(connection, params)

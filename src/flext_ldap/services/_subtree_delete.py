@@ -105,6 +105,7 @@ class FlextLdapSubtreeDeleteHandler:
 
         Returns:
             The resulting ``p.Result[t.SequenceOf[str]]``.
+
         """
         search_options = m.Ldap.SearchOptions(
             base_dn=base_dn,
@@ -137,5 +138,6 @@ class FlextLdapSubtreeDeleteHandler:
 
         Returns:
             The resulting ``int``.
+
         """
         return dn.count(",")

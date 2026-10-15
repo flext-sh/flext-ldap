@@ -39,6 +39,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
         Returns:
             The resulting ``t.SequenceOf[t.Pair[str, t.MappingKV[str,
                 t.StrSequence]]]``.
+
         """
         results: t.MutableSequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]] = []
         entries: t.SequenceOf[p.Ldif.Ldap3Entry] = getattr(connection, "entries", [])
@@ -62,6 +63,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
 
         Returns:
             The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]``.
+
         """
         entries_raw = parse_response.entries
         if not entries_raw:

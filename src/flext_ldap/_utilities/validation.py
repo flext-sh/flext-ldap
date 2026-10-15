@@ -17,7 +17,15 @@ class FlextLdapUtilitiesValidation(FlextLdapUtilitiesBase):
 
     @staticmethod
     def valid_status(value: str | t.JsonValue) -> TypeIs[str]:
-        """Return whether a value is a valid LDAP status."""
+        """Return whether a value is a valid LDAP status.
+
+        Args:
+            value: Candidate value to validate.
+
+        Returns:
+            True when the value is a known LDAP status string.
+
+        """
         if isinstance(value, c.Ldap.Status):
             return True
         return value in c.Ldap.VALID_STATUSES

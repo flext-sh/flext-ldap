@@ -72,6 +72,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Returns:
             The resulting ``m.Ldap.ConversionMetadata``.
+
         """
         return u.Ldap.build_conversion_metadata(
             removed_attrs,
@@ -92,6 +93,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Returns:
             The resulting ``m.Ldap.ConversionMetadata``.
+
         """
         return u.Ldap.track_conversion_differences(
             conversion_metadata,
@@ -186,6 +188,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         dn_str = str(ldap3_entry.entry_dn)
         attrs_dict: t.Ldap.Ldap3AttributeDict = ldap3_entry.entry_attributes_as_dict

@@ -29,6 +29,7 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``Literal['ALL', 'DSA', 'NO_INFO', 'SCHEMA']``.
+
         """
         match get_info:
             case c.Ldap.Ldap3GetInfo.DSA:
@@ -52,6 +53,7 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``p.Ldif.Ldap3Server``.
+
         """
         scheme = "ldaps" if use_ssl else "ldap"
         server: p.Ldif.Ldap3Server = ldap3.Server(
@@ -70,6 +72,7 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``p.Ldif.Ldap3Server``.
+
         """
         server: p.Ldif.Ldap3Server = ldap3.Server(
             server_url,
@@ -93,6 +96,7 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
 
         Raises:
             TypeError: If Expected ldap3.Server, got.
+
         """
         if not isinstance(server, ldap3.Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"
@@ -116,6 +120,7 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``p.Ldif.Ldap3Server``.
+
         """
         server: p.Ldif.Ldap3Server = ldap3.Server(
             host,

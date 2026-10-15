@@ -198,21 +198,51 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 max_retries: int = 1,
                 stop_on_error: bool = False,
             ) -> FlextLdifProtocols.Result[m.Ldap.LdapBatchStats]:
-                """Upsert multiple entries and report canonical batch statistics."""
+                """Upsert multiple entries and report canonical batch statistics.
+
+                Args:
+                    entries: LDIF entries to add or update.
+                    progress_callback: Optional callback invoked per entry with
+                        ``(current, total, dn, stats)``.
+                    retry_on_errors: Error substrings that trigger a retry.
+                    max_retries: Maximum attempts per entry when retrying.
+                    stop_on_error: Halt the batch on the first failure.
+
+                Returns:
+                    Result containing LdapBatchStats with per-entry counters.
+
+                """
                 ...
 
             def delete_subtree(
                 self,
                 dn: str | FlextLdifProtocols.Ldif.DN,
             ) -> FlextLdifProtocols.Result[m.Ldap.SubtreeDeleteResult]:
-                """Delete an entry and its descendants, deepest-first."""
+                """Delete an entry and its descendants, deepest-first.
+
+                Args:
+                    dn: Distinguished name of the subtree root to delete.
+
+                Returns:
+                    Result containing SubtreeDeleteResult with per-entry
+                    outcomes.
+
+                """
                 ...
 
             def plan_upsert(
                 self,
                 entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry],
             ) -> FlextLdifProtocols.Result[m.Ldap.UpsertPlan]:
-                """Classify entries for upsert without writing (dry plan)."""
+                """Classify entries for upsert without writing (dry plan).
+
+                Args:
+                    entries: LDIF entries to classify against current state.
+
+                Returns:
+                    Result containing UpsertPlan with per-entry actions.
+
+                """
                 ...
 
             def find_entry(
@@ -221,7 +251,16 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 *,
                 attributes: t.StrSequence | None = None,
             ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
-                """Read one entry by DN; an absent entry is an empty result."""
+                """Read one entry by DN; an absent entry is an empty result.
+
+                Args:
+                    dn: Distinguished name of the entry to read.
+                    attributes: Optional attribute names to restrict the read.
+
+                Returns:
+                    Result containing SearchResult with zero or one entry.
+
+                """
                 ...
 
             def connect(
@@ -358,7 +397,15 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 self,
                 settings: m.Ldap.ConnectionConfig,
             ) -> FlextLdifProtocols.Result[bool]:
-                """Establish the ldap3 server/connection pair and verify bind."""
+                """Establish the ldap3 server/connection pair and verify bind.
+
+                Args:
+                    settings: Validated connection configuration for the server.
+
+                Returns:
+                    Result[bool] indicating connection success or failure.
+
+                """
                 ...
 
             def disconnect(self) -> None:
@@ -369,14 +416,30 @@ class FlextLdapProtocols(FlextLdifProtocols):
             def add(
                 entry: m.Ldif.Entry,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
-                """Add LDAP entry, returning the operation result."""
+                """Add LDAP entry, returning the operation result.
+
+                Args:
+                    entry: Entry model to add.
+
+                Returns:
+                    Result containing OperationResult.
+
+                """
                 ...
 
             @staticmethod
             def delete(
                 dn: str | m.Ldif.DN,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
-                """Delete LDAP entry, returning the operation result."""
+                """Delete LDAP entry, returning the operation result.
+
+                Args:
+                    dn: Distinguished name of the entry to delete.
+
+                Returns:
+                    Result containing OperationResult.
+
+                """
                 ...
 
             @staticmethod
@@ -384,7 +447,16 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 dn: str | m.Ldif.DN,
                 changes: t.Ldap.OperationChanges,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
-                """Modify LDAP entry, returning the operation result."""
+                """Modify LDAP entry, returning the operation result.
+
+                Args:
+                    dn: Distinguished name of the entry to modify.
+                    changes: Modification changes in ldap3 format.
+
+                Returns:
+                    Result containing OperationResult.
+
+                """
                 ...
 
             @staticmethod
@@ -392,7 +464,16 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 search_options: m.Ldap.SearchOptions,
                 server_type: str = "rfc",
             ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
-                """Perform LDAP search, returning the search result."""
+                """Perform LDAP search, returning the search result.
+
+                Args:
+                    search_options: Search configuration (base, filter, scope).
+                    server_type: LDAP server type for result parsing.
+
+                Returns:
+                    Result containing SearchResult with Entry models.
+
+                """
                 ...
 
         @runtime_checkable
@@ -422,7 +503,19 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 max_retries: int = 3,
                 retry_delay: float = 1.0,
             ) -> FlextLdifProtocols.Result[bool]:
-                """Connect using the public LDAP connection service contract."""
+                """Connect using the public LDAP connection service contract.
+
+                Args:
+                    connection_config: Validated connection configuration for
+                        the target server.
+                    auto_retry: Retry transient bind failures automatically.
+                    max_retries: Maximum connection attempts when retrying.
+                    retry_delay: Delay in seconds between attempts.
+
+                Returns:
+                    Result[bool] indicating connection success or failure.
+
+                """
                 ...
 
             @staticmethod
@@ -458,21 +551,46 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
             @staticmethod
             def already_exists_error(error_message: str) -> bool:
-                """Whether the error message indicates an existing entry."""
+                """Whether the error message indicates an existing entry.
+
+                Args:
+                    error_message: Raw error text to inspect.
+
+                Returns:
+                    True when the message maps to an entry-already-exists
+                    condition.
+
+                """
                 ...
 
             def find_entry(
                 self,
                 dn: str,
             ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
-                """Read one entry by DN; an absent entry is an empty result."""
+                """Read one entry by DN; an absent entry is an empty result.
+
+                Args:
+                    dn: Distinguished name of the entry to read.
+
+                Returns:
+                    Result containing SearchResult with zero or one entry.
+
+                """
                 ...
 
             def add(
                 self,
                 entry: FlextLdifProtocols.Ldif.Entry,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
-                """Add an LDAP entry, returning the operation result."""
+                """Add an LDAP entry, returning the operation result.
+
+                Args:
+                    entry: LDIF entry to add.
+
+                Returns:
+                    Result containing OperationResult.
+
+                """
                 ...
 
             def modify(
@@ -480,21 +598,46 @@ class FlextLdapProtocols(FlextLdifProtocols):
                 dn: str,
                 changes: t.Ldap.OperationChanges,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
-                """Modify an LDAP entry with the provided change set."""
+                """Modify an LDAP entry with the provided change set.
+
+                Args:
+                    dn: Distinguished name of the entry to modify.
+                    changes: Modification changes in ldap3 format.
+
+                Returns:
+                    Result containing OperationResult.
+
+                """
                 ...
 
             def delete(
                 self,
                 dn: str,
             ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
-                """Delete an LDAP entry identified by DN."""
+                """Delete an LDAP entry identified by DN.
+
+                Args:
+                    dn: Distinguished name of the entry to delete.
+
+                Returns:
+                    Result containing OperationResult.
+
+                """
                 ...
 
             def search(
                 self,
                 search_options: FlextLdapProtocols.Ldap.SearchOptions,
             ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
-                """Perform an LDAP search, returning the search result."""
+                """Perform an LDAP search, returning the search result.
+
+                Args:
+                    search_options: Search configuration (base, filter, scope).
+
+                Returns:
+                    Result containing SearchResult with Entry models.
+
+                """
                 ...
 
         # ── LDAP runtime object contracts ────────────────────────

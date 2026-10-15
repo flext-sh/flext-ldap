@@ -79,6 +79,7 @@ class FlextLdapUpsertHandler:
 
         Returns:
             The resulting ``bool``.
+
         """
         attrs = u.Ldap.extract_entry_attributes(entry)
         changetype_val: t.StrSequence = list(
@@ -100,6 +101,7 @@ class FlextLdapUpsertHandler:
 
         Returns:
             The resulting ``list[tuple[str, t.StrSequence]]``.
+
         """
         additions: list[tuple[str, t.StrSequence]] = []
         for change_operation in entry_model.change_operations:

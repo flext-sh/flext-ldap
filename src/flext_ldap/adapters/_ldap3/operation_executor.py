@@ -39,6 +39,7 @@ class FlextLdapLdap3OperationExecutor:
 
             Returns:
                 The resulting ``str | None``.
+
             """
             if value is None:
                 return None
@@ -79,6 +80,7 @@ class FlextLdapLdap3OperationExecutor:
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         error_msg = f"{prefix}: LDAP operation returned failure status"
         result_payload = connection.result
@@ -101,6 +103,7 @@ class FlextLdapLdap3OperationExecutor:
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         attrs_dict: t.MappingKV[str, t.StrSequence] = {
             k: list(v) for k, v in ldap_attrs.items()
@@ -120,6 +123,7 @@ class FlextLdapLdap3OperationExecutor:
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         dn_str = u.Ldif.resolve_dn_value(dn)
         return FlextLdapLdap3OperationExecutor._execute(
@@ -138,6 +142,7 @@ class FlextLdapLdap3OperationExecutor:
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
+
         """
         dn_str = u.Ldif.resolve_dn_value(dn)
         return FlextLdapLdap3OperationExecutor._execute(

@@ -20,7 +20,16 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
         attrs: t.Ldap.OperationAttributes,
         key: str,
     ) -> str | None:
-        """Return the first normalized value for a rootDSE attribute."""
+        """Return the first normalized value for a rootDSE attribute.
+
+        Args:
+            attrs: rootDSE attributes mapped to their value sequences.
+            key: Attribute name to look up.
+
+        Returns:
+            The first non-empty value, or ``None`` when absent or empty.
+
+        """
         values = attrs.get(key)
         if values is None:
             return None
@@ -35,6 +44,7 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
 
         Returns:
             The resulting ``p.Result[t.Ldap.OperationAttributes]``.
+
         """
         result: p.Result[t.Ldap.OperationAttributes]
         search_method = getattr(connection, "search", None)
@@ -92,6 +102,7 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         root_dse_result = cls.query_root_dse(connection)
         if root_dse_result.failure:

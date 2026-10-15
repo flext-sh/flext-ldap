@@ -27,6 +27,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``bool``.
+
         """
         collection_list: t.StrSequence
         match collection:
@@ -51,6 +52,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``str``.
+
         """
         values_list: t.StrSequence
         match values:
@@ -101,6 +103,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``t.MappingKV[str, t.StrSequence]``.
+
         """
         return {k: cls._convert_attr_value(v) for k, v in (attrs or {}).items()}
 
@@ -112,6 +115,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``t.StrSequence``.
+
         """
         match value:
             case None:
@@ -131,7 +135,17 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
     @staticmethod
     def base64_encoded(value: str, threshold: int = c.Ldif.ASCII_THRESHOLD) -> bool:
-        """Return True when a value requires LDIF base64 encoding."""
+        """Return True when a value requires LDIF base64 encoding.
+
+        Args:
+            value: String value to inspect.
+            threshold: Maximum ASCII code point tolerated before encoding.
+
+        Returns:
+            True when the value already carries the base64 marker or exceeds
+            the threshold.
+
+        """
         return value.startswith("::") or any(ord(char) > threshold for char in value)
 
     @classmethod
@@ -143,6 +157,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``t.StrSequence``.
+
         """
         return cls.ldap3_value_to_strings(value)
 
@@ -156,6 +171,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``str``.
+
         """
         if dn is None:
             return default
@@ -172,6 +188,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``t.JsonList | t.JsonMapping``.
+
         """
         if isinstance(value, Mapping):
             return {k: v for k, v in value.items() if v}
@@ -188,6 +205,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``str | t.StrSequence``.
+
         """
         normalized: t.MutableSequenceOf[str] = []
         for val in values:
@@ -207,6 +225,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
         Returns:
             The resulting ``str``.
+
         """
         if not value:
             return ""

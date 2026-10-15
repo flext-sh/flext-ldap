@@ -62,6 +62,7 @@ class FlextLdapFlextModelsLdap:
 
                 Raises:
                     ValueError: If use_ssl and use_tls are mutually exclusive.
+
                 """
                 if self.use_ssl and self.use_tls:
                     msg = "use_ssl and use_tls are mutually exclusive"
@@ -131,6 +132,7 @@ class FlextLdapFlextModelsLdap:
 
                 Returns:
                     The resulting ``Self``.
+
                 """
                 return cls(
                     base_dn=base_dn,

@@ -36,6 +36,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``m.Ldap.ConversionMetadata``.
+
         """
         return m.Ldap.ConversionMetadata(
             source_attributes=list(dict(original_attrs_dict).keys()),
@@ -53,6 +54,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``p.Result[m.Ldif.Entry]``.
+
         """
         raw_entry = dict(entry)
         dn_raw = raw_entry.get("dn")
@@ -81,6 +83,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``m.Ldap.ConversionMetadata``.
+
         """
         updates: MutableMapping[str, bool | str | t.StrSequence] = {}
         if converted_dn != original_dn:
@@ -115,6 +118,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``t.MutableStrSequenceMapping``.
+
         """
         attributes = entry.attributes
         if attributes is None:
@@ -127,6 +131,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``str``.
+
         """
         unknown: str = c.Ldap.UNKNOWN_CATEGORY
         if not attrs:
@@ -143,6 +148,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``str``.
+
         """
         return cls.extract_objectclass_category(
             cls.extract_attrs_dict_from_entry(entry),
@@ -157,6 +163,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
 
         Returns:
             The resulting ``m.Ldif.FlexibleCategories``.
+
         """
         result = m.Ldif.FlexibleCategories()
         for entry in entries:

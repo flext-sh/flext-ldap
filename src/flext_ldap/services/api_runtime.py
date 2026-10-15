@@ -20,6 +20,7 @@ class FlextLdapApiRuntime:
 
         Returns:
             The resulting ``Self``.
+
         """
         return self
 
