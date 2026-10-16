@@ -16,3 +16,6 @@ class FlextLdapModelsBase:
         """Open, frozen namespace for YAML-owned LDAP business rules."""
 
         model_config = m.ConfigDict(extra="allow", frozen=True)
+
+
+__all__: tuple[str, ...] = ("FlextLdapModelsBase",)

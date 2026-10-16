@@ -734,3 +734,6 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 entry_dn=entry_dn_sliced,
                 error=error_msg,
             )
+
+
+__all__: list[str] = ["FlextLdapOperations"]

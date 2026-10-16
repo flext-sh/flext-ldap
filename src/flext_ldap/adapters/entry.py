@@ -337,3 +337,6 @@ class FlextLdapEntryAdapter(s[bool]):
         if any(u.Ldap.base64_encoded(v, ascii_threshold) for v in converted_values):
             base64_attrs.append(key)
         return converted_values
+
+
+__all__: list[str] = ["FlextLdapEntryAdapter"]
