@@ -18,9 +18,7 @@ type Ldap3AttributeValues = FlextLdifTypes.SequenceOf[Ldap3AttributeScalar]
 type Ldap3AttributeDict = FlextLdifTypes.MappingKV[str, Ldap3AttributeValues]
 type Ldap3AttributeValue = Ldap3AttributeScalar | Ldap3AttributeValues
 type Ldap3AddAttributeValue = (
-    Ldap3AttributeScalar
-    | FlextLdifTypes.StrSequence
-    | FlextLdifTypes.SequenceOf[bytes]
+    Ldap3AttributeScalar | FlextLdifTypes.StrSequence | FlextLdifTypes.SequenceOf[bytes]
 )
 type Ldap3AddAttributes = FlextLdifTypes.MappingKV[str, Ldap3AddAttributeValue]
 type Ldap3ModifyChangeValue = FlextLdifTypes.Pair[
@@ -44,10 +42,7 @@ type Ldap3EntrySequenceValue = FlextLdifTypes.SequenceOf[
     Ldap3AttributeScalar | FlextLdifTypes.Numeric | bool
 ]
 type Ldap3EntryValue = (
-    Ldap3AttributeScalar
-    | FlextLdifTypes.Numeric
-    | bool
-    | Ldap3EntrySequenceValue
+    Ldap3AttributeScalar | FlextLdifTypes.Numeric | bool | Ldap3EntrySequenceValue
 )
 type LdapProgressCallback = Callable[..., None]
 type MultiPhaseProgressCallback = Callable[..., None]
@@ -63,12 +58,12 @@ type LdapModifyChanges = FlextLdifTypes.MappingKV[
 
 __all__: list[str] = [
     "LDAPException",
-    "Ldap3AddAttributes",
     "Ldap3AddAttributeValue",
+    "Ldap3AddAttributes",
     "Ldap3AttributeDict",
     "Ldap3AttributeScalar",
-    "Ldap3AttributeValues",
     "Ldap3AttributeValue",
+    "Ldap3AttributeValues",
     "Ldap3EntrySequenceValue",
     "Ldap3EntryValue",
     "Ldap3ModifyChangeValue",

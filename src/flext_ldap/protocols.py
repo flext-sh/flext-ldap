@@ -13,13 +13,11 @@ from typing import Protocol, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
 
-from flext_ldap._protocols import (
-    client_protocols as _client_protocols,
-    search_protocols as _search_protocols,
-    service_protocols as _service_protocols,
-    settings_protocols as _settings_protocols,
-    structural_protocols as _structural_protocols,
-)
+from flext_ldap._protocols.client_protocols import FlextLdapProtocolsClient
+from flext_ldap._protocols.search_protocols import FlextLdapProtocolsSearch
+from flext_ldap._protocols.service_protocols import FlextLdapProtocolsService
+from flext_ldap._protocols.settings_protocols import FlextLdapProtocolsSettings
+from flext_ldap._protocols.structural_protocols import FlextLdapProtocolsStructural
 
 
 class FlextLdapProtocols(FlextLdifProtocols):
@@ -53,42 +51,42 @@ class FlextLdapProtocols(FlextLdifProtocols):
         flext-cli)
         """
 
-        LdapSettings = _settings_protocols.LdapSettings
-        Settings = _settings_protocols.Settings
+        LdapSettings = FlextLdapProtocolsSettings.LdapSettings
+        Settings = FlextLdapProtocolsSettings.Settings
 
         # ── Layer 0: Domain Protocols ────────────────────────────
         # DN, Attributes, Entry → use _ldif_p.Ldif.DN,
         # _ldif_p.Ldif.Attributes, _ldif_p.Ldif.Entry
         # directly from flext-ldif (SSOT — no redefinition in Ldap namespace)
 
-        LdapBatchStats = _search_protocols.LdapBatchStats
-        ConnectionConfig = _search_protocols.ConnectionConfig
-        SearchScope = _search_protocols.SearchScope
-        SearchOptions = _search_protocols.SearchOptions
-        OperationResult = _search_protocols.OperationResult
-        SearchResult = _search_protocols.SearchResult
-        PhaseSyncResult = _search_protocols.PhaseSyncResult
+        LdapBatchStats = FlextLdapProtocolsSearch.LdapBatchStats
+        ConnectionConfig = FlextLdapProtocolsSearch.ConnectionConfig
+        SearchScope = FlextLdapProtocolsSearch.SearchScope
+        SearchOptions = FlextLdapProtocolsSearch.SearchOptions
+        OperationResult = FlextLdapProtocolsSearch.OperationResult
+        SearchResult = FlextLdapProtocolsSearch.SearchResult
+        PhaseSyncResult = FlextLdapProtocolsSearch.PhaseSyncResult
 
         # ── Layer 1: Service Protocols ───────────────────────────
 
-        LdapClient = _client_protocols.LdapClient
-        LdapAdapter = _client_protocols.LdapAdapter
-        LdapConnection = _service_protocols.LdapConnection
-        LdapOperations = _service_protocols.LdapOperations
+        LdapClient = FlextLdapProtocolsClient.LdapClient
+        LdapAdapter = FlextLdapProtocolsClient.LdapAdapter
+        LdapConnection = FlextLdapProtocolsService.LdapConnection
+        LdapOperations = FlextLdapProtocolsService.LdapOperations
 
         # ── LDAP runtime object contracts ────────────────────────
         # The base structural ldap3 contracts live in flext-ldif (``p.Ldif``)
         # as the single source of truth and are reached through MRO; this
         # package extends only what it needs.
 
-        Ldap3Connection = _service_protocols.Ldap3Connection
+        Ldap3Connection = FlextLdapProtocolsService.Ldap3Connection
 
         # ── Structural Duck-Typing Protocols ─────────────────────
 
-        HasItemsMethod = _structural_protocols.HasItemsMethod
-        HasConfigAttribute = _structural_protocols.HasConfigAttribute
-        HasDynamicAttribute = _structural_protocols.HasDynamicAttribute
-        HasAttributesProperty = _structural_protocols.HasAttributesProperty
+        HasItemsMethod = FlextLdapProtocolsStructural.HasItemsMethod
+        HasConfigAttribute = FlextLdapProtocolsStructural.HasConfigAttribute
+        HasDynamicAttribute = FlextLdapProtocolsStructural.HasDynamicAttribute
+        HasAttributesProperty = FlextLdapProtocolsStructural.HasAttributesProperty
 
 
 p = FlextLdapProtocols
