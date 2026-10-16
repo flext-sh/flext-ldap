@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """FlextLdap models module - FACADE ONLY.
 
 This module provides models for LDAP operations, extending m.
@@ -11,9 +12,11 @@ from __future__ import annotations
 
 from flext_ldif import FlextLdifModels
 
-from flext_ldap._models.base import FlextLdapModelsBase
-from flext_ldap._models.config import FlextLdapConfigModels
-from flext_ldap._models.ldap import FlextLdapFlextModelsLdap
+from flext_ldap._models import (
+    FlextLdapConfigModels,
+    FlextLdapFlextModelsLdap,
+    FlextLdapModelsBase,
+)
 
 
 class FlextLdapModels(FlextLdifModels):
@@ -35,10 +38,10 @@ class FlextLdapModels(FlextLdifModels):
     """
 
     class Ldap(
+        FlextLdapModelsBase,
         FlextLdapConfigModels,
         FlextLdapFlextModelsLdap,
         FlextLdapFlextModelsLdap.FlextLdapModelsLdap,
-        FlextLdapModelsBase,
     ):
         """LDAP-specific models namespace via pure MRO composition."""
 
