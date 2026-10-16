@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 from flext_tests import FlextTestsUtilities
@@ -26,14 +27,15 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             """Direct test utility surface for flext-ldap."""
 
             @staticmethod
-            def that(
-                value: t.Tests.Testobject,
+            def that[SubjectT](
+                value: SubjectT,
                 *,
                 owned_payload: bool = False,
-                **kwargs: p.AttributeProbe,
+                where: Callable[[SubjectT], bool] | None = None,
+                **kwargs: t.Tests.MatcherOption,
             ) -> None:
                 """Provide that."""
-                tm.that(value, owned_payload=owned_payload, **kwargs)
+                tm.that(value, owned_payload=owned_payload, where=where, **kwargs)
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](
