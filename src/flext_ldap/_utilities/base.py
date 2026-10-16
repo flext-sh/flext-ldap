@@ -9,3 +9,6 @@ from __future__ import annotations
 
 class FlextLdapUtilitiesBase:
     """Base utilities for flext-ldap."""
+
+
+__all__: tuple[str, ...] = ("FlextLdapUtilitiesBase",)
