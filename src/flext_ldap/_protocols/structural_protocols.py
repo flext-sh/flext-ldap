@@ -58,10 +58,4 @@ class FlextLdapProtocolsStructural:
             ...
 
 
-__all__: list[str] = [
-    "FlextLdapProtocolsStructural",
-    "HasAttributesProperty",
-    "HasConfigAttribute",
-    "HasDynamicAttribute",
-    "HasItemsMethod",
-]
+__all__: list[str] = ["FlextLdapProtocolsStructural"]
