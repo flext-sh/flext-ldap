@@ -96,6 +96,22 @@ class FlextLdapSync(FlextLdapOperations):
             return progress_callback
         if FlextLdapSync.single_phase_callback(callback):
             return callback
+        FlextLdapSync._require_supported_callback(callback)
+        return None
+
+    @staticmethod
+    def _require_supported_callback(
+        callback: t.Ldap.LdapProgressCallback,
+    ) -> None:
+        """Raise unless the callback matches a supported phase protocol.
+
+        Args:
+            callback: Configured progress callback to validate.
+
+        Raises:
+            TypeError: If the callback signature matches neither protocol.
+
+        """
         try:
             sig = inspect.signature(callback)
             param_count = len(sig.parameters)
@@ -303,21 +319,8 @@ class FlextLdapSync(FlextLdapOperations):
                 phase_callback(phase_name, current, total, dn, stats)
 
             return wrapped_callback
-        try:
-            sig = inspect.signature(phase_callback)
-            param_count = len(sig.parameters)
-            msg = (
-                f"progress_callback has {param_count} parameters but must have "
-                f"{c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
-                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase)"
-            )
-        except c.EXC_TYPE_VALIDATION:
-            msg = (
-                f"progress_callback {phase_callback!r} has an incompatible signature: "
-                f"must have {c.Ldap.SINGLE_PHASE_PARAM_COUNT} (single-phase) or "
-                f"{c.Ldap.MULTI_PHASE_PARAM_COUNT} (multi-phase) parameters"
-            )
-        raise TypeError(msg)
+        FlextLdapSync._require_supported_callback(phase_callback)
+        return None
 
     def _process_single_phase(
         self,
