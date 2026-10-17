@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from flext_ldif import FlextLdifTypes
-from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
+
+from flext_ldap._typings import ldap as _ldap_types
 
 
 class FlextLdapTypes(FlextLdifTypes):
@@ -18,55 +17,26 @@ class FlextLdapTypes(FlextLdifTypes):
     class Ldap:
         """LDAP type aliases."""
 
-        LDAPException: type[Exception] = _Ldap3LDAPException
+        LDAPException = _ldap_types.LDAPException
 
-        type Ldap3AttributeScalar = str | bytes
-        type Ldap3AttributeValues = FlextLdifTypes.SequenceOf[Ldap3AttributeScalar]
-        type Ldap3AttributeDict = FlextLdifTypes.MappingKV[str, Ldap3AttributeValues]
-        type Ldap3AttributeValue = Ldap3AttributeScalar | Ldap3AttributeValues
-        type Ldap3AddAttributeValue = (
-            Ldap3AttributeScalar
-            | FlextLdifTypes.StrSequence
-            | FlextLdifTypes.SequenceOf[bytes]
-        )
-        type Ldap3AddAttributes = FlextLdifTypes.MappingKV[str, Ldap3AddAttributeValue]
-        type Ldap3ModifyChangeValue = FlextLdifTypes.Pair[
-            str,
-            FlextLdifTypes.MutableSequenceOf[str],
-        ]
-        type Ldap3ModifyChangesDict = FlextLdifTypes.MutableMappingKV[
-            str,
-            FlextLdifTypes.MutableSequenceOf[Ldap3ModifyChangeValue],
-        ]
-        type OperationChangeValue = FlextLdifTypes.Pair[int, FlextLdifTypes.StrSequence]
-        type OperationChanges = FlextLdifTypes.MutableMappingKV[
-            str,
-            FlextLdifTypes.SequenceOf[OperationChangeValue],
-        ]
-        type OperationAttributes = FlextLdifTypes.MappingKV[
-            str,
-            FlextLdifTypes.StrSequence,
-        ]
-        type Ldap3EntrySequenceValue = FlextLdifTypes.SequenceOf[
-            Ldap3AttributeScalar | FlextLdifTypes.Numeric | bool
-        ]
-        type Ldap3EntryValue = (
-            Ldap3AttributeScalar
-            | FlextLdifTypes.Numeric
-            | bool
-            | Ldap3EntrySequenceValue
-        )
-        type LdapProgressCallback = Callable[..., None]
-        type MultiPhaseProgressCallback = Callable[..., None]
-        type ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback
-        type LdapModifyChangeValue = FlextLdifTypes.Pair[
-            str | int,
-            FlextLdifTypes.StrSequence,
-        ]
-        type LdapModifyChanges = FlextLdifTypes.MappingKV[
-            str,
-            FlextLdifTypes.SequenceOf[LdapModifyChangeValue],
-        ]
+        Ldap3AttributeScalar = _ldap_types.Ldap3AttributeScalar
+        Ldap3AttributeValues = _ldap_types.Ldap3AttributeValues
+        Ldap3AttributeDict = _ldap_types.Ldap3AttributeDict
+        Ldap3AttributeValue = _ldap_types.Ldap3AttributeValue
+        Ldap3AddAttributeValue = _ldap_types.Ldap3AddAttributeValue
+        Ldap3AddAttributes = _ldap_types.Ldap3AddAttributes
+        Ldap3ModifyChangeValue = _ldap_types.Ldap3ModifyChangeValue
+        Ldap3ModifyChangesDict = _ldap_types.Ldap3ModifyChangesDict
+        OperationChangeValue = _ldap_types.OperationChangeValue
+        OperationChanges = _ldap_types.OperationChanges
+        OperationAttributes = _ldap_types.OperationAttributes
+        Ldap3EntrySequenceValue = _ldap_types.Ldap3EntrySequenceValue
+        Ldap3EntryValue = _ldap_types.Ldap3EntryValue
+        LdapProgressCallback = _ldap_types.LdapProgressCallback
+        MultiPhaseProgressCallback = _ldap_types.MultiPhaseProgressCallback
+        ProgressCallbackUnion = _ldap_types.ProgressCallbackUnion
+        LdapModifyChangeValue = _ldap_types.LdapModifyChangeValue
+        LdapModifyChanges = _ldap_types.LdapModifyChanges
 
 
 t = FlextLdapTypes
