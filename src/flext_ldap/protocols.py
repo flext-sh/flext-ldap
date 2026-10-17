@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """LDAP Protocol Definitions - Protocol Interfaces for FLEXT LDAP Operations.
 
 Protocols use structural typing only - no model imports.
@@ -13,11 +14,13 @@ from typing import Protocol, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
 
-from flext_ldap._protocols.client_protocols import FlextLdapProtocolsClient
-from flext_ldap._protocols.search_protocols import FlextLdapProtocolsSearch
-from flext_ldap._protocols.service_protocols import FlextLdapProtocolsService
-from flext_ldap._protocols.settings_protocols import FlextLdapProtocolsSettings
-from flext_ldap._protocols.structural_protocols import FlextLdapProtocolsStructural
+from flext_ldap._protocols import (
+    FlextLdapProtocolsClient,
+    FlextLdapProtocolsSearch,
+    FlextLdapProtocolsService,
+    FlextLdapProtocolsSettings,
+    FlextLdapProtocolsStructural,
+)
 
 
 class FlextLdapProtocols(FlextLdifProtocols):

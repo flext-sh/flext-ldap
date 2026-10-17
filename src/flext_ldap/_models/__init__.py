@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from flext_ldap._models.config import FlextLdapConfigModels
     from flext_ldap._models.ldap import FlextLdapFlextModelsLdap
 
+
 __all__: tuple[str, ...] = (
     "FlextLdapConfigModels",
     "FlextLdapFlextModelsLdap",
