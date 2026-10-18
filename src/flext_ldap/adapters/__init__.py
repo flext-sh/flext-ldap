@@ -13,22 +13,24 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap.adapters import _ldap3
-    from flext_ldap.adapters._ldap3.connection_manager import (
+    from flext_ldap.adapters import _ldap3 as _ldap3
+    from flext_ldap.adapters._ldap3 import (
         FlextLdapLdap3ConnectionManager,
-    )
-    from flext_ldap.adapters._ldap3.operation_executor import (
         FlextLdapLdap3OperationExecutor,
-    )
-    from flext_ldap.adapters._ldap3.result_converter import (
         FlextLdapLdap3ResultConverter,
+        FlextLdapLdap3ResultExtract,
+        FlextLdapLdap3SearchExecutor,
+        FlextLdapLdap3Wrappers,
     )
-    from flext_ldap.adapters._ldap3.result_extract import FlextLdapLdap3ResultExtract
-    from flext_ldap.adapters._ldap3.search_executor import FlextLdapLdap3SearchExecutor
-    from flext_ldap.adapters._ldap3.wrappers import FlextLdapLdap3Wrappers
+    from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+    from flext_ldap.adapters.host import FlextLdapAdapterHost
+    from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
 
 
 __all__: tuple[str, ...] = (
+    "FlextLdapAdapterHost",
+    "FlextLdapEntryAdapter",
+    "FlextLdapLdap3Adapter",
     "FlextLdapLdap3ConnectionManager",
     "FlextLdapLdap3OperationExecutor",
     "FlextLdapLdap3ResultConverter",
@@ -42,6 +44,9 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "FlextLdapAdapterHost": ".host",
+        "FlextLdapEntryAdapter": ".entry",
+        "FlextLdapLdap3Adapter": ".ldap3",
         "FlextLdapLdap3ConnectionManager": "._ldap3.connection_manager",
         "FlextLdapLdap3OperationExecutor": "._ldap3.operation_executor",
         "FlextLdapLdap3ResultConverter": "._ldap3.result_converter",
