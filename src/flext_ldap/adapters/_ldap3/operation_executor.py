@@ -28,6 +28,7 @@ class FlextLdapLdap3OperationExecutor:
 
         model_config = m.ConfigDict(frozen=True, extra="ignore")
         description: str | None = None
+        message: str | None = None
 
         @m.field_validator("description", mode="before")
         @classmethod
@@ -76,7 +77,7 @@ class FlextLdapLdap3OperationExecutor:
         connection: p.Ldap.Ldap3Connection,
         prefix: str,
     ) -> p.Result[m.Ldap.OperationResult]:
-        """Build ``r.fail`` from ``connection.result.description`` when present.
+        """Build ``r.fail`` retaining the server description and diagnostic.
 
         Returns:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
@@ -91,7 +92,12 @@ class FlextLdapLdap3OperationExecutor:
             description = payload.description
             if description is not None:
                 error_msg = f"{prefix}: {description}"
-        return r[m.Ldap.OperationResult].fail(error_msg)
+            if payload.message:
+                error_msg = f"{error_msg}: {payload.message}"
+        return r[m.Ldap.OperationResult].fail(
+            error_msg,
+            error_data=result_payload,
+        )
 
     @staticmethod
     def execute_add(

@@ -142,8 +142,9 @@ class TestsFlextLdapOperations:
             self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
         ]
 
+        expected = u.Ldap.Tests.fail(operations.upsert(entries[0]))
         error = u.Ldap.Tests.fail(operations.batch_upsert(entries, stop_on_error=True))
-        u.Ldap.Tests.that(error, contains=c.Ldap.Tests.OPERATIONS_BATCH_STOP_FRAGMENT)
+        u.Ldap.Tests.that(error, eq=expected)
 
     def test_batch_upsert_all_failed_returns_failure(self) -> None:
         """Verify batch upsert all failed returns failure."""

@@ -30,12 +30,11 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             def that[SubjectT](
                 value: SubjectT,
                 *,
-                owned_payload: bool = False,
                 where: Callable[[SubjectT], bool] | None = None,
                 **kwargs: t.Tests.MatcherOption,
             ) -> None:
                 """Provide that."""
-                tm.that(value, owned_payload=owned_payload, where=where, **kwargs)
+                tm.that(value, where=where, **kwargs)
 
             @staticmethod
             def fail[TResult: t.Tests.TestResultValue](

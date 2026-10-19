@@ -281,11 +281,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             stop_on_error=stop_on_error,
         )
         stats = m.Ldap.LdapBatchStats()
-        stop_error_index: int | None = None
         total_entries = len(entries)
         for i, entry in enumerate(entries, 1):
             try:
-                stop_requested = self._process_batch_entry(
+                outcome = self._process_batch_entry(
                     entry,
                     sync_options,
                     stats,
@@ -295,15 +294,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             except c.EXC_BROAD_IO_TYPE as exc:
                 return r[m.Ldap.LdapBatchStats].fail(
                     f"Batch upsert aborted on unexpected exception at entry {i}: {exc}",
+                    exception=exc,
                 )
-            if stop_requested:
-                stop_error_index = i
-                break
-        if sync_options.stop_on_error and stop_error_index is not None:
-            return r[m.Ldap.LdapBatchStats].fail(
-                f"Batch upsert stopped on error at entry "
-                f"{stop_error_index}/{total_entries}",
-            )
+            if sync_options.stop_on_error and outcome.failure:
+                return r[m.Ldap.LdapBatchStats].from_failure(outcome)
         self.logger.info(
             "Batch upsert completed",
             operation=c.Ldap.OperationName.BATCH_UPSERT,
@@ -666,11 +660,11 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         stats: m.Ldap.LdapBatchStats,
         entry_index: int,
         total_entries: int,
-    ) -> bool:
-        """Process one batch entry and report whether stop-on-error should halt.
+    ) -> p.Result[m.Ldap.LdapOperationResult]:
+        """Process one batch entry while preserving its causal outcome.
 
         Returns:
-            The resulting ``bool``.
+            The original upsert result, including server diagnostics.
 
         """
         entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
@@ -694,8 +688,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 entry_dn,
                 stats,
             )
-        should_stop: bool = sync_options.stop_on_error and upsert_result.failure
-        return should_stop
+        return upsert_result
 
     def _update_batch_stats(
         self,
