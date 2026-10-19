@@ -32,11 +32,11 @@ class FlextLdapTypes(FlextLdifTypes):
         OperationAttributes = _ldap_types.OperationAttributes
         Ldap3EntrySequenceValue = _ldap_types.Ldap3EntrySequenceValue
         Ldap3EntryValue = _ldap_types.Ldap3EntryValue
-        LdapProgressCallback = _ldap_types.LdapProgressCallback
+        type LdapProgressCallback = _ldap_types.LdapProgressCallback
         MultiPhaseProgressCallback = _ldap_types.MultiPhaseProgressCallback
         ProgressCallbackUnion = _ldap_types.ProgressCallbackUnion
         LdapModifyChangeValue = _ldap_types.LdapModifyChangeValue
-        LdapModifyChanges = _ldap_types.LdapModifyChanges
+        type LdapModifyChanges = _ldap_types.LdapModifyChanges
 
 
 t = FlextLdapTypes
