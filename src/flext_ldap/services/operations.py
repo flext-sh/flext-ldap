@@ -321,24 +321,6 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         return r[m.Ldap.LdapBatchStats].ok(stats)
 
     @staticmethod
-    def _fold_operation_result(
-        result: p.Result[m.Ldap.OperationResult],
-    ) -> p.Result[m.Ldap.OperationResult]:
-        """Fold an adapter operation outcome into the canonical result surface.
-
-        Returns:
-            The resulting ``p.Result[m.Ldap.OperationResult]``.
-
-        """
-        folded: p.Result[m.Ldap.OperationResult] = result.fold(
-            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
-                u.to_str(e, default="Unknown error"),
-            ),
-            on_success=r[m.Ldap.OperationResult].ok,
-        )
-        return folded
-
-    @staticmethod
     def _normalized_dn(dn: str | p.Ldif.DN, op_name: str) -> p.Result[m.Ldif.DN]:
         """Normalize a str-or-DN input into a validated DN model.
 
@@ -386,7 +368,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         if dn_build.failure:
             return r[m.Ldap.OperationResult].from_failure(dn_build)
         dn_model: m.Ldif.DN = dn_build.unwrap()
-        return self._fold_operation_result(self._ensure_adapter().delete(dn_model))
+        return self._ensure_adapter().delete(dn_model)
 
     def delete_subtree(
         self,
@@ -511,9 +493,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         concrete_changes: t.Ldap.OperationChanges = {
             k: [(int(op), list(vals)) for op, vals in v] for k, v in changes.items()
         }
-        return self._fold_operation_result(
-            self._ensure_adapter().modify(dn_model, concrete_changes),
-        )
+        return self._ensure_adapter().modify(dn_model, concrete_changes)
 
     def search(
         self,
@@ -562,17 +542,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             update={"base_dn": base_dn_result.value},
         )
         effective_server_type = server_type or self._server_type
-        result = self._ensure_adapter().search(
+        return self._ensure_adapter().search(
             normalized_options,
             server_type=effective_server_type,
         )
-        folded: p.Result[m.Ldap.SearchResult] = result.fold(
-            on_failure=lambda e: r[m.Ldap.SearchResult].fail(
-                u.to_str(e, default="Unknown error"),
-            ),
-            on_success=r[m.Ldap.SearchResult].ok,
-        )
-        return folded
 
     def upsert(
         self,
