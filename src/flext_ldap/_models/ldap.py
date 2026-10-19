@@ -38,7 +38,7 @@ class FlextLdapFlextModelsLdap:
             ] = None
             bind_password: Annotated[
                 str | None,
-                m.Field(description="Bind password for authentication"),
+                m.Field(description="Bind password for authentication", repr=False),
             ] = None
             timeout: Annotated[
                 t.PositiveInt,
