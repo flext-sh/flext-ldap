@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_ldif import p
 
-from flext_ldap._protocols.search_protocols import FlextLdapProtocolsSearch
 from flext_ldap._protocols.service_protocols import FlextLdapProtocolsService
 
 if TYPE_CHECKING:
@@ -38,7 +37,7 @@ class FlextLdapProtocolsClient:
 
         def add(
             self,
-            entry: p.Ldif.Entry,
+            entry: m.Ldif.Entry,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Add LDAP entry.
 
@@ -53,7 +52,7 @@ class FlextLdapProtocolsClient:
 
         def batch_upsert(
             self,
-            entries: t.SequenceOf[p.Ldif.Entry],
+            entries: t.SequenceOf[m.Ldif.Entry],
             *,
             progress_callback: t.Ldap.LdapProgressCallback | None = None,
             retry_on_errors: t.StrSequence | None = None,
@@ -78,7 +77,7 @@ class FlextLdapProtocolsClient:
 
         def delete_subtree(
             self,
-            dn: str | p.Ldif.DN,
+            dn: str | m.Ldif.DN,
         ) -> p.Result[m.Ldap.SubtreeDeleteResult]:
             """Delete an entry and its descendants, deepest-first.
 
@@ -94,7 +93,7 @@ class FlextLdapProtocolsClient:
 
         def plan_upsert(
             self,
-            entries: t.SequenceOf[p.Ldif.Entry],
+            entries: t.SequenceOf[m.Ldif.Entry],
         ) -> p.Result[m.Ldap.UpsertPlan]:
             """Classify entries for upsert without writing (dry plan).
 
@@ -127,7 +126,7 @@ class FlextLdapProtocolsClient:
 
         def connect(
             self,
-            connection_config: FlextLdapProtocolsSearch.ConnectionConfig,
+            connection_config: m.Ldap.ConnectionConfig,
             *,
             auto_retry: bool = False,
             max_retries: int = 1,
@@ -173,7 +172,7 @@ class FlextLdapProtocolsClient:
 
         def delete(
             self,
-            dn: str | p.Ldif.DN,
+            dn: str | m.Ldif.DN,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Delete LDAP entry.
 
@@ -204,7 +203,7 @@ class FlextLdapProtocolsClient:
 
         def modify(
             self,
-            dn: str | p.Ldif.DN,
+            dn: str | m.Ldif.DN,
             changes: t.Ldap.LdapModifyChanges,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Modify LDAP entry.
@@ -221,7 +220,7 @@ class FlextLdapProtocolsClient:
 
         def search(
             self,
-            search_options: FlextLdapProtocolsSearch.SearchOptions,
+            search_options: m.Ldap.SearchOptions,
             server_type: str = "rfc",
         ) -> p.Result[m.Ldap.SearchResult]:
             """Perform LDAP search operation.
@@ -276,7 +275,7 @@ class FlextLdapProtocolsClient:
 
         @staticmethod
         def add(
-            entry: p.Ldif.Entry,
+            entry: m.Ldif.Entry,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Add LDAP entry, returning the operation result.
 
@@ -291,7 +290,7 @@ class FlextLdapProtocolsClient:
 
         @staticmethod
         def delete(
-            dn: str | p.Ldif.DN,
+            dn: str | m.Ldif.DN,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Delete LDAP entry, returning the operation result.
 
@@ -306,7 +305,7 @@ class FlextLdapProtocolsClient:
 
         @staticmethod
         def modify(
-            dn: str | p.Ldif.DN,
+            dn: str | m.Ldif.DN,
             changes: t.Ldap.OperationChanges,
         ) -> p.Result[m.Ldap.OperationResult]:
             """Modify LDAP entry, returning the operation result.
