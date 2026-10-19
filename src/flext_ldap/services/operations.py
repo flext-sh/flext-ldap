@@ -81,12 +81,12 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
     """
 
-    _upsert_handler_instance: FlextLdapUpsertHandler | None = u.PrivateAttr(
+    _upsert_handler_instance: FlextLdapUpsertHandler | None = m.PrivateAttr(
         default_factory=lambda: None,
     )
 
     _subtree_delete_handler_instance: FlextLdapSubtreeDeleteHandler | None = (
-        u.PrivateAttr(default_factory=lambda: None)
+        m.PrivateAttr(default_factory=lambda: None)
     )
 
     @property

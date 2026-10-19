@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import s, t, u
+from flext_ldap import m, s, t
 from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
 
 
@@ -25,7 +25,7 @@ class FlextLdapAdapterHost[
     owner per AGENTS.md §2.7) constructs the concrete implementation.
     """
 
-    _adapter: FlextLdapLdap3Adapter | None = u.PrivateAttr(
+    _adapter: FlextLdapLdap3Adapter | None = m.PrivateAttr(
         default_factory=lambda: None,
     )
 

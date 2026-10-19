@@ -15,7 +15,7 @@ from __future__ import annotations
 from flext_core import FlextService
 from flext_ldif import FlextLdif
 
-from flext_ldap import FlextLdapSettings, c, m, p, t, u
+from flext_ldap import FlextLdapSettings, c, m, p, t
 
 
 class FlextLdapService[
@@ -28,8 +28,8 @@ class FlextLdapService[
     specialize only when bridging adapter-level protocols.
     """
 
-    _ldif: p.Ldif.LdifClient = u.PrivateAttr(default_factory=FlextLdif)
-    _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldap.DEFAULT_TYPE)
+    _ldif: p.Ldif.LdifClient = m.PrivateAttr(default_factory=FlextLdif)
+    _server_type: str = m.PrivateAttr(default_factory=lambda: c.Ldap.DEFAULT_TYPE)
 
     @classmethod
     def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:

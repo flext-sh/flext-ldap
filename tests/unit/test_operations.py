@@ -25,7 +25,7 @@ class TestsFlextLdapOperations:
     class BatchPathOperations(FlextLdapOperations):
         """Deterministic operations service for exercising public batch flow."""
 
-        _queued_results: list[p.Result[m.Ldap.LdapOperationResult]] = u.PrivateAttr(
+        _queued_results: list[p.Result[m.Ldap.LdapOperationResult]] = m.PrivateAttr(
             default_factory=list[p.Result[m.Ldap.LdapOperationResult]],
         )
 

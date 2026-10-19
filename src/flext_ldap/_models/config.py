@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import m, u
+from flext_ldif import m
 
 
 class FlextLdapConfigModels:
@@ -21,30 +21,30 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
-        name: str = u.Field(description="LDAP project name.")
-        version: str = u.Field(description="LDAP project version.")
+        name: str = m.Field(description="LDAP project name.")
+        version: str = m.Field(description="LDAP project version.")
 
     class Connection(m.BaseModel):
         """LDAP connection defaults and thresholds."""
 
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
-        port: int = u.Field(ge=1, le=65535, description="Default LDAP server port.")
-        timeout_seconds: int = u.Field(
+        port: int = m.Field(ge=1, le=65535, description="Default LDAP server port.")
+        timeout_seconds: int = m.Field(
             ge=1,
             description="Default LDAP operation timeout in seconds.",
         )
-        max_retries: int = u.Field(
+        max_retries: int = m.Field(
             ge=0,
             description="Maximum connection retry attempts.",
         )
-        retry_delay_seconds: float = u.Field(
+        retry_delay_seconds: float = m.Field(
             ge=0,
             description="Delay between retry attempts in seconds.",
         )
-        auto_bind: bool = u.Field(description="Auto-bind connection after connect.")
-        auto_range: bool = u.Field(description="Enable LDAP range retrieval.")
-        default_batch_size: int = u.Field(
+        auto_bind: bool = m.Field(description="Auto-bind connection after connect.")
+        auto_range: bool = m.Field(description="Enable LDAP range retrieval.")
+        default_batch_size: int = m.Field(
             ge=1,
             description="Default LDAP search batch size.",
         )
@@ -54,23 +54,23 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
-        vendor_string_max_tokens: int = u.Field(
+        vendor_string_max_tokens: int = m.Field(
             ge=1,
             description="Maximum tokens in a vendor string.",
         )
-        dn_truncation_length: int = u.Field(
+        dn_truncation_length: int = m.Field(
             ge=1,
             description="Maximum displayed length of a DN.",
         )
-        multi_phase_param_count: int = u.Field(
+        multi_phase_param_count: int = m.Field(
             ge=1,
             description="Parameter count for multi-phase operations.",
         )
-        single_phase_param_count: int = u.Field(
+        single_phase_param_count: int = m.Field(
             ge=1,
             description="Parameter count for single-phase operations.",
         )
-        example_base_dn: str = u.Field(
+        example_base_dn: str = m.Field(
             description="Example base DN used in fixtures and docs.",
         )
 
@@ -79,13 +79,13 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
-        identity: FlextLdapConfigModels.Identity = u.Field(
+        identity: FlextLdapConfigModels.Identity = m.Field(
             description="LDAP identity metadata.",
         )
-        connection: FlextLdapConfigModels.Connection = u.Field(
+        connection: FlextLdapConfigModels.Connection = m.Field(
             description="LDAP connection defaults and thresholds.",
         )
-        validation: FlextLdapConfigModels.Validation = u.Field(
+        validation: FlextLdapConfigModels.Validation = m.Field(
             description="LDAP validation and example defaults.",
         )
 
@@ -94,7 +94,7 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="ignore")
 
-        Ldap: FlextLdapConfigModels.Ldap = u.Field(
+        Ldap: FlextLdapConfigModels.Ldap = m.Field(
             description="LDAP business-rule config namespace.",
         )
 
