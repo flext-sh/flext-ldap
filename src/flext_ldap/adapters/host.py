@@ -25,7 +25,7 @@ class FlextLdapAdapterHost[
     owner per AGENTS.md §2.7) constructs the concrete implementation.
     """
 
-    _adapter: FlextLdapLdap3Adapter | None = u.PrivateAttr(
+    _adapter: FlextLdapLdap3Adapter | None = m.PrivateAttr(
         default_factory=lambda: None,
     )
 

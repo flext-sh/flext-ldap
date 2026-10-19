@@ -25,11 +25,11 @@ class TestsFlextLdapSubtreeDelete:
     class SubtreeOperations(FlextLdapOperations):
         """Deterministic operations double for subtree-delete semantics."""
 
-        _subtree_entries: list[m.Ldif.Entry] = u.PrivateAttr(
+        _subtree_entries: list[m.Ldif.Entry] = m.PrivateAttr(
             default_factory=list[m.Ldif.Entry],
         )
-        _fail_on_dn: str | None = u.PrivateAttr(default=None)
-        _deleted_dns: list[str] = u.PrivateAttr(default_factory=list[str])
+        _fail_on_dn: str | None = m.PrivateAttr(default=None)
+        _deleted_dns: list[str] = m.PrivateAttr(default_factory=list[str])
 
         def __init__(
             self,

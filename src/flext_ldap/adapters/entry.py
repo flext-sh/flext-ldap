@@ -49,7 +49,7 @@ class FlextLdapEntryAdapter(s[bool]):
     flext-ldif's servers system for server-specific handling.
     """
 
-    _server_type: str = u.PrivateAttr(default_factory=lambda: c.Ldif.ServerTypes.RFC)
+    _server_type: str = m.PrivateAttr(default_factory=lambda: c.Ldif.ServerTypes.RFC)
 
     def __init__(self, *, server_type: str | None = None) -> None:
         """Initialize entry adapter with ldif integration and servers.
