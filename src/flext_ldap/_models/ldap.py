@@ -24,33 +24,33 @@ class FlextLdapFlextModelsLdap:
         class ConnectionConfig(m.BaseModel):
             """Connection configuration for LDAP server."""
 
-            host: Annotated[str, u.Field(description="LDAP server hostname")] = (
+            host: Annotated[str, m.Field(description="LDAP server hostname")] = (
                 c.LOCALHOST
             )
-            port: Annotated[t.PortNumber, u.Field(description="LDAP server port")] = (
+            port: Annotated[t.PortNumber, m.Field(description="LDAP server port")] = (
                 c.Ldap.PORT
             )
-            use_ssl: Annotated[bool, u.Field(description="Enable SSL (LDAPS)")] = False
-            use_tls: Annotated[bool, u.Field(description="Enable StartTLS")] = False
+            use_ssl: Annotated[bool, m.Field(description="Enable SSL (LDAPS)")] = False
+            use_tls: Annotated[bool, m.Field(description="Enable StartTLS")] = False
             bind_dn: Annotated[
                 str | None,
-                u.Field(description="Bind DN for authentication"),
+                m.Field(description="Bind DN for authentication"),
             ] = None
             bind_password: Annotated[
                 str | None,
-                u.Field(description="Bind password for authentication"),
+                m.Field(description="Bind password for authentication"),
             ] = None
             timeout: Annotated[
                 t.PositiveInt,
-                u.Field(description="Connection timeout in seconds"),
+                m.Field(description="Connection timeout in seconds"),
             ] = c.Ldap.TIMEOUT
             auto_bind: Annotated[
                 bool,
-                u.Field(description="Auto-bind on connection"),
+                m.Field(description="Auto-bind on connection"),
             ] = True
             auto_range: Annotated[
                 bool,
-                u.Field(description="Enable auto-range for paged results"),
+                m.Field(description="Enable auto-range for paged results"),
             ] = True
 
             @m.model_validator(mode="after")
@@ -83,7 +83,7 @@ class FlextLdapFlextModelsLdap:
 
             base_dn: Annotated[
                 t.NonEmptyStr,
-                u.Field(..., description="Base DN for search (required, non-empty)"),
+                m.Field(..., description="Base DN for search (required, non-empty)"),
             ]
             scope: str = c.Ldap.DEFAULT_SCOPE
             filter_str: str = c.Ldap.ALL_ENTRIES_FILTER
@@ -156,15 +156,15 @@ class FlextLdapFlextModelsLdap:
 
             synced: Annotated[
                 t.NonNegativeInt,
-                u.Field(description="Entries synced successfully"),
+                m.Field(description="Entries synced successfully"),
             ] = 0
             failed: Annotated[
                 t.NonNegativeInt,
-                u.Field(description="Entries that failed"),
+                m.Field(description="Entries that failed"),
             ] = 0
             skipped: Annotated[
                 t.NonNegativeInt,
-                u.Field(description="Entries skipped"),
+                m.Field(description="Entries skipped"),
             ] = 0
 
         class SubtreeDeleteResult(m.BaseModel):
@@ -172,19 +172,19 @@ class FlextLdapFlextModelsLdap:
 
             base_dn: Annotated[
                 str,
-                u.Field(description="Base DN of the targeted subtree"),
+                m.Field(description="Base DN of the targeted subtree"),
             ] = ""
             deleted_count: Annotated[
                 t.NonNegativeInt,
-                u.Field(description="Entries deleted before the run stopped"),
+                m.Field(description="Entries deleted before the run stopped"),
             ] = 0
             failed_dn: Annotated[
                 str | None,
-                u.Field(description="DN of the first failed deletion, if any"),
+                m.Field(description="DN of the first failed deletion, if any"),
             ] = None
             cause: Annotated[
                 str | None,
-                u.Field(description="Failure cause reported for failed_dn"),
+                m.Field(description="Failure cause reported for failed_dn"),
             ] = None
 
         class UpsertPlan(m.BaseModel):
@@ -192,19 +192,19 @@ class FlextLdapFlextModelsLdap:
 
             adds: Annotated[
                 t.NonNegativeInt,
-                u.Field(
+                m.Field(
                     description="Entries absent from the directory (would be added)",
                 ),
             ] = 0
             modifies: Annotated[
                 t.NonNegativeInt,
-                u.Field(
+                m.Field(
                     description="Entries present with differences (would be modified)",
                 ),
             ] = 0
             unchanged: Annotated[
                 t.NonNegativeInt,
-                u.Field(description="Entries already matching the desired state"),
+                m.Field(description="Entries already matching the desired state"),
             ] = 0
 
         class UpsertResult(m.BaseModel):
@@ -212,19 +212,19 @@ class FlextLdapFlextModelsLdap:
 
             success: Annotated[
                 bool,
-                u.Field(description="Whether the upsert succeeded"),
+                m.Field(description="Whether the upsert succeeded"),
             ] = False
             dn: Annotated[
                 str,
-                u.Field(description="Distinguished name of the entry"),
+                m.Field(description="Distinguished name of the entry"),
             ] = ""
             operation: Annotated[
                 str,
-                u.Field(description="Operation performed (ADD/MODIFY/SKIP)"),
+                m.Field(description="Operation performed (ADD/MODIFY/SKIP)"),
             ] = ""
             error: Annotated[
                 str | None,
-                u.Field(description="Error message if operation failed"),
+                m.Field(description="Error message if operation failed"),
             ] = None
 
         class BatchUpsertResult(m.BaseModel):
@@ -235,7 +235,7 @@ class FlextLdapFlextModelsLdap:
             failed: t.NonNegativeInt = 0
             results: Annotated[
                 t.SequenceOf[FlextLdapFlextModelsLdap.FlextLdapModelsLdap.UpsertResult],
-                u.Field(
+                m.Field(
                     default_factory=list,
                     description="Validated per-entry upsert results",
                 ),
@@ -259,29 +259,29 @@ class FlextLdapFlextModelsLdap:
             )
             server_type: str = c.Ldap.DEFAULT_TYPE
             progress_callback: t.Ldap.ProgressCallbackUnion | None = None
-            retry_on_errors: t.StrSequence = u.Field(default_factory=list[str])
+            retry_on_errors: t.StrSequence = m.Field(default_factory=list[str])
             max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
             stop_on_error: bool = False
 
         class ConversionMetadata(m.BaseModel):
             """Conversion metadata."""
 
-            source_attributes: t.StrSequence = u.Field(
+            source_attributes: t.StrSequence = m.Field(
                 default_factory=list[str],
                 description="Source attribute names",
             )
             source_dn: str = ""
-            removed_attributes: t.StrSequence = u.Field(
+            removed_attributes: t.StrSequence = m.Field(
                 default_factory=list[str],
                 description="Attributes removed during conversion",
             )
-            base64_encoded_attributes: t.StrSequence = u.Field(
+            base64_encoded_attributes: t.StrSequence = m.Field(
                 default_factory=list[str],
                 description="Attributes that were base64-encoded",
             )
             dn_changed: bool = False
             converted_dn: str = ""
-            attribute_changes: t.StrSequence = u.Field(
+            attribute_changes: t.StrSequence = m.Field(
                 default_factory=list[str],
                 description="Tracked attribute change descriptions",
             )
@@ -292,16 +292,16 @@ class FlextLdapFlextModelsLdap:
             model_config = m.ConfigDict(frozen=True)
             success: Annotated[
                 bool,
-                u.Field(description="Whether the operation succeeded"),
+                m.Field(description="Whether the operation succeeded"),
             ] = False
             operation_type: Annotated[
                 str,
-                u.Field(description="Type of operation performed"),
+                m.Field(description="Type of operation performed"),
             ] = ""
-            message: Annotated[str, u.Field(description="Result or error message")] = ""
+            message: Annotated[str, m.Field(description="Result or error message")] = ""
             entries_affected: Annotated[
                 t.NonNegativeInt,
-                u.Field(description="Number of entries affected"),
+                m.Field(description="Number of entries affected"),
             ] = 0
 
         class SearchResult(m.BaseModel):
@@ -313,7 +313,7 @@ class FlextLdapFlextModelsLdap:
 
             entries: Annotated[
                 t.SequenceOf[m.Ldif.Entry],
-                u.Field(default_factory=list),
+                m.Field(default_factory=list),
             ]
             search_options: FlextLdapFlextModelsLdap.FlextLdapModelsLdap.SearchOptions
 
@@ -337,7 +337,7 @@ class FlextLdapFlextModelsLdap:
             phase_results: t.MappingKV[
                 str,
                 FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
-            ] = u.Field(
+            ] = m.Field(
                 default_factory=dict[
                     str,
                     "FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult",
