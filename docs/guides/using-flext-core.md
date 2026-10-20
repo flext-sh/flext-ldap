@@ -97,8 +97,8 @@ container = FlextContainer()
 container.bind("service", "ready")
 resolved: p.Result[str] = container.resolve("service", type_cls=str)
 
-assert resolved.success
-assert resolved.value == "ready"
+tm.ok(resolved.success)
+tm.that(resolved.value, eq="ready")
 ```
 
 ## Logging
@@ -126,8 +126,8 @@ class GreetingService(s[str]):
 
 runtime = GreetingService.fetch_global()
 result = runtime.execute()
-assert result.success
-assert result.value == "Hello!"
+tm.ok(result.success)
+tm.that(result.value, eq="Hello!")
 ```
 
 ## Good practices

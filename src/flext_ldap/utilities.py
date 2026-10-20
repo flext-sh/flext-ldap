@@ -36,8 +36,6 @@ class FlextLdapUtilities(FlextLdifUtilities):
     ):
         """LDAP-specific utility namespace."""
 
-        Validation = FlextLdapUtilitiesValidation
-
 
 u = FlextLdapUtilities
 

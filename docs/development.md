@@ -463,7 +463,7 @@ class TestFlextLdapUser:
         )
 
         assert user.is_valid()
-        assert user.get_display_name() == "John Doe"
+        tm.that(user.get_display_name(), eq="John Doe")
 
     def test_user_validation_failure(self):
         """Test invalid user data fails validation."""
@@ -490,7 +490,7 @@ class TestFlextLdapUser:
             dn="cn=test,dc=example,dc=com", uid=uid, cn="Test User", sn="User"
         )
 
-        assert user.is_valid() == expected
+        tm.that(user.is_valid(), eq=expected)
 ```
 
 ### Integration Test Structure
@@ -530,8 +530,8 @@ class TestLdapOperations:
         assert auth_result.success
 
         user = auth_result.unwrap()
-        assert user.uid == "test.user"
-        assert user.cn == "Test User"
+        tm.that(user.uid, eq="test.user")
+        tm.that(user.cn, eq="Test User")
 
     def test_user_search(self, ldap_server):
         """Test user search functionality."""
@@ -545,7 +545,7 @@ class TestLdapOperations:
         )
 
         result = api.search_entries(search_request)
-        assert result.success
+        tm.ok(result.success)
 
         entries = result.unwrap()
         assert isinstance(entries, list)
