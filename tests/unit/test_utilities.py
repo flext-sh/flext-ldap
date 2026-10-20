@@ -347,7 +347,7 @@ class TestsFlextLdapUtilitiesUnitDetect(TestsFlextLdapUtilitiesUnit):
         """detect_from_connection classifies the vendor from real rootDSE data."""
         result = u.Ldap.detect_from_connection(_bound_mock_connection())
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq="openldap")
 
     @staticmethod
@@ -443,19 +443,19 @@ class TestsFlextLdapUtilitiesUnitFilter:
     def test_is_base64_encoded_with_prefix() -> None:
         """Verify is base64 encoded with prefix."""
         result = u.Ldap.base64_encoded(":: dGVzdA==")
-        tm.that(result, eq=True)
+        tm.ok(result)
 
     @staticmethod
     def test_is_base64_encoded_high_ascii() -> None:
         """Verify is base64 encoded high ascii."""
         result = u.Ldap.base64_encoded("test\x80value")
-        tm.that(result, eq=True)
+        tm.ok(result)
 
     @staticmethod
     def test_is_base64_encoded_normal() -> None:
         """Verify is base64 encoded normal."""
         result = u.Ldap.base64_encoded("normalvalue")
-        tm.that(result, eq=False)
+        tm.fail(result)
 
     @staticmethod
     def test_ldap3_value_to_strings_from_none() -> None:
@@ -662,7 +662,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
         """
         result = u.Ldap.query_root_dse(_bound_mock_connection())
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(
             result.value.get(c.Ldap.RootDseAttribute.NAMING_CONTEXTS),
             has="dc=example,dc=com",
@@ -730,7 +730,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
             original_attrs_dict={"cn": ["test"]},
             converted_attrs_dict={"cn": ["test"]},
         )
-        tm.that(result.dn_changed, eq=False)
+        tm.fail(result.dn_changed)
         tm.that(result.attribute_changes, lacks="cn")
 
     @staticmethod
@@ -744,7 +744,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
             original_attrs_dict={"cn": ["test"]},
             converted_attrs_dict={"cn": ["test"]},
         )
-        tm.that(result.dn_changed, eq=True)
+        tm.ok(result.dn_changed)
 
     @staticmethod
     def test_track_conversion_differences_attr_change() -> None:

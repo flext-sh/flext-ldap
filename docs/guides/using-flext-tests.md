@@ -111,7 +111,7 @@ def test_safe_divide() -> None:
     assert isclose(result.unwrap(), 5.0)
 
     failure = safe_divide(10, 0)
-    assert failure.failure
+    tm.fail(failure)
 ```
 
 ## Good practices

@@ -129,7 +129,7 @@ class TestsFlextLdapPublicApiContract:
         facade: type,
     ) -> None:
         """Verify canonical alias resolves to domain facade."""
-        tm.that(getattr(flext_ldap, alias) is facade, eq=True)
+        tm.ok(getattr(flext_ldap, alias) is facade)
 
     @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
     @staticmethod
@@ -153,5 +153,5 @@ class TestsFlextLdapPublicApiContract:
         """Verify fetch global returns shared singleton."""
         # The module-level ``ldap`` is produced by ``FlextLdap.fetch_global()``;
         # repeated resolution must yield the same shared instance (idempotence).
-        tm.that(FlextLdap.fetch_global() is flext_ldap.ldap, eq=True)
-        tm.that(FlextLdap.fetch_global() is FlextLdap.fetch_global(), eq=True)
+        tm.ok(FlextLdap.fetch_global() is flext_ldap.ldap)
+        tm.ok(FlextLdap.fetch_global() is FlextLdap.fetch_global())

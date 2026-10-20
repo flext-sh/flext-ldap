@@ -66,7 +66,7 @@ def safe_divide(a: float, b: float) -> p.Result[float]:
 
 assert safe_divide(10, 2).success
 assert isclose(safe_divide(10, 2).value, 5.0)
-assert safe_divide(10, 0).failure
+tm.fail(safe_divide(10, 0))
 ```
 
 ## Settings

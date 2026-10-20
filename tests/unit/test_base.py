@@ -35,14 +35,14 @@ class TestsFlextLdapBase:
         result = m.Ldap.Tests.SuccessService().execute()
 
         tm.ok(result)
-        tm.that(result.failure, eq=False)
+        tm.fail(result.failure)
 
     @staticmethod
     def test_execute_success_carries_true_value() -> None:
         """Verify execute success carries true value."""
         result = m.Ldap.Tests.SuccessService().execute()
 
-        tm.that(result.unwrap(), eq=True)
+        tm.ok(result.unwrap())
         tm.that(result.error, none=True)
 
     # ── execute(): failure outcome ─────────────────────────────────────
@@ -70,7 +70,7 @@ class TestsFlextLdapBase:
         mapped = m.Ldap.Tests.SuccessService().execute().map(not_)
 
         tm.ok(mapped)
-        tm.that(mapped.unwrap(), eq=False)
+        tm.fail(mapped.unwrap())
 
     @staticmethod
     def test_map_does_not_run_on_failure() -> None:
@@ -86,7 +86,7 @@ class TestsFlextLdapBase:
         recovered = m.Ldap.Tests.FailService().execute().recover(lambda _err: True)
 
         tm.ok(recovered)
-        tm.that(recovered.unwrap(), eq=True)
+        tm.ok(recovered.unwrap())
 
     @pytest.mark.parametrize(
         ("service_factory", "fallback", "expected"),
@@ -115,7 +115,7 @@ class TestsFlextLdapBase:
         # commit.
         glob = FlextSettings.fetch_global()
 
-        tm.that(cfg is glob, eq=False)
+        tm.fail(cfg is glob)
         tm.that(glob, is_=FlextSettings)
         tm.that(cfg, is_=FlextTestsSettings)
 

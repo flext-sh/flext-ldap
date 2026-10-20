@@ -100,7 +100,7 @@ class TestsFlextLdapEntryAdapter:
 
         result = adapter.execute()
 
-        tm.that(u.Ldap.Tests.ok(result), eq=True)
+        tm.ok(u.Ldap.Tests.ok(result))
 
     # ------------------------------------------------------------------
     # ldif_entry_to_ldap3_attributes() — LDIF -> ldap3 attributes

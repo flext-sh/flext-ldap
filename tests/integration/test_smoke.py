@@ -57,7 +57,7 @@ class TestsFlextLdapSmoke:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
         conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
-        tm.that(ldap.is_connected, eq=False)
+        tm.fail(ldap.is_connected)
 
         # Act
         result = ldap.connect(conn_config)
@@ -65,26 +65,26 @@ class TestsFlextLdapSmoke:
         # Assert - public r[bool] contract and observable connected state
         try:
             tm.ok(result)
-            tm.that(result.value, eq=True)
-            tm.that(ldap.is_connected, eq=True)
+            tm.ok(result.value)
+            tm.ok(ldap.is_connected)
         finally:
             ldap.disconnect()
 
         # Assert - disconnect is observable through the public API
-        tm.that(ldap.is_connected, eq=False)
+        tm.fail(ldap.is_connected)
 
     @staticmethod
     def test_disconnect_is_idempotent_when_not_connected() -> None:
         """Disconnecting an unconnected client leaves ``is_connected`` False."""
         # Arrange - ensure a clean, disconnected client
         ldap.disconnect()
-        tm.that(ldap.is_connected, eq=False)
+        tm.fail(ldap.is_connected)
 
         # Act - a second disconnect must not raise and must not connect
         ldap.disconnect()
 
         # Assert - idempotent, observable public state unchanged
-        tm.that(ldap.is_connected, eq=False)
+        tm.fail(ldap.is_connected)
 
     @staticmethod
     def test_rejected_bind_releases_socket(
@@ -102,7 +102,7 @@ class TestsFlextLdapSmoke:
             update={"bind_password": rejected_password},
         )
         tm.fail(ldap.connect(rejected))
-        tm.that(ldap.is_connected, eq=False)
+        tm.fail(ldap.is_connected)
         gc.collect()
 
 
@@ -142,7 +142,7 @@ class TestsFlextLdapMultivalueAdd:
             validation_metadata=None,
             domain_events=[],
         )
-        tm.that(ldap.is_connected, eq=False)
+        tm.fail(ldap.is_connected)
         connect_result = ldap.connect(conn_config)
         tm.ok(connect_result)
         try:

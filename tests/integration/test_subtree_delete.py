@@ -137,7 +137,7 @@ class TestsFlextLdapSubtreeDeleteIntegration:
             tm.that(result.value.deleted_count, eq=3)
             tm.that(result.value.base_dn, eq=root_dn)
             absent = ldap.search(m.Ldap.SearchOptions.base_scope(root_dn))
-            tm.that(absent.failure, eq=True)
+            tm.ok(absent.failure)
             residue = ldap.search(
                 m.Ldap.SearchOptions(
                     base_dn=base_dn,
@@ -163,8 +163,8 @@ class TestsFlextLdapSubtreeDeleteIntegration:
         tm.ok(ldap.connect(conn_config))
         try:
             result = ldap.delete_subtree(absent_dn)
-            tm.that(result.failure, eq=True)
-            tm.that(absent_dn in str(result.error), eq=True)
+            tm.ok(result.failure)
+            tm.ok(absent_dn in str(result.error))
         finally:
             ldap.disconnect()
 
@@ -211,7 +211,7 @@ class TestsFlextLdapPlanUpsertIntegration:
             cn_values = tm.not_none(
                 stored_now.value.entries[0].attributes,
             ).attributes.get("cn", [])
-            tm.that("Stored Name" in cn_values, eq=True)
+            tm.ok("Stored Name" in cn_values)
 
             fresh_now = ldap.search(
                 m.Ldap.SearchOptions(
