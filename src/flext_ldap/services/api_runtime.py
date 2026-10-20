@@ -31,6 +31,7 @@ class FlextLdapApiRuntime:
         exc_tb: types.TracebackType | None,
     ) -> None:
         """Context manager exit with automatic disconnection."""
+        del exc_type, exc_val, exc_tb
         self.disconnect()
 
     def disconnect(self) -> None:
