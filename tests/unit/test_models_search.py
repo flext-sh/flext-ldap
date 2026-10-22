@@ -127,6 +127,7 @@ class TestsFlextLdapModelsSearch:
 
         Raises:
             ValueError: If Unsupported search category case.
+
         """
         attrs: t.AttributeMapping
         match case:

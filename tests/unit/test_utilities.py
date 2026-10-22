@@ -108,6 +108,7 @@ class TestsFlextLdapUtilitiesUnit:
 
         Raises:
             ValueError: If Unsupported attr to str list case.
+
         """
         expected = c.Ldap.Tests.ATTR_TO_STR_LIST_SCENARIOS[case]
         match case:
