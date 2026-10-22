@@ -67,6 +67,9 @@ class FlextLdapSync(FlextLdapOperations):
         Returns:
             The resulting ``t.Ldap.LdapProgressCallback | None``.
 
+        Raises:
+            TypeError: If progress_callback.
+
         """
         callback = settings.progress_callback
         if callback is None:
@@ -283,6 +286,9 @@ class FlextLdapSync(FlextLdapOperations):
 
         Returns:
             The resulting ``t.Ldap.LdapProgressCallback | None``.
+
+        Raises:
+            TypeError: If progress_callback.
 
         """
         phase_callback = (
