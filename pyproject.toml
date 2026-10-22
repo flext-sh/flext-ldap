@@ -2,9 +2,11 @@
 # @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
 # @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
 # @flext-regenerate: make gen
+# @flext-rendered-by: flext-infra 0.12.0
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
 
-# [CUSTOM] name, description, authors, maintainers, scripts, entry-points, classifiers, keywords, license, urls, readme, version, dependencies, optional-dependencies
-# [MANAGED] requires-python
 [project]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -65,16 +67,7 @@ Documentation = "https://github.com/flext-sh/flext/blob/main/README.md"
 Homepage = "https://github.com/flext-sh/flext"
 Repository = "https://github.com/flext-sh/flext"
 
-# [MANAGED] build-system
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
-
-# [MANAGED] tool.codespell
 [dependency-groups]
-codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-]
 dev = [
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "mkdocstrings-python>=2.0.9",
@@ -137,17 +130,42 @@ dev = [
   "vulture>=2.16",
   "yamlfix>=1.19.1",
 ]
+codegen = [
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+]
+
+[tool.flext.docs]
+package_name = "flext_ldap"
+
+[tool.flext.namespace]
+scan_dirs = ["src"]
+
+[tool.hatch.build.targets.wheel]
+only-include = ["src/flext_ldap"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src/flext_ldap" = "flext_ldap"
+
+[tool.hatch.build.targets.wheel.force-include]
+"pyproject.toml" = "flext_ldap/pyproject.toml"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/flext_ldap"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"pyproject.toml" = "pyproject.toml"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.codespell]
 check-filenames = true
 ignore-words-list = "crate,nd"
 
-# [MANAGED] tool.coverage
-
 [tool.coverage.report]
 exclude_also = [
-  "if TYPE_CHECKING:",
   "if _t.TYPE_CHECKING:",
+  "if TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
 ]
 precision = 2
@@ -156,33 +174,15 @@ skip_covered = false
 
 [tool.coverage.run]
 omit = [
-  "*/_protocols/*",
   "*/dependency_injector/providers.pyx",
   "*/protocols.py",
+  "*/_protocols/*",
 ]
 source = ["src"]
 
-# [MANAGED] tool.deptry
-
 [tool.deptry]
 known_first_party = ["flext_ldap"]
-optional_dependencies_dev_groups = ["dev"]
-
-# [MANAGED] tool.hatch
-
-[tool.hatch.build.targets.sdist]
-only-include = ["src/flext_ldap"]
-
-[tool.hatch.build.targets.wheel]
-only-include = ["src/flext_ldap"]
-
-[tool.hatch.build.targets.wheel.sources]
-"src/flext_ldap" = "flext_ldap"
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-# [MANAGED] tool.mypy
+optional_dependencies_dev_groups = []
 
 [tool.mypy]
 allow_redefinition = true
@@ -209,34 +209,71 @@ warn_unused_ignores = true
 follow_untyped_imports = true
 module = ["rope.*"]
 
-# [MANAGED] tool.pydantic-mypy
-
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
 
-# [MANAGED] tool.pyrefly
-
 [tool.pyrefly]
 disable-project-excludes-heuristics = true
 project-excludes = [
+  "**/*.bak",
+  "**/*.egg-info/**",
+  "**/*.orig",
+  "**/*.rej",
+  "**/*.swp",
+  "**/.agents-sync-home/**",
+  "**/.agents/**",
+  "**/.archive/**",
+  "**/.beads/**",
+  "**/.benchmarks/**",
+  "**/.bkp/**",
+  "**/.cache/**",
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.gemini/**",
+  "**/.git/**",
+  "**/.hypothesis/**",
+  "**/.kilo/**",
+  "**/.mypy_cache/**",
+  "**/.omo/**",
+  "**/.opencode/**",
+  "**/.pylance_cache/**",
+  "**/.pyrefly_cache/**",
+  "**/.pytest_cache/**",
+  "**/.reports/**",
+  "**/.ruff_cache/**",
+  "**/.serena/**",
+  "**/.snapshots/**",
+  "**/.test-tmp/**",
+  "**/.tmp/**",
+  "**/.tox/**",
+  "**/.venv.*/**",
   "**/.venv/**",
-  "**/__pycache__",
+  "**/.vscode/**",
+  "**/.worktrees/**",
+  "**/__pycache__/**",
   "**/__pyrefly_virtual__/**",
-  "**/node_modules",
+  "**/_tmp_*/**",
+  "**/build/**",
+  "**/dist-packages/**",
+  "**/dist/**",
+  "**/htmlcov/**",
+  "**/incoming/**",
+  "**/legado/**",
+  "**/node_modules/**",
   "**/protos/**",
+  "**/reports/**",
   "**/site-packages/**",
+  "**/site/**",
+  "**/target/**",
   "**/typings/**",
-  "**/vendor/**",
   "**/venv/**",
-  ".venv/**",
-  "typings/**",
-  "vendor/**",
 ]
 project-includes = ["src/**/*.py*", "tests/**/*.py*"]
 python-version = "3.13"
-search-path = ["src", "tests", "."]
+search-path = ["src", "."]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -321,8 +358,6 @@ unused-coroutine = "error"
 unused-ignore = "error"
 variance-mismatch = "error"
 
-# [MANAGED] tool.pyright
-
 [tool.pyright]
 exclude = [
   "**/*.bak",
@@ -345,54 +380,41 @@ exclude = [
   "**/.git/**",
   "**/.hypothesis/**",
   "**/.kilo/**",
-  "**/.mypy_cache",
   "**/.mypy_cache/**",
   "**/.omo/**",
   "**/.opencode/**",
   "**/.pylance_cache/**",
   "**/.pyrefly_cache/**",
-  "**/.pytest_cache",
   "**/.pytest_cache/**",
   "**/.reports/**",
-  "**/.ruff_cache",
   "**/.ruff_cache/**",
   "**/.serena/**",
   "**/.snapshots/**",
   "**/.test-tmp/**",
   "**/.tmp/**",
   "**/.tox/**",
-  "**/.venv",
   "**/.venv.*/**",
   "**/.venv/**",
   "**/.vscode/**",
   "**/.worktrees/**",
-  "**/__pycache__",
   "**/__pycache__/**",
   "**/__pyrefly_virtual__/**",
   "**/_tmp_*/**",
   "**/build/**",
-  "**/dist-packages",
   "**/dist-packages/**",
   "**/dist/**",
   "**/htmlcov/**",
   "**/incoming/**",
   "**/legado/**",
-  "**/node_modules",
   "**/node_modules/**",
   "**/protos/**",
   "**/reports/**",
-  "**/site-packages",
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
-  "**/venv",
   "**/venv/**",
-  ".git",
-  ".reports",
-  ".venv",
-  "vendor",
 ]
-extraPaths = [".", "src"]
+extraPaths = ["src", "."]
 include = ["conftest.py", "src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
@@ -426,10 +448,10 @@ root = "tests"
 [tool.pytest.ini_options]
 addopts = [
   "--benchmark-disable",
+  "--strict-markers",
+  "--markdown-docs",
   "--durations=10",
   "--flext-enforce-strict",
-  "--markdown-docs",
-  "--strict-markers",
 ]
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
@@ -439,31 +461,83 @@ filterwarnings = [
 ]
 flext_slow_timeout_seconds = "30"
 markers = [
-  "discovery: catalog and stream discovery tests",
+  "smoke: public-interface smoke tests",
+  "unit: unit tests",
+  "integration: integration tests",
+  "functional: functional behavior tests",
+  "performance: performance and benchmark tests",
+  "slow: slow-running tests",
   "docker: tests requiring Docker",
+  "oracle: tests requiring the shared Oracle database",
+  "remote: tests requiring remote/external network services",
   "e2e: end-to-end integration tests",
   "edge_cases: edge case tests",
-  "functional: functional behavior tests",
-  "integration: integration tests",
-  "oracle: tests requiring the shared Oracle database",
-  "performance: performance and benchmark tests",
-  "remote: tests requiring remote/external network services",
-  "requires_engine: native check engine required by this test",
-  "resilience: resilience tests",
-  "singer: Singer protocol contract tests",
-  "slow: slow-running tests",
-  "smoke: public-interface smoke tests",
   "stress: stress tests",
-  "unit: unit tests",
+  "resilience: resilience tests",
+  "discovery: catalog and stream discovery tests",
+  "singer: Singer protocol contract tests",
+  "requires_engine: native check engine required by this test",
 ]
 minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
 
-# [MANAGED] tool.ruff
-
 [tool.ruff]
+extend-exclude = [
+  "**/*.bak",
+  "**/*.egg-info/**",
+  "**/*.orig",
+  "**/*.rej",
+  "**/*.swp",
+  "**/.agents-sync-home/**",
+  "**/.agents/**",
+  "**/.archive/**",
+  "**/.beads/**",
+  "**/.benchmarks/**",
+  "**/.bkp/**",
+  "**/.cache/**",
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.gemini/**",
+  "**/.git/**",
+  "**/.hypothesis/**",
+  "**/.kilo/**",
+  "**/.mypy_cache/**",
+  "**/.omo/**",
+  "**/.opencode/**",
+  "**/.pylance_cache/**",
+  "**/.pyrefly_cache/**",
+  "**/.pytest_cache/**",
+  "**/.reports/**",
+  "**/.ruff_cache/**",
+  "**/.serena/**",
+  "**/.snapshots/**",
+  "**/.test-tmp/**",
+  "**/.tmp/**",
+  "**/.tox/**",
+  "**/.venv.*/**",
+  "**/.venv/**",
+  "**/.vscode/**",
+  "**/.worktrees/**",
+  "**/__pycache__/**",
+  "**/__pyrefly_virtual__/**",
+  "**/_tmp_*/**",
+  "**/build/**",
+  "**/dist-packages/**",
+  "**/dist/**",
+  "**/htmlcov/**",
+  "**/incoming/**",
+  "**/legado/**",
+  "**/node_modules/**",
+  "**/protos/**",
+  "**/reports/**",
+  "**/site-packages/**",
+  "**/site/**",
+  "**/target/**",
+  "**/venv/**",
+]
 fix = false
 line-length = 88
 namespace-packages = ["examples", "scripts", "tests"]
@@ -482,9 +556,9 @@ skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
 extend-safe-fixes = [
-  "camelcase-imported-as-lowercase",
   "relative-imports",
   "typing-only-first-party-import",
+  "camelcase-imported-as-lowercase",
 ]
 extend-select = ["missing-blank-line-after-last-section"]
 ignore = [
@@ -537,29 +611,16 @@ convention = "google"
 [tool.ruff.lint.pylint]
 allow-dunder-method-names = ["__base__", "__bases__"]
 
-# [MANAGED] tool.tomlsort
-
 [tool.tomlsort]
 all = true
 in_place = true
-sort_first = ["build-system", "dependency-groups", "project", "tool"]
-
-# [MANAGED] tool.uv
-
-[tool.uv]
-constraint-dependencies = ["mypy<2.4.0"]
-environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
-link-mode = "copy"
-
-# [MANAGED] tool.vulture
+sort_first = ["project", "build-system", "tool", "dependency-groups"]
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
 min_confidence = 100
 paths = ["src"]
 verbose = false
-
-# [MANAGED] tool.yamlfix
 
 [tool.yamlfix]
 explicit_start = false
@@ -568,4 +629,9 @@ preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
 
-# [MANAGED] dependency-groups
+[tool.uv]
+environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
+link-mode = "copy"
+override-dependencies = [
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@2bf3ad55a32cc117f5321e1467695eba540be97b",
+]
