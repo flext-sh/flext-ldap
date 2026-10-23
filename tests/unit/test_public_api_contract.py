@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -36,10 +35,8 @@ from flext_ldap import (
     FlextLdapTypes,
     FlextLdapUtilities,
 )
-from tests import tm
+from tests import c, t, tm
 
-if TYPE_CHECKING:
-    from tests import t
 pytestmark = pytest.mark.unit
 
 # Top-level facade-owner modules of ``flext_ldap``, statically enumerated so the
@@ -131,7 +128,7 @@ class TestsFlextLdapPublicApiContract:
         """Verify canonical alias resolves to domain facade."""
         tm.ok(getattr(flext_ldap, alias) is facade)
 
-    @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
+    @pytest.mark.parametrize(c.ContextScope.OPERATION, _FACADE_OPERATIONS)
     @staticmethod
     def test_facade_exposes_documented_operation(operation: str) -> None:
         """Verify facade exposes documented operation."""

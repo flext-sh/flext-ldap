@@ -10,16 +10,12 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
 
 from flext_ldap import ldap
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm, u
 
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
 

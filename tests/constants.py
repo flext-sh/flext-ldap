@@ -15,14 +15,12 @@ from enum import StrEnum, unique
 from pathlib import Path
 from tempfile import gettempdir
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 from flext_tests import FlextTestsConstants
 
 from flext_ldap import FlextLdapConstants
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import t
 
 
 def _docker_admin_password() -> str:

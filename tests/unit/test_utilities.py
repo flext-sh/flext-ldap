@@ -183,7 +183,7 @@ class TestsFlextLdapUtilitiesUnit:
         """Verify identical entries compare equal (empty change set)."""
         entry_data: t.MappingKV[str, t.StrSequence] = {
             "cn": [c.Ldap.Tests.STRING_SIMPLE],
-            "sn": ["user"],
+            "sn": [c.ContextScope.USER],
         }
         result = u.Ldap.compare_entries(_entry(entry_data), _entry(entry_data))
         changes = u.Ldap.Tests.ok(result)
@@ -427,7 +427,7 @@ class TestsFlextLdapUtilitiesUnitFilter:
     @staticmethod
     def test_find_existing_values_found_case_insensitive() -> None:
         """Verify find existing values found case insensitive."""
-        existing = {"cn": ["test"], "sn": ["user"]}
+        existing = {"cn": ["test"], "sn": [c.ContextScope.USER]}
         result = tm.not_none(u.Ldap.find_existing_values("CN", existing))
         tm.that(list(result), eq=["test"])
 
@@ -594,7 +594,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     @staticmethod
     def test_process_deleted_attributes() -> None:
         """Verify process deleted attributes."""
-        existing_attrs = {"cn": ["test"], "sn": ["user"]}
+        existing_attrs = {"cn": ["test"], "sn": [c.ContextScope.USER]}
         changes = u.Ldap.process_deleted_attributes(existing_attrs, frozenset(), {"cn"})
         tm.that(changes, has="sn")
         tm.that(changes, lacks="cn")

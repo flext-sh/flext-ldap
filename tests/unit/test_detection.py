@@ -37,7 +37,7 @@ from tests import c, p, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import t
+from tests import t
 
 pytestmark = pytest.mark.unit
 

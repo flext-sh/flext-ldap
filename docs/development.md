@@ -563,7 +563,7 @@ from flext_tests import tk
 from flext_ldap import FlextLdapSettings, set_flext_ldap_settings
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope=c.ContextScope.SESSION)
 def ldap_server():
     """Docker LDAP server for integration tests using tk."""
     docker_manager = tk()

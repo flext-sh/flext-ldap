@@ -109,9 +109,9 @@ class TestsFlextLdapEntryAdapter:
     @pytest.mark.parametrize(
         "attributes",
         [
-            {"cn": ("user",), "sn": ("Doe",)},
-            {"cn": ("user",)},
-            {"objectClass": ("top", "person"), "cn": ("user",)},
+            {"cn": (c.ContextScope.USER,), "sn": ("Doe",)},
+            {"cn": (c.ContextScope.USER,)},
+            {"objectClass": ("top", "person"), "cn": (c.ContextScope.USER,)},
         ],
     )
     def test_ldif_to_ldap3_attributes_preserves_names_and_values(
@@ -156,7 +156,7 @@ class TestsFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
         source = self._Ldap3Entry(
             dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
-            attributes={"cn": ["user"], "sn": ["Doe"]},
+            attributes={"cn": [c.ContextScope.USER], "sn": ["Doe"]},
         )
 
         result = adapter.ldap3_to_ldif_entry(source)
@@ -165,7 +165,7 @@ class TestsFlextLdapEntryAdapter:
         dn = tm.not_none(entry.dn)
         attributes = tm.not_none(entry.attributes)
         tm.that(dn.value, eq=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE)
-        tm.that(attributes.attributes, eq={"cn": ["user"], "sn": ["Doe"]})
+        tm.that(attributes.attributes, eq={"cn": [c.ContextScope.USER], "sn": ["Doe"]})
 
     def test_ldap3_to_ldif_tracks_base64_attributes_for_non_ascii(self) -> None:
         """Verify ldap3 to ldif tracks base64 attributes for non ascii."""
@@ -186,7 +186,7 @@ class TestsFlextLdapEntryAdapter:
         """Return the canonical ldap3 source entry for conversion tests."""
         return TestsFlextLdapEntryAdapter._Ldap3Entry(
             dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
-            attributes={"cn": ["user"]},
+            attributes={"cn": [c.ContextScope.USER]},
         )
 
     @pytest.mark.parametrize(
@@ -221,7 +221,7 @@ class TestsFlextLdapEntryAdapter:
     def test_conversion_round_trip_preserves_attributes(self) -> None:
         """Verify conversion round trip preserves attributes."""
         adapter = FlextLdapEntryAdapter()
-        original = {"cn": ["user"], "sn": ["Doe"]}
+        original = {"cn": [c.ContextScope.USER], "sn": ["Doe"]}
         source = self._Ldap3Entry(
             dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
             attributes=original,
