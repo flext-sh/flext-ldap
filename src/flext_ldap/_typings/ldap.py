@@ -34,9 +34,9 @@ class FlextLdapTypesLdap:
         FlextLdifTypes.MutableSequenceOf[Ldap3ModifyChangeValue],
     ]
     type OperationChangeValue = FlextLdifTypes.Pair[int, FlextLdifTypes.StrSequence]
-    type OperationChanges = FlextLdifTypes.MutableMappingKV[
+    type OperationChanges = dict[
         str,
-        FlextLdifTypes.SequenceOf[OperationChangeValue],
+        FlextLdifTypes.MutableSequenceOf[OperationChangeValue],
     ]
     type OperationAttributes = FlextLdifTypes.MappingKV[
         str,
