@@ -767,14 +767,22 @@ class TestsFlextLdapUtilitiesUnitWhen:
     @staticmethod
     def test_when_safe_condition_true() -> None:
         """Verify when safe condition true."""
-        result = u.Ldap.when_safe(condition=True, then_value="yes", else_value="no")
-        u.Ldap.Tests.that(result, eq="yes")
+        result = u.Ldap.when_safe(
+            condition=True,
+            then_value=c.ParserBooleanToken.YES,
+            else_value=c.ParserBooleanToken.NO,
+        )
+        u.Ldap.Tests.that(result, eq=c.ParserBooleanToken.YES)
 
     @staticmethod
     def test_when_safe_condition_false() -> None:
         """Verify when safe condition false."""
-        result = u.Ldap.when_safe(condition=False, then_value="yes", else_value="no")
-        u.Ldap.Tests.that(result, eq="no")
+        result = u.Ldap.when_safe(
+            condition=False,
+            then_value=c.ParserBooleanToken.YES,
+            else_value=c.ParserBooleanToken.NO,
+        )
+        u.Ldap.Tests.that(result, eq=c.ParserBooleanToken.NO)
 
     @staticmethod
     def test_when_safe_safe_then_true_with_none() -> None:

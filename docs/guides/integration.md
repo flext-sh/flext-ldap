@@ -247,7 +247,7 @@ def search_users(
             }
             for entry in entries
         ],
-        "count": len(entries),
+        c.Aggregation.COUNT: len(entries),
     }
 
 
@@ -721,7 +721,7 @@ metadata:
 data:
   base_dn: "dc=example,dc=com"
   port: "636"
-  use_ssl: "true"
+  use_ssl: c.ParserBooleanToken.TRUE
 ```
 
 ---

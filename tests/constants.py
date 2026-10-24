@@ -118,7 +118,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
                 EMPTY = "empty"
                 BYTES = "bytes"
-                LIST = "list"
+                LIST = c.Action.LIST
                 LIST_BYTES = "list_bytes"
                 INT = "int"
 
@@ -127,7 +127,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 """Provide the test double for ldap value case."""
 
                 BYTES = "bytes"
-                LIST = "list"
+                LIST = c.Action.LIST
                 LIST_BYTES = "list_bytes"
                 TUPLE = "tuple"
                 STR = "str"
