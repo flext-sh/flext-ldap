@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """FLEXT LDAP type definitions with strict direct contracts.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.

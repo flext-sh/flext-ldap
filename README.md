@@ -14,7 +14,8 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-**Version**: `0.12.0` | **Python**: 3.13+ | **Project class**: `domain`
+**Version**: `0.12.0` | **Python**: see `pyproject.toml` `requires-python` | **Project
+class**: `domain`
 
 > **Alpha (0.12.0).** This package is alpha quality. Every package in the workspace must
 > be re-checked and re-validated at 0.12.0 before any promotion beyond alpha; treat
@@ -37,9 +38,8 @@ Enterprise LDAP Operations Library for FLEXT Framework
 ## Collection Rules
 
 Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent
-FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry
-verification).
+and this project's `AGENTS.md` for the current authority chain, execution boundaries and
+required validation.
 
 ## Operation Flow
 
@@ -58,12 +58,16 @@ verification).
 - Public extensions exposed by this project: `FlextLdap`, `FlextLdapConfig`,
   `FlextLdapConstants`, `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService` (+4
   more).
-- Library abstraction boundaries: see AGENTS.md §2.7.
+- Library abstraction boundaries: see the project `AGENTS.md` and the referenced parent
+  architecture rules.
 
 ## Quality Gates
 
-Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) execute their declared
-operations directly.
+Consult `make help` for the current command surface. Each verb performs only its
+declared operation; `make check` validates without applying repairs. Environment setup
+delegates tool provisioning to Mise and project/workspace installation to native uv
+declarations and locks. Python runs the installed project; no custom Python bootstrap or
+lock parser precedes installation.
 
 See [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 for the build, test, and Python quality gates.

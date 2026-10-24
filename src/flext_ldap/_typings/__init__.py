@@ -21,8 +21,6 @@ __all__: tuple[str, ...] = ("FlextLdapTypesLdap",)
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextLdapTypesLdap": ".ldap",
-    }),
+    MappingProxyType({"FlextLdapTypesLdap": ".ldap"}),
     public_exports=__all__,
 )
