@@ -33,7 +33,7 @@ class FlextLdapProtocolsSettings:
         """MRO-composed settings contract with the LDAP namespace."""
 
         @property
-        def ldap(self) -> FlextLdapProtocolsSettings.LdapSettings:
+        def Ldap(self) -> FlextLdapProtocolsSettings.LdapSettings:
             """Namespaced LDAP settings branch (read-only for covariance)."""
             ...
 
