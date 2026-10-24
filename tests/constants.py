@@ -19,7 +19,7 @@ from typing import Final
 
 from flext_tests import FlextTestsConstants
 
-from flext_ldap import FlextLdapConstants
+from flext_ldap import FlextLdapConstants, c
 from tests import t
 
 
