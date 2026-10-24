@@ -15,7 +15,7 @@
       {
         "hooks": [
           {
-            "command": "python3 /home/marlonsc/flext/flext-ldap/.claude/aihub-hooks/claude-sessionstart.py",
+            "command": "python3 $HOME/flext/flext-ldap/.claude/aihub-hooks/claude-sessionstart.py",
             "statusMessage": "Applying synchronized governance",
             "timeout": 10,
             "type": "command"
@@ -37,7 +37,7 @@
       {
         "hooks": [
           {
-            "command": "python3 /home/marlonsc/flext/flext-ldap/.claude/aihub-hooks/claude-subagentstart.py",
+            "command": "python3 $HOME/flext/flext-ldap/.claude/aihub-hooks/claude-subagentstart.py",
             "statusMessage": "Applying synchronized governance",
             "timeout": 10,
             "type": "command"
@@ -49,7 +49,7 @@
       {
         "hooks": [
           {
-            "command": "python3 /home/marlonsc/flext/flext-ldap/.claude/aihub-hooks/claude-userpromptsubmit.py",
+            "command": "python3 $HOME/flext/flext-ldap/.claude/aihub-hooks/claude-userpromptsubmit.py",
             "statusMessage": "Applying synchronized governance",
             "timeout": 10,
             "type": "command"

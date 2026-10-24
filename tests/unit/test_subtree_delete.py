@@ -6,15 +6,12 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 
 from flext_ldap.services.operations import FlextLdapOperations
-from tests import c, m, r, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, m, p, r, t, u
 
 pytestmark = pytest.mark.unit
 

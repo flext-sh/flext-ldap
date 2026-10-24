@@ -281,11 +281,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             stop_on_error=stop_on_error,
         )
         stats = m.Ldap.LdapBatchStats()
-        stop_error_index: int | None = None
         total_entries = len(entries)
         for i, entry in enumerate(entries, 1):
             try:
-                stop_requested = self._process_batch_entry(
+                outcome = self._process_batch_entry(
                     entry,
                     sync_options,
                     stats,
@@ -295,15 +294,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             except c.EXC_BROAD_IO_TYPE as exc:
                 return r[m.Ldap.LdapBatchStats].fail(
                     f"Batch upsert aborted on unexpected exception at entry {i}: {exc}",
+                    exception=exc,
                 )
-            if stop_requested:
-                stop_error_index = i
-                break
-        if sync_options.stop_on_error and stop_error_index is not None:
-            return r[m.Ldap.LdapBatchStats].fail(
-                f"Batch upsert stopped on error at entry "
-                f"{stop_error_index}/{total_entries}",
-            )
+            if sync_options.stop_on_error and outcome.failure:
+                return r[m.Ldap.LdapBatchStats].from_failure(outcome)
         self.logger.info(
             "Batch upsert completed",
             operation=c.Ldap.OperationName.BATCH_UPSERT,
@@ -325,24 +319,6 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 f"{stats.synced} synced, {stats.skipped} skipped",
             )
         return r[m.Ldap.LdapBatchStats].ok(stats)
-
-    @staticmethod
-    def _fold_operation_result(
-        result: p.Result[m.Ldap.OperationResult],
-    ) -> p.Result[m.Ldap.OperationResult]:
-        """Fold an adapter operation outcome into the canonical result surface.
-
-        Returns:
-            The resulting ``p.Result[m.Ldap.OperationResult]``.
-
-        """
-        folded: p.Result[m.Ldap.OperationResult] = result.fold(
-            on_failure=lambda e: r[m.Ldap.OperationResult].fail(
-                u.to_str(e, default="Unknown error"),
-            ),
-            on_success=r[m.Ldap.OperationResult].ok,
-        )
-        return folded
 
     @staticmethod
     def _normalized_dn(dn: str | p.Ldif.DN, op_name: str) -> p.Result[m.Ldif.DN]:
@@ -392,7 +368,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         if dn_build.failure:
             return r[m.Ldap.OperationResult].from_failure(dn_build)
         dn_model: m.Ldif.DN = dn_build.unwrap()
-        return self._fold_operation_result(self._ensure_adapter().delete(dn_model))
+        return self._ensure_adapter().delete(dn_model)
 
     def delete_subtree(
         self,
@@ -517,9 +493,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         concrete_changes: t.Ldap.OperationChanges = {
             k: [(int(op), list(vals)) for op, vals in v] for k, v in changes.items()
         }
-        return self._fold_operation_result(
-            self._ensure_adapter().modify(dn_model, concrete_changes),
-        )
+        return self._ensure_adapter().modify(dn_model, concrete_changes)
 
     def search(
         self,
@@ -568,17 +542,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             update={"base_dn": base_dn_result.value},
         )
         effective_server_type = server_type or self._server_type
-        result = self._ensure_adapter().search(
+        return self._ensure_adapter().search(
             normalized_options,
             server_type=effective_server_type,
         )
-        folded: p.Result[m.Ldap.SearchResult] = result.fold(
-            on_failure=lambda e: r[m.Ldap.SearchResult].fail(
-                u.to_str(e, default="Unknown error"),
-            ),
-            on_success=r[m.Ldap.SearchResult].ok,
-        )
-        return folded
 
     def upsert(
         self,
@@ -666,11 +633,11 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         stats: m.Ldap.LdapBatchStats,
         entry_index: int,
         total_entries: int,
-    ) -> bool:
-        """Process one batch entry and report whether stop-on-error should halt.
+    ) -> p.Result[m.Ldap.LdapOperationResult]:
+        """Process one batch entry while preserving its causal outcome.
 
         Returns:
-            The resulting ``bool``.
+            The original upsert result, including server diagnostics.
 
         """
         entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
@@ -694,8 +661,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
                 entry_dn,
                 stats,
             )
-        should_stop: bool = sync_options.stop_on_error and upsert_result.failure
-        return should_stop
+        return upsert_result
 
     def _update_batch_stats(
         self,

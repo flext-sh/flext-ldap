@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """FlextLdap constants module.
 
 This module provides constants for LDAP operations, extending c.

@@ -28,7 +28,7 @@ class FlextLdapSync(FlextLdapOperations):
         """Return ``True`` when the callback declares ``expected_count`` parameters.
 
         Raises:
-            TypeError: If progress_callback.
+            TypeError: If the callback signature cannot be inspected.
 
         """
         if callback is None:
