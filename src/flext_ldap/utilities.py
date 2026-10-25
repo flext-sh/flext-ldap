@@ -38,5 +38,4 @@ class FlextLdapUtilities(FlextLdifUtilities):
 
 
 u = FlextLdapUtilities
-
 __all__: list[str] = ["FlextLdapUtilities", "u"]

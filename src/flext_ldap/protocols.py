@@ -59,5 +59,4 @@ class FlextLdapProtocols(FlextLdifProtocols):
 
 
 p = FlextLdapProtocols
-
 __all__: list[str] = ["FlextLdapProtocols", "p"]

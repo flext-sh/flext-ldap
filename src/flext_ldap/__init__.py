@@ -15,7 +15,6 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_ldif import d, e, h, r, x
 
-    from flext_ldap import adapters as adapters, services as services
     from flext_ldap.__version__ import (
         FlextLdapVersion,
         __author__,
@@ -58,7 +57,6 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
-    "adapters",
     "c",
     "config",
     "d",
@@ -70,7 +68,6 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
-    "services",
     "settings",
     "t",
     "u",
@@ -98,7 +95,6 @@ install_lazy_exports(
         "__title__": ".__version__",
         "__url__": ".__version__",
         "__version_info__": ".__version__",
-        "adapters": ".adapters",
         "c": ".constants",
         "config": "._config",
         "d": "flext_ldif",
@@ -110,7 +106,6 @@ install_lazy_exports(
         "p": ".protocols",
         "r": "flext_ldif",
         "s": ".base",
-        "services": ".services",
         "settings": "._settings",
         "t": ".typings",
         "u": ".utilities",

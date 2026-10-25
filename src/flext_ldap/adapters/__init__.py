@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap.adapters import _ldap3 as _ldap3
     from flext_ldap.adapters._ldap3 import (
         FlextLdapLdap3ConnectionManager,
         FlextLdapLdap3OperationExecutor,
@@ -37,7 +36,6 @@ __all__: tuple[str, ...] = (
     "FlextLdapLdap3ResultExtract",
     "FlextLdapLdap3SearchExecutor",
     "FlextLdapLdap3Wrappers",
-    "_ldap3",
 )
 
 install_lazy_exports(
@@ -53,7 +51,6 @@ install_lazy_exports(
         "FlextLdapLdap3ResultExtract": "._ldap3.result_extract",
         "FlextLdapLdap3SearchExecutor": "._ldap3.search_executor",
         "FlextLdapLdap3Wrappers": "._ldap3.wrappers",
-        "_ldap3": "._ldap3",
     }),
     public_exports=__all__,
 )

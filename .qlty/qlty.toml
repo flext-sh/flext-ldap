@@ -7,6 +7,25 @@ config_version = "0"
 
 exclude_patterns = [
   "**/protos/**",
+  "**/conftest.py",
+  "**/src/flext_ldap/__init__.py",
+  "**/src/flext_ldap/__version__.py",
+  "**/src/flext_ldap/_constants/__init__.py",
+  "**/src/flext_ldap/_models/__init__.py",
+  "**/src/flext_ldap/_protocols/__init__.py",
+  "**/src/flext_ldap/_typings/__init__.py",
+  "**/src/flext_ldap/_utilities/__init__.py",
+  "**/src/flext_ldap/adapters/__init__.py",
+  "**/src/flext_ldap/adapters/_ldap3/__init__.py",
+  "**/src/flext_ldap/constants.py",
+  "**/src/flext_ldap/models.py",
+  "**/src/flext_ldap/protocols.py",
+  "**/src/flext_ldap/services/__init__.py",
+  "**/src/flext_ldap/typings.py",
+  "**/src/flext_ldap/utilities.py",
+  "**/tests/__init__.py",
+  "**/tests/integration/__init__.py",
+  "**/tests/unit/__init__.py",
 ]
 
 [smells]

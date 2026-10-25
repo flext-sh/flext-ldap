@@ -13,6 +13,10 @@
 - [Container](#container)
 - [Logging](#logging)
 - [Service runtime](#service-runtime)
+- [Ports and composition](#ports-and-composition)
+- [Domain models](#domain-models)
+- [Need -> capability -> benefit](#need-capability-benefit)
+- [What flext-core must not absorb](#what-flext-core-must-not-absorb)
 - [Good practices](#good-practices)
 - [Bad practices](#bad-practices)
 - [Related](#related)
@@ -59,14 +63,25 @@ from flext_core import p, r
 
 
 def safe_divide(a: float, b: float) -> p.Result[float]:
+    """Divide ``a`` by ``b`` and fail explicitly on a zero divisor.
+
+    Returns:
+        The quotient, or a ``division_by_zero`` failure.
+
+    """
     if b == 0:
         return r[float].fail("division_by_zero")
     return r[float].ok(a / b)
 
 
-assert safe_divide(10, 2).success
-assert isclose(safe_divide(10, 2).value, 5.0)
-tm.fail(safe_divide(10, 0))
+expected_quotient = 5.0
+quotient = safe_divide(10, 2)
+if not quotient.success or not isclose(quotient.value, expected_quotient):
+    message = "Expected a successful quotient"
+    raise RuntimeError(message)
+if not safe_divide(10, 0).failure:
+    message = "Expected division by zero to fail"
+    raise RuntimeError(message)
 ```
 
 ## Settings
@@ -75,7 +90,9 @@ tm.fail(safe_divide(10, 0))
 from flext_core import FlextSettings
 
 settings = FlextSettings.fetch_global()
-assert isinstance(settings.model_dump(), dict)
+if not isinstance(settings.model_dump(), dict):
+    message = "Expected settings to dump to a mapping"
+    raise TypeError(message)
 ```
 
 Subprojects extend `FlextSettings` with their own `env_prefix`:
@@ -85,6 +102,8 @@ from flext_core import FlextSettings, m
 
 
 class GreetingSettings(FlextSettings):
+    """Greeting settings read from ``GREETING_*`` environment variables."""
+
     model_config = m.SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
 ```
 
@@ -97,8 +116,10 @@ container = FlextContainer()
 container.bind("service", "ready")
 resolved: p.Result[str] = container.resolve("service", type_cls=str)
 
-tm.ok(resolved.success)
-tm.that(resolved.value, eq="ready")
+expected_service = "ready"
+if not resolved.success or resolved.value != expected_service:
+    message = "Expected the bound service to resolve"
+    raise RuntimeError(message)
 ```
 
 ## Logging
@@ -119,16 +140,64 @@ from flext_core import p, r, s
 
 
 class GreetingService(s[str]):
+    """Service returning a fixed greeting."""
+
     @override
     def execute(self) -> p.Result[str]:
+        """Return the greeting as a successful result."""
         return r[str].ok("Hello!")
 
 
+expected_greeting = "Hello!"
 runtime = GreetingService.fetch_global()
 result = runtime.execute()
-tm.ok(result.success)
-tm.that(result.value, eq="Hello!")
+if not result.success or result.value != expected_greeting:
+    message = "Expected the greeting service to succeed"
+    raise RuntimeError(message)
 ```
+
+## Ports and composition
+
+An application composition root constructs adapters and passes them to its
+services. A dependency uses `t.Port[p.X]`, with a runtime-checkable protocol and an
+excluded field declaration, so service construction validates the supplied
+collaborator without serializing it into the request or response.
+
+Service `execute()` returns `p.Result[T]`. Project-specific bases add their own
+settings and options through MRO; inheriting directly from `s` does not replace
+those local specializations. `fetch_global()` builds the service without
+arguments and is not a way to supply required ports. `with_settings()` creates an
+isolated settings snapshot; it does not retain an injected settings object by
+reference.
+
+## Domain models
+
+`m.Entity` and `m.AggregateRoot` follow Pydantic equality: two instances are equal
+when they have the same type and field values, so two entities that share a
+`unique_id` but differ in another field are unequal. Compare identity explicitly
+with `a.unique_id == b.unique_id`, and key entity collections by `unique_id`. A
+mutable entity is not hashable; only frozen models such as `m.Value` hash, by
+their field values.
+
+## Need -> capability -> benefit
+
+| Need               | Capability                                           | Benefit                                                     |
+| ------------------ | ---------------------------------------------------- | ----------------------------------------------------------- |
+| Service foundation | `s[T]` / `FlextService[T]`                           | Shared validation and lifecycle; `T` is the result payload  |
+| Railway results    | `r[T]` / `FlextResult[T]`                            | One failure-preserving result implementation                |
+| Typed ports        | `t.Port[p.X]`                                        | Constructor-level dependency injection, no service locator  |
+| Data validation    | `m` presets and `u.validate_value`                   | Shared typed boundaries; strict presets for strict ingress  |
+| Configuration      | `FlextConfig`, `FlextSettings`, `config`, `settings` | Shared contracts; application objects stay consumer-owned   |
+| Handlers           | `h` / `FlextHandlers`                                | Typed operation metadata and registration                   |
+| Lazy exports       | Declared root exports                                | Components load on first access through the generated init  |
+
+## What flext-core must not absorb
+
+- CLI frameworks and command rendering belong to `flext-cli`.
+- Code generation, AST/Rope analysis, locks and Git belong to `flext-infra`.
+- Pytest fixtures and matchers belong to `flext-tests`.
+- Domain adapters and LDAP/LDIF/Meltano semantics belong to their packages.
+- Application authorization and use cases belong to the application.
 
 ## Good practices
 

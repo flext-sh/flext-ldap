@@ -40,5 +40,4 @@ class FlextLdapConstants(FlextLdifConstants):
 
 
 c = FlextLdapConstants
-
 __all__: list[str] = ["FlextLdapConstants", "c"]

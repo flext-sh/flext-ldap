@@ -40,7 +40,6 @@ class FlextLdapModels(FlextLdifModels):
     class Ldap(
         FlextLdapModelsBase,
         FlextLdapConfigModels,
-        FlextLdapFlextModelsLdap,
         FlextLdapFlextModelsLdap.FlextLdapModelsLdap,
     ):
         """LDAP-specific models namespace via pure MRO composition."""
@@ -50,5 +49,4 @@ class FlextLdapModels(FlextLdifModels):
 
 
 m = FlextLdapModels
-
 __all__: list[str] = ["FlextLdapModels", "m"]
