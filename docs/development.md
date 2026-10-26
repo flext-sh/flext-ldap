@@ -758,32 +758,32 @@ results = gather(*[api.create_user(user) for user in users_to_create])
 
 1. **Create Feature Branch**
 
-   ```bash
-   git checkout -b feature/ldap-group-management
-   ```
+    ```bash
+    git checkout -b feature/ldap-group-management
+    ```
 
 1. **Implement Changes**
 
-   ```bash
-   # Follow development workflow
-   make format
-   make lint
-   make type-check
-   make test
-   ```
+    ```bash
+    # Follow development workflow
+    make format
+    make lint
+    make type-check
+    make test
+    ```
 
 1. **Validate Quality**
 
-   ```bash
-   make check # Must pass static gates; run make test separately
-   ```
+    ```bash
+    make check # Must pass static gates; run make test separately
+    ```
 
 1. **Submit Pull Request**
 
-   - Clear description of changes
-   - Reference related issues
-   - Include test coverage
-   - Update documentation if needed
+    - Clear description of changes
+    - Reference related issues
+    - Include test coverage
+    - Update documentation if needed
 
 ### Code Review Checklist
 

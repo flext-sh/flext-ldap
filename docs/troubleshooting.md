@@ -815,28 +815,28 @@ When reporting issues, include:
 
 1. **Environment details:**
 
-   - Python version
-   - flext-ldap version
-   - Operating system
-   - LDAP server type and version
+    - Python version
+    - flext-ldap version
+    - Operating system
+    - LDAP server type and version
 
 1. **Configuration:**
 
-   - Sanitized configuration (no passwords)
-   - Environment variables
-   - Network setup (Docker, Kubernetes, etc.)
+    - Sanitized configuration (no passwords)
+    - Environment variables
+    - Network setup (Docker, Kubernetes, etc.)
 
 1. **Error details:**
 
-   - Complete error messages
-   - Stack traces
-   - Relevant log output
+    - Complete error messages
+    - Stack traces
+    - Relevant log output
 
 1. **Reproduction steps:**
 
-   - Minimal code example
-   - Steps to reproduce
-   - Expected vs actual behavior
+    - Minimal code example
+    - Steps to reproduce
+    - Expected vs actual behavior
 
 ### Diagnostic Information Collection
 
