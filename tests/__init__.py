@@ -15,11 +15,13 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_tests import (
         api,
+        cli,
         config,
         d,
         e,
         h,
         install_local_packages,
+        main,
         r,
         settings,
         td,
@@ -29,7 +31,7 @@ if TYPE_CHECKING:
         x,
     )
 
-    from flext_ldap import ldap, ldif, main
+    from flext_ldap import ldap, ldif
     from tests.base import TestsFlextLdapServiceBase, s
     from tests.constants import TestsFlextLdapConstants, c
     from tests.models import TestsFlextLdapModels, m
@@ -49,6 +51,7 @@ __all__: tuple[str, ...] = (
     "TestsFlextLdapUtilities",
     "api",
     "c",
+    "cli",
     "config",
     "d",
     "e",
@@ -84,6 +87,7 @@ install_lazy_exports(
         "TestsFlextLdapUtilities": ".utilities",
         "api": "flext_tests",
         "c": ".constants",
+        "cli": "flext_tests",
         "config": "flext_tests",
         "d": "flext_tests",
         "e": "flext_tests",
@@ -92,7 +96,7 @@ install_lazy_exports(
         "ldap": "flext_ldap",
         "ldif": "flext_ldap",
         "m": ".models",
-        "main": "flext_ldap",
+        "main": "flext_tests",
         "p": ".protocols",
         "r": "flext_tests",
         "s": ".base",

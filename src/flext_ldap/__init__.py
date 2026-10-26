@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif import d, e, h, ldif, r, x
+    from flext_ldif import cli, d, e, h, ldif, r, x
 
     from flext_ldap.__version__ import (
         FlextLdapVersion,
@@ -58,6 +58,7 @@ __all__: tuple[str, ...] = (
     "__version__",
     "__version_info__",
     "c",
+    "cli",
     "config",
     "d",
     "e",
@@ -97,6 +98,7 @@ install_lazy_exports(
         "__url__": ".__version__",
         "__version_info__": ".__version__",
         "c": ".constants",
+        "cli": "flext_ldif",
         "config": "._config",
         "d": "flext_ldif",
         "e": "flext_ldif",
