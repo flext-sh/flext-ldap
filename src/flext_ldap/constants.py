@@ -9,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import c
+from flext_ldif import c as flext_ldif_c
 
 from flext_ldap._constants import FlextLdapConstantsBase
 
 
-class FlextLdapConstants(c):
+class FlextLdapConstants(flext_ldif_c):
     """FlextLdap domain constants extending c.
 
     Hierarchy:

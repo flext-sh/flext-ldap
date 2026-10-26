@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import p
+from flext_ldif import p as flext_ldif_p
 
 from flext_ldap._protocols import (
     FlextLdapProtocolsClient,
@@ -21,7 +21,7 @@ from flext_ldap._protocols import (
 )
 
 
-class FlextLdapProtocols(p):
+class FlextLdapProtocols(flext_ldif_p):
     """LDAP-specific protocol definitions.
 
     Domain-specific protocol interfaces for LDAP operations.
