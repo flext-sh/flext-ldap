@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifTypes
+from flext_ldif import t
 
 from flext_ldap._typings import FlextLdapTypesLdap
 
 
-class FlextLdapTypes(FlextLdifTypes):
+class FlextLdapTypes(t):
     """LDAP-specific type namespace."""
 
     class Ldap(FlextLdapTypesLdap):

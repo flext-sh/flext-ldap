@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifUtilities
+from flext_ldif import u
 
 from flext_ldap._utilities import (
     FlextLdapUtilitiesBase,
@@ -21,7 +21,7 @@ from flext_ldap._utilities import (
 )
 
 
-class FlextLdapUtilities(FlextLdifUtilities):
+class FlextLdapUtilities(u):
     """LDAP-specific utility facade."""
 
     class Ldap(
