@@ -31,7 +31,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 value: SubjectT,
                 *,
                 where: Callable[[SubjectT], bool] | None = None,
-                **kwargs: t.Tests.MatcherOption,
+                **kwargs: p.Tests.MatcherOption,
             ) -> None:
                 """Provide that."""
                 tm.that(value, where=where, **kwargs)
