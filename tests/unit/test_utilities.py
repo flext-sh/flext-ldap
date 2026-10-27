@@ -183,7 +183,7 @@ class TestsFlextLdapUtilitiesUnit:
         """Verify identical entries compare equal (empty change set)."""
         entry_data: t.MappingKV[str, t.StrSequence] = {
             "cn": [c.Ldap.Tests.STRING_SIMPLE],
-            "sn": ["user"],
+            "sn": [c.ContextScope.USER],
         }
         result = u.Ldap.compare_entries(_entry(entry_data), _entry(entry_data))
         changes = u.Ldap.Tests.ok(result)
@@ -347,7 +347,7 @@ class TestsFlextLdapUtilitiesUnitDetect(TestsFlextLdapUtilitiesUnit):
         """detect_from_connection classifies the vendor from real rootDSE data."""
         result = u.Ldap.detect_from_connection(_bound_mock_connection())
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq="openldap")
 
     @staticmethod
@@ -427,7 +427,7 @@ class TestsFlextLdapUtilitiesUnitFilter:
     @staticmethod
     def test_find_existing_values_found_case_insensitive() -> None:
         """Verify find existing values found case insensitive."""
-        existing = {"cn": ["test"], "sn": ["user"]}
+        existing = {"cn": ["test"], "sn": [c.ContextScope.USER]}
         result = tm.not_none(u.Ldap.find_existing_values("CN", existing))
         tm.that(list(result), eq=["test"])
 
@@ -443,19 +443,19 @@ class TestsFlextLdapUtilitiesUnitFilter:
     def test_is_base64_encoded_with_prefix() -> None:
         """Verify is base64 encoded with prefix."""
         result = u.Ldap.base64_encoded(":: dGVzdA==")
-        tm.that(result, eq=True)
+        tm.ok(result)
 
     @staticmethod
     def test_is_base64_encoded_high_ascii() -> None:
         """Verify is base64 encoded high ascii."""
         result = u.Ldap.base64_encoded("test\x80value")
-        tm.that(result, eq=True)
+        tm.ok(result)
 
     @staticmethod
     def test_is_base64_encoded_normal() -> None:
         """Verify is base64 encoded normal."""
         result = u.Ldap.base64_encoded("normalvalue")
-        tm.that(result, eq=False)
+        tm.fail(result)
 
     @staticmethod
     def test_ldap3_value_to_strings_from_none() -> None:
@@ -594,7 +594,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     @staticmethod
     def test_process_deleted_attributes() -> None:
         """Verify process deleted attributes."""
-        existing_attrs = {"cn": ["test"], "sn": ["user"]}
+        existing_attrs = {"cn": ["test"], "sn": [c.ContextScope.USER]}
         changes = u.Ldap.process_deleted_attributes(existing_attrs, frozenset(), {"cn"})
         tm.that(changes, has="sn")
         tm.that(changes, lacks="cn")
@@ -662,7 +662,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
         """
         result = u.Ldap.query_root_dse(_bound_mock_connection())
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(
             result.value.get(c.Ldap.RootDseAttribute.NAMING_CONTEXTS),
             has="dc=example,dc=com",
@@ -730,7 +730,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
             original_attrs_dict={"cn": ["test"]},
             converted_attrs_dict={"cn": ["test"]},
         )
-        tm.that(result.dn_changed, eq=False)
+        tm.fail(result.dn_changed)
         tm.that(result.attribute_changes, lacks="cn")
 
     @staticmethod
@@ -744,7 +744,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
             original_attrs_dict={"cn": ["test"]},
             converted_attrs_dict={"cn": ["test"]},
         )
-        tm.that(result.dn_changed, eq=True)
+        tm.ok(result.dn_changed)
 
     @staticmethod
     def test_track_conversion_differences_attr_change() -> None:
@@ -767,14 +767,22 @@ class TestsFlextLdapUtilitiesUnitWhen:
     @staticmethod
     def test_when_safe_condition_true() -> None:
         """Verify when safe condition true."""
-        result = u.Ldap.when_safe(condition=True, then_value="yes", else_value="no")
-        u.Ldap.Tests.that(result, eq="yes")
+        result = u.Ldap.when_safe(
+            condition=True,
+            then_value=c.ParserBooleanToken.YES,
+            else_value=c.ParserBooleanToken.NO,
+        )
+        u.Ldap.Tests.that(result, eq=c.ParserBooleanToken.YES)
 
     @staticmethod
     def test_when_safe_condition_false() -> None:
         """Verify when safe condition false."""
-        result = u.Ldap.when_safe(condition=False, then_value="yes", else_value="no")
-        u.Ldap.Tests.that(result, eq="no")
+        result = u.Ldap.when_safe(
+            condition=False,
+            then_value=c.ParserBooleanToken.YES,
+            else_value=c.ParserBooleanToken.NO,
+        )
+        u.Ldap.Tests.that(result, eq=c.ParserBooleanToken.NO)
 
     @staticmethod
     def test_when_safe_safe_then_true_with_none() -> None:

@@ -27,7 +27,7 @@
 - Public symbol exports: `FlextLdap`, `FlextLdapConfig`, `FlextLdapConstants`,
   `FlextLdapModels`, `FlextLdapProtocols`, `FlextLdapService`, `FlextLdapSettings`,
   `FlextLdapTypes`, `FlextLdapUtilities`, `FlextLdapVersion` (+4 more)
-- Exported module shortcuts: `adapters`, `services`
+- Exported module shortcuts: _none_
 - Generated module pages: `8`
 
 ## Next Pages

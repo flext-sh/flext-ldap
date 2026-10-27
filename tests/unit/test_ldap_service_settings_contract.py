@@ -20,7 +20,6 @@ class TestsFlextLdapServiceSettingsContract:
     @staticmethod
     def test_facade_settings_resolve_project_settings() -> None:
         """Verify the facade settings expose the project LDAP branch."""
-        resolved = ldap.settings
-        tm.that(resolved, where=lambda value: isinstance(value, FlextLdapSettings))
+        resolved = tm.instance(ldap.settings, FlextLdapSettings)
         tm.that(resolved.Ldap.host, eq=settings.Ldap.host)
         tm.that(resolved.Ldap.port, eq=settings.Ldap.port)

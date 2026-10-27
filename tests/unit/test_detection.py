@@ -37,7 +37,7 @@ from tests import c, p, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import t
+from tests import t
 
 pytestmark = pytest.mark.unit
 
@@ -194,7 +194,7 @@ class TestsFlextLdapDetection:
 
         result = detector.detect_from_connection(connection)
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.unwrap(), eq=expected)
 
     def test_detect_from_connection_is_idempotent(self) -> None:
@@ -205,7 +205,7 @@ class TestsFlextLdapDetection:
         first = detector.detect_from_connection(connection)
         second = detector.detect_from_connection(connection)
 
-        tm.that(first.success, eq=True)
+        tm.ok(first.success)
         tm.that(first.unwrap(), eq=second.unwrap())
 
     @pytest.mark.parametrize(
@@ -234,5 +234,5 @@ class TestsFlextLdapDetection:
 
         result = detector.detect_from_connection(connection)
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(str(result.error), has=error_substring)

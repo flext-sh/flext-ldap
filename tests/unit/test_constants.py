@@ -54,7 +54,7 @@ class TestsFlextLdapConstantsUnit:
         status: c.Ldap.Status,
     ) -> None:
         """Verify is valid status accepts every enum member."""
-        u.Ldap.Tests.that(u.Ldap.Validation.valid_status(status), eq=True)
+        u.Ldap.Tests.that(u.Ldap.valid_status(status), eq=True)
 
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     @staticmethod
@@ -62,13 +62,13 @@ class TestsFlextLdapConstantsUnit:
         status: c.Ldap.Status,
     ) -> None:
         """Verify is valid status accepts every status string value."""
-        u.Ldap.Tests.that(u.Ldap.Validation.valid_status(status.value), eq=True)
+        u.Ldap.Tests.that(u.Ldap.valid_status(status.value), eq=True)
 
     @staticmethod
     def test_is_valid_status_rejects_unknown_string() -> None:
         """Verify is valid status rejects unknown string."""
         u.Ldap.Tests.that(
-            u.Ldap.Validation.valid_status(c.Ldap.Tests.CONSTANT_INVALID_STATUS),
+            u.Ldap.valid_status(c.Ldap.Tests.CONSTANT_INVALID_STATUS),
             eq=False,
         )
 
@@ -150,7 +150,7 @@ class TestsFlextLdapConstantsUnit:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
+    @pytest.mark.parametrize(c.ContextScope.OPERATION, list(c.Ldap.OperationType))
     def test_operation_success_messages_defined_for_every_operation(
         operation: c.Ldap.OperationType,
     ) -> None:
@@ -159,7 +159,7 @@ class TestsFlextLdapConstantsUnit:
         u.Ldap.Tests.that(bool(message), eq=True)
 
     @staticmethod
-    @pytest.mark.parametrize("operation", list(c.Ldap.OperationType))
+    @pytest.mark.parametrize(c.ContextScope.OPERATION, list(c.Ldap.OperationType))
     def test_operation_failure_prefixes_defined_for_every_operation(
         operation: c.Ldap.OperationType,
     ) -> None:

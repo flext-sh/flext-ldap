@@ -7,8 +7,7 @@ constructed with.
 
 Business Rules:
     - Schema modifications (changetype=modify) use MODIFY_ADD operations
-    - Regular entries attempt ADD first, then compare and MODIFY if exists
-    - "Entry already exists" errors trigger comparison and modification
+    - Regular entries are read before ADD, comparison or MODIFY
     - Idempotent: SKIPPED if entry already matches desired state
 
 Audit Implications:
@@ -56,7 +55,7 @@ class FlextLdapUpsertHandler:
         Business Rules:
             - Checks changetype attribute to route to schema modify vs regular add
             - Schema modifications use MODIFY_ADD for new schema elements
-            - Regular entries use add-then-modify pattern for idempotency
+            - Regular entries use the same directory read as the dry-run plan
 
         Audit Implication:
             Entry point for all upsert operations; returns operation type
@@ -126,13 +125,11 @@ class FlextLdapUpsertHandler:
     def handle_existing_entry(
         self,
         entry: p.Ldif.Entry,
+        existing_entry: m.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
-        """Handle an upsert when the entry already exists in LDAP.
+        """Compare a present entry and apply the required modification.
 
         Business Rules:
-            - Searches for existing entry using BASE scope on entry DN
-            - If search fails, returns failure with the search context
-            - If search returns empty (race condition), retries ADD
             - Compares existing vs new entry to compute MODIFY changes
             - If no differences, returns SKIPPED (idempotent)
             - Applies MODIFY_REPLACE/MODIFY_DELETE changes for sync
@@ -142,102 +139,57 @@ class FlextLdapUpsertHandler:
             SKIPPED indicates no changes needed, enabling safe reruns.
 
         Returns:
-            r with MODIFIED, SKIPPED, or ADDED (race condition).
+            r with MODIFIED or SKIPPED.
 
         """
         if entry.dn is None or not entry.dn.value:
             return r[m.Ldap.LdapOperationResult].fail("Upsert entry missing DN")
-        entry_dn = entry.dn.value
-        search_options = m.Ldap.SearchOptions.base_scope(entry_dn)
-        search_result = self._ops.search(search_options)
-        if search_result.failure:
-            result: p.Result[m.Ldap.LdapOperationResult] = r[
-                m.Ldap.LdapOperationResult
-            ].fail_op("Search for existing entry", search_result.error)
-        else:
-            search_data = search_result.map_or(None)
-            existing_entries: t.SequenceOf[m.Ldif.Entry] = []
-            if search_data is not None and search_data.entries:
-                existing_entries = list(search_data.entries)
-            if not existing_entries:
-                retry_result = self._ops.add(entry)
-                if retry_result.success:
-                    result = r[m.Ldap.LdapOperationResult].ok(
-                        m.Ldap.LdapOperationResult(
-                            operation=c.Ldap.UpsertOperation.ADDED,
-                        ),
-                    )
-                else:
-                    result = r[m.Ldap.LdapOperationResult].fail(
-                        u.to_str(retry_result.error),
-                    )
-            else:
-                existing_entry = existing_entries[0]
-                changes_result = u.Ldap.compare_entries(existing_entry, entry)
-                if changes_result.failure:
-                    result = r[m.Ldap.LdapOperationResult].fail_op(
-                        "Entry comparison",
-                        changes_result.error,
-                    )
-                else:
-                    empty_changes: t.Ldap.OperationChanges = {}
-                    changes = changes_result.unwrap_or(empty_changes)
-                    if not changes:
-                        result = r[m.Ldap.LdapOperationResult].ok(
-                            m.Ldap.LdapOperationResult(
-                                operation=c.Ldap.UpsertOperation.SKIPPED,
-                            ),
-                        )
-                    else:
-                        modify_result = self._ops.modify(entry_dn, changes)
-                        result = modify_result.fold(
-                            on_failure=lambda e: r[m.Ldap.LdapOperationResult].fail(
-                                u.to_str(e),
-                            ),
-                            on_success=lambda _: r[m.Ldap.LdapOperationResult].ok(
-                                m.Ldap.LdapOperationResult(
-                                    operation=c.Ldap.UpsertOperation.MODIFIED,
-                                ),
-                            ),
-                        )
-        return result
+        changes_result = u.Ldap.compare_entries(existing_entry, entry)
+        if changes_result.failure:
+            return r[m.Ldap.LdapOperationResult].from_failure(changes_result)
+        changes = changes_result.value
+        if not changes:
+            return r[m.Ldap.LdapOperationResult].ok(
+                m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.SKIPPED),
+            )
+        modified = self._ops.modify(entry.dn.value, changes)
+        if modified.failure:
+            return r[m.Ldap.LdapOperationResult].from_failure(modified)
+        return r[m.Ldap.LdapOperationResult].ok(
+            m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.MODIFIED),
+        )
 
     def handle_regular_add(
         self,
         entry: p.Ldif.Entry,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
-        """Add a standard entry or fall back to existing-entry handling.
+        """Read a standard entry and then add or reconcile it.
 
         Business Rules:
-            - First attempts LDAP ADD operation for optimistic path
-            - If ADD succeeds, returns ADDED operation result
-            - If "entry already exists" error (68), delegates to handle_existing_entry
-            - Other errors are propagated as r.fail()
+            - Read with the same absence-aware boundary used by plan
+            - Add absent entries once; compare present entries before modifying
+            - Every read or write failure propagates unchanged
 
         Audit Implication:
-            Primary upsert entry point for non-schema entries.
-            Optimistic add minimizes round trips for new entries.
+            Existing entries do not trigger a rejected ADD before comparison.
 
         Returns:
-            r with ADDED or delegates to existing entry handler.
+            r with ADDED, MODIFIED or SKIPPED.
 
         """
         entry_for_add = u.Ldif.as_entry(entry)
-        return (
-            self._ops
-            .add(entry_for_add)
-            .map(
-                lambda _: m.Ldap.LdapOperationResult(
-                    operation=c.Ldap.UpsertOperation.ADDED,
-                ),
-            )
-            .lash(
-                lambda e: (
-                    self.handle_existing_entry(entry)
-                    if self._ops.already_exists_error(u.to_str(e))
-                    else r[m.Ldap.LdapOperationResult].fail(u.to_str(e))
-                ),
-            )
+        if entry_for_add.dn is None or not entry_for_add.dn.value:
+            return r[m.Ldap.LdapOperationResult].fail("Upsert entry missing DN")
+        found = self._ops.find_entry(entry_for_add.dn.value)
+        if found.failure:
+            return r[m.Ldap.LdapOperationResult].from_failure(found)
+        if found.value.entries:
+            return self.handle_existing_entry(entry, found.value.entries[0])
+        added = self._ops.add(entry_for_add)
+        if added.failure:
+            return r[m.Ldap.LdapOperationResult].from_failure(added)
+        return r[m.Ldap.LdapOperationResult].ok(
+            m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.ADDED),
         )
 
     def handle_schema_modify(
@@ -270,15 +222,15 @@ class FlextLdapUpsertHandler:
             return r[m.Ldap.LdapOperationResult].fail(
                 c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS,
             )
+        changes: t.Ldap.OperationChanges = {}
         for attr_type, filtered in schema_additions:
-            changes: t.Ldap.OperationChanges = {
-                attr_type: [(c.Ldap.ModifyOperation.ADD, filtered)],
-            }
-            modified = self._ops.modify(dn_str, changes)
-            if modified.failure:
-                return r[m.Ldap.LdapOperationResult].fail(
-                    u.to_str(modified.error) or c.Ldap.ErrorMessage.UNKNOWN_ERROR,
-                )
+            changes.setdefault(attr_type, []).append((
+                c.Ldap.ModifyOperation.ADD,
+                filtered,
+            ))
+        modified = self._ops.modify(dn_str, changes)
+        if modified.failure:
+            return r[m.Ldap.LdapOperationResult].from_failure(modified)
         return r[m.Ldap.LdapOperationResult].ok(
             m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.MODIFIED),
         )

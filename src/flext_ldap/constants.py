@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """FlextLdap constants module.
 
 This module provides constants for LDAP operations, extending c.
@@ -8,12 +9,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import FlextLdifConstants
+from flext_ldif import c as flext_ldif_c
 
 from flext_ldap._constants import FlextLdapConstantsBase
 
 
-class FlextLdapConstants(FlextLdifConstants):
+class FlextLdapConstants(flext_ldif_c):
     """FlextLdap domain constants extending c.
 
     Hierarchy:
@@ -39,5 +40,4 @@ class FlextLdapConstants(FlextLdifConstants):
 
 
 c = FlextLdapConstants
-
 __all__: list[str] = ["FlextLdapConstants", "c"]

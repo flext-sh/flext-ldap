@@ -80,7 +80,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
                 return cls.ldap3_value_to_strings(value)
             case list() | tuple() | range():
                 return [
-                    item.decode(c.Ldif.Encoding.UTF8, errors="replace")
+                    item.decode(c.Ldif.Encoding.UTF8, errors=c.MergeStrategy.REPLACE)
                     if isinstance(item, bytes)
                     else str(item)
                     for item in value
@@ -122,10 +122,14 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
                 empty_values: t.StrSequence = []
                 return empty_values
             case bytes() as value_bytes:
-                return [value_bytes.decode(c.Ldif.Encoding.UTF8, errors="replace")]
+                return [
+                    value_bytes.decode(
+                        c.Ldif.Encoding.UTF8, errors=c.MergeStrategy.REPLACE
+                    )
+                ]
             case list() | tuple() as sequence_values:
                 return [
-                    item.decode(c.Ldif.Encoding.UTF8, errors="replace")
+                    item.decode(c.Ldif.Encoding.UTF8, errors=c.MergeStrategy.REPLACE)
                     if isinstance(item, bytes)
                     else str(item)
                     for item in sequence_values

@@ -41,7 +41,9 @@ class FlextLdapSettings(FlextLdifSettings):
         bind_dn: Annotated[str, m.Field(description="LDAP bind distinguished name")] = (
             ""
         )
-        bind_password: Annotated[str, m.Field(description="LDAP bind password")] = ""
+        bind_password: Annotated[
+            str, m.Field(description="LDAP bind password", repr=False)
+        ] = ""
         timeout: Annotated[
             int,
             m.Field(ge=1, description="LDAP operation timeout in seconds"),

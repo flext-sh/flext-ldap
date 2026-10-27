@@ -81,7 +81,7 @@ class TestsFlextLdapModelsSync:
                 {
                     "success": True,
                     "dn": c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
-                    "operation": c.Ldap.OperationType.ADD,
+                    c.ContextScope.OPERATION: c.Ldap.OperationType.ADD,
                 },
             ],
         })
@@ -225,7 +225,9 @@ class TestsFlextLdapModelsSync:
                     "synced": c.Ldap.Tests.SYNC_PHASE_RESULTS_SYNCED,
                     "failed": c.Ldap.Tests.SYNC_PHASE_RESULTS_FAILED,
                     "skipped": c.Ldap.Tests.SYNC_PHASE_RESULTS_SKIPPED,
-                    "duration_seconds": c.Ldap.Tests.SYNC_PHASE_RESULTS_DURATION,
+                    c.MetadataKey.DURATION_SECONDS: (
+                        c.Ldap.Tests.SYNC_PHASE_RESULTS_DURATION
+                    ),
                     "success_rate": c.Ldap.Tests.SYNC_PHASE_RESULTS_SUCCESS_RATE,
                 },
             },

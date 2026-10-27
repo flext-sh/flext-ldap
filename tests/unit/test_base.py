@@ -35,14 +35,14 @@ class TestsFlextLdapBase:
         result = m.Ldap.Tests.SuccessService().execute()
 
         tm.ok(result)
-        tm.that(result.failure, eq=False)
+        tm.fail(result.failure)
 
     @staticmethod
     def test_execute_success_carries_true_value() -> None:
         """Verify execute success carries true value."""
         result = m.Ldap.Tests.SuccessService().execute()
 
-        tm.that(result.unwrap(), eq=True)
+        tm.ok(result.unwrap())
         tm.that(result.error, none=True)
 
     # ── execute(): failure outcome ─────────────────────────────────────
@@ -70,7 +70,7 @@ class TestsFlextLdapBase:
         mapped = m.Ldap.Tests.SuccessService().execute().map(not_)
 
         tm.ok(mapped)
-        tm.that(mapped.unwrap(), eq=False)
+        tm.fail(mapped.unwrap())
 
     @staticmethod
     def test_map_does_not_run_on_failure() -> None:
@@ -86,7 +86,7 @@ class TestsFlextLdapBase:
         recovered = m.Ldap.Tests.FailService().execute().recover(lambda _err: True)
 
         tm.ok(recovered)
-        tm.that(recovered.unwrap(), eq=True)
+        tm.ok(recovered.unwrap())
 
     @pytest.mark.parametrize(
         ("service_factory", "fallback", "expected"),
@@ -115,22 +115,27 @@ class TestsFlextLdapBase:
         # commit.
         glob = FlextSettings.fetch_global()
 
-        tm.that(cfg is glob, eq=False)
+        tm.fail(cfg is glob)
         tm.that(glob, is_=FlextSettings)
         tm.that(cfg, is_=FlextTestsSettings)
 
     # ── settings: composed MRO namespaces exposed publicly ─────────────
 
-    # NOTE (multi-agent): SSOT settings expose Ldap/ldif namespaces as
+    # SSOT settings expose Ldap/Ldif namespaces as
     # plain BaseModel sections (flext-core reference: tests/unit/test_service.py);
     # CLI data is flat cli_* fields, not a "Cli" namespace.
-    @pytest.mark.parametrize("namespace", ["ldif", "Ldap"])
+    @pytest.mark.parametrize("namespace", ["Ldif", "Ldap"])
     @staticmethod
     def test_fetch_settings_exposes_mro_namespace(namespace: str) -> None:
         """Verify fetch settings exposes mro namespace."""
         settings = m.Ldap.Tests.SuccessService.fetch_settings()
 
         tm.that(getattr(settings, namespace), is_=m.BaseModel)
+        tm.that(
+            getattr(m.Ldap.Tests.SuccessService().settings, namespace)
+            is getattr(settings, namespace),
+            eq=True,
+        )
 
     @staticmethod
     def test_instance_settings_match_fetch_settings_singleton() -> None:

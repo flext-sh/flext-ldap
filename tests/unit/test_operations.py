@@ -6,15 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 
 from flext_ldap.services.operations import FlextLdapOperations
-from tests import c, m, p, r, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, p, r, t, u
 
 pytestmark = pytest.mark.unit
 
@@ -142,8 +139,9 @@ class TestsFlextLdapOperations:
             self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
         ]
 
+        expected = u.Ldap.Tests.fail(operations.upsert(entries[0]))
         error = u.Ldap.Tests.fail(operations.batch_upsert(entries, stop_on_error=True))
-        u.Ldap.Tests.that(error, contains=c.Ldap.Tests.OPERATIONS_BATCH_STOP_FRAGMENT)
+        u.Ldap.Tests.that(error, eq=expected)
 
     def test_batch_upsert_all_failed_returns_failure(self) -> None:
         """Verify batch upsert all failed returns failure."""

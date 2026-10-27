@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_ldif import m, u
+from flext_ldif import m
 
 from flext_ldap import c, t
 
@@ -38,7 +38,7 @@ class FlextLdapFlextModelsLdap:
             ] = None
             bind_password: Annotated[
                 str | None,
-                m.Field(description="Bind password for authentication"),
+                m.Field(description="Bind password for authentication", repr=False),
             ] = None
             timeout: Annotated[
                 t.PositiveInt,
@@ -241,7 +241,7 @@ class FlextLdapFlextModelsLdap:
                 ),
             ]
 
-            @u.computed_field
+            @m.computed_field
             @property
             def success_rate(self) -> float:
                 """Success rate (successful / total_processed)."""

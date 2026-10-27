@@ -208,7 +208,7 @@ def login(username: str, password: str) -> t.JsonMapping:
 
     user = auth_result.unwrap()
     return {
-        "user_id": user.uid,
+        c.ContextKey.USER_ID: user.uid,
         "display_name": user.cn,
         "email": user.mail,
         "groups": user.member_of,
@@ -247,7 +247,7 @@ def search_users(
             }
             for entry in entries
         ],
-        "count": len(entries),
+        c.Aggregation.COUNT: len(entries),
     }
 
 
@@ -274,7 +274,7 @@ def create_user(
     user = result.unwrap()
     return {
         "message": "User created successfully",
-        "user": {"uid": user.uid, "dn": user.dn, "name": user.cn},
+        c.ContextScope.USER: {"uid": user.uid, "dn": user.dn, "name": user.cn},
     }
 ```
 
@@ -721,7 +721,7 @@ metadata:
 data:
   base_dn: "dc=example,dc=com"
   port: "636"
-  use_ssl: "true"
+  use_ssl: c.ParserBooleanToken.TRUE
 ```
 
 ---
@@ -1089,11 +1089,15 @@ from flext_ldap.api import ldap
 
 # Metrics
 ldap_operations_total = Counter(
-    "ldap_operations_total", "Total LDAP operations", ["operation", "status"]
+    "ldap_operations_total",
+    "Total LDAP operations",
+    [c.ContextScope.OPERATION, "status"],
 )
 
 ldap_operation_duration = Histogram(
-    "ldap_operation_duration_seconds", "LDAP operation duration", ["operation"]
+    "ldap_operation_duration_seconds",
+    "LDAP operation duration",
+    [c.ContextScope.OPERATION],
 )
 
 

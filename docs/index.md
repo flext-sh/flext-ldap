@@ -40,14 +40,16 @@ docstrings.
 ## Collection Rules
 
 Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent
-FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry
-verification).
+and this project's `AGENTS.md` for the current authority chain, execution boundaries and
+required validation.
 
 ## Quality Gates
 
-Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) execute their declared
-operations directly.
+Consult `make help` for the current command surface. Each verb performs only its
+declared operation; `make check` validates without applying repairs. Environment setup
+delegates tool provisioning to Mise and project/workspace installation to native uv
+declarations and locks. Python runs the installed project; no custom Python bootstrap or
+lock parser precedes installation.
 
 See [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 for the build, test, and Python quality gates.

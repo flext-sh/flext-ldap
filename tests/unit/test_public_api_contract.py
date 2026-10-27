@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -36,10 +35,8 @@ from flext_ldap import (
     FlextLdapTypes,
     FlextLdapUtilities,
 )
-from tests import tm
+from tests import c, t, tm
 
-if TYPE_CHECKING:
-    from tests import t
 pytestmark = pytest.mark.unit
 
 # Top-level facade-owner modules of ``flext_ldap``, statically enumerated so the
@@ -129,9 +126,9 @@ class TestsFlextLdapPublicApiContract:
         facade: type,
     ) -> None:
         """Verify canonical alias resolves to domain facade."""
-        tm.that(getattr(flext_ldap, alias) is facade, eq=True)
+        tm.ok(getattr(flext_ldap, alias) is facade)
 
-    @pytest.mark.parametrize("operation", _FACADE_OPERATIONS)
+    @pytest.mark.parametrize(c.ContextScope.OPERATION, _FACADE_OPERATIONS)
     @staticmethod
     def test_facade_exposes_documented_operation(operation: str) -> None:
         """Verify facade exposes documented operation."""
@@ -153,5 +150,5 @@ class TestsFlextLdapPublicApiContract:
         """Verify fetch global returns shared singleton."""
         # The module-level ``ldap`` is produced by ``FlextLdap.fetch_global()``;
         # repeated resolution must yield the same shared instance (idempotence).
-        tm.that(FlextLdap.fetch_global() is flext_ldap.ldap, eq=True)
-        tm.that(FlextLdap.fetch_global() is FlextLdap.fetch_global(), eq=True)
+        tm.ok(FlextLdap.fetch_global() is flext_ldap.ldap)
+        tm.ok(FlextLdap.fetch_global() is FlextLdap.fetch_global())
