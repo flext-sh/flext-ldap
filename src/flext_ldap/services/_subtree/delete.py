@@ -25,7 +25,7 @@ from __future__ import annotations
 from flext_ldap import c, m, p, r, t, u
 
 
-class FlextLdapSubtreeDeleteHandler:
+class FlextLdapServicesSubtreeDelete:
     """Handle deepest-first subtree deletion."""
 
     def __init__(self, operations: p.Ldap.LdapOperations) -> None:
@@ -143,4 +143,4 @@ class FlextLdapSubtreeDeleteHandler:
         return dn.count(",")
 
 
-__all__: list[str] = ["FlextLdapSubtreeDeleteHandler"]
+__all__: list[str] = ["FlextLdapServicesSubtreeDelete"]

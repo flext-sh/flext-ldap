@@ -39,8 +39,8 @@ from flext_ldif import ldif
 
 from flext_ldap import c, m, p, r, t, u
 from flext_ldap.adapters.host import FlextLdapAdapterHost
-from flext_ldap.services._subtree_delete import FlextLdapSubtreeDeleteHandler
-from flext_ldap.services._upsert_handler import FlextLdapUpsertHandler
+from flext_ldap.services._subtree import FlextLdapServicesSubtreeDelete
+from flext_ldap.services._upsert import FlextLdapServicesUpsertHandler
 
 
 class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
@@ -81,26 +81,26 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
     """
 
-    _upsert_handler_instance: FlextLdapUpsertHandler | None = m.PrivateAttr(
+    _upsert_handler_instance: FlextLdapServicesUpsertHandler | None = m.PrivateAttr(
         default_factory=lambda: None,
     )
 
-    _subtree_delete_handler_instance: FlextLdapSubtreeDeleteHandler | None = (
+    _subtree_delete_handler_instance: FlextLdapServicesSubtreeDelete | None = (
         m.PrivateAttr(default_factory=lambda: None)
     )
 
     @property
-    def _upsert_handler(self) -> FlextLdapUpsertHandler:
+    def _upsert_handler(self) -> FlextLdapServicesUpsertHandler:
         """Lazy-init upsert handler."""
         if self._upsert_handler_instance is None:
-            self._upsert_handler_instance = FlextLdapUpsertHandler(self)
+            self._upsert_handler_instance = FlextLdapServicesUpsertHandler(self)
         return self._upsert_handler_instance
 
     @property
-    def _subtree_delete_handler(self) -> FlextLdapSubtreeDeleteHandler:
+    def _subtree_delete_handler(self) -> FlextLdapServicesSubtreeDelete:
         """Lazy-init subtree-delete handler."""
         if self._subtree_delete_handler_instance is None:
-            self._subtree_delete_handler_instance = FlextLdapSubtreeDeleteHandler(self)
+            self._subtree_delete_handler_instance = FlextLdapServicesSubtreeDelete(self)
         return self._subtree_delete_handler_instance
 
     @staticmethod
@@ -405,7 +405,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         """Classify entries for upsert without writing (dry plan).
 
         Business Rules:
-            - Delegates to FlextLdapUpsertHandler.plan (the owner of the
+            - Delegates to FlextLdapServicesUpsertHandler.plan (the owner of the
               upsert compare semantics owns "what would change")
             - Routes each entry like the write path: a ``changetype: modify``
               entry with add operations is a modify (no search); any other
@@ -557,7 +557,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         """Upsert an entry, optionally retrying for configured error patterns.
 
         Business Rules:
-            - First attempts ADD operation via FlextLdapUpsertHandler
+            - First attempts ADD operation via FlextLdapServicesUpsertHandler
             - If entry exists (LDAP error 68), performs search and comparison
             - Entry comparison ignores operational attributes (modifyTimestamp, etc.)
             - If entries are identical, operation is SKIPPED (no changes needed)
@@ -572,7 +572,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
             - Skipped operations indicate no changes needed (audit efficiency)
 
         Architecture:
-            - Uses FlextLdapUpsertHandler.execute() for core upsert logic
+            - Uses FlextLdapServicesUpsertHandler.execute() for core upsert logic
             - Retry logic uses u.retry()
             - Returns r pattern - no exceptions raised
 

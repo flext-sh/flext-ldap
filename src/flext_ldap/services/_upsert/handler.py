@@ -24,7 +24,7 @@ from __future__ import annotations
 from flext_ldap import c, m, p, r, t, u
 
 
-class FlextLdapUpsertHandler:
+class FlextLdapServicesUpsertHandler:
     """Handle add-or-modify flows for upsert calls."""
 
     def __init__(self, operations: p.Ldap.LdapOperations) -> None:
@@ -299,4 +299,4 @@ class FlextLdapUpsertHandler:
         )
 
 
-__all__: list[str] = ["FlextLdapUpsertHandler"]
+__all__: list[str] = ["FlextLdapServicesUpsertHandler"]
