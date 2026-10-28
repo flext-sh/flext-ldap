@@ -19,7 +19,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
     def norm_in(
         cls,
         value: str,
-        collection: t.StrSequence | t.VariadicTuple[str],
+        collection: t.StrSequence | tuple[str, ...],
         *,
         case: str | None = None,
     ) -> bool:
@@ -44,7 +44,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
     @classmethod
     def norm_join(
         cls,
-        values: t.StrSequence | t.VariadicTuple[str],
+        values: t.StrSequence | tuple[str, ...],
         *,
         case: str | None = None,
     ) -> str:
@@ -200,7 +200,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
     @staticmethod
     def map_str(
-        values: t.StrSequence | t.VariadicTuple[str],
+        values: t.StrSequence | tuple[str, ...],
         *,
         case: str | None = None,
         join: str | None = None,

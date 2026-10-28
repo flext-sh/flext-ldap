@@ -35,7 +35,7 @@ from flext_ldap import (
     FlextLdapTypes,
     FlextLdapUtilities,
 )
-from tests import c, t, tm
+from tests import c, tm
 
 pytestmark = pytest.mark.unit
 
@@ -70,7 +70,7 @@ _ALIAS_FACADE_CASES: tuple[tuple[str, type], ...] = (
 # Operations the public ``FlextLdap`` facade promises to expose to callers.
 # Composition strategy (which mixin supplies each) is an internal detail; that
 # the facade *offers* these callables is the observable contract.
-_FACADE_OPERATIONS: t.VariadicTuple[str] = (
+_FACADE_OPERATIONS: tuple[str, ...] = (
     "connect",
     "disconnect",
     "execute",
@@ -116,7 +116,7 @@ class TestsFlextLdapPublicApiContract:
     @staticmethod
     def test_declared_exports_are_unique() -> None:
         """Verify declared exports are unique."""
-        names: t.VariadicTuple[str] = flext_ldap.__all__
+        names: tuple[str, ...] = flext_ldap.__all__
         tm.that(len(names), eq=len(set(names)))
 
     @pytest.mark.parametrize(("alias", "facade"), _ALIAS_FACADE_CASES)
