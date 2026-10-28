@@ -41,7 +41,6 @@ class TestsFlextLdapLdap3Adapter:
         SEARCH = "search"
 
     @pytest.fixture
-    @staticmethod
     def adapter() -> FlextLdapLdap3Adapter:
         """Return a freshly constructed, never-connected adapter."""
         return FlextLdapLdap3Adapter()
