@@ -176,6 +176,15 @@ AuthenticationError: Authentication failed: Invalid credentials
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap.api import ldap
 
 
@@ -231,6 +240,15 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldap import m
 
@@ -296,6 +314,15 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def validate_filter(filter_string: str) -> bool:
     """Validate LDAP filter syntax."""
@@ -332,6 +359,15 @@ SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -376,6 +412,15 @@ run(diagnose_base_dn())
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import time
 
@@ -511,6 +556,15 @@ settings = FlextLdapSettings(
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 class LDAPService:
     def __init__(self):
@@ -535,6 +589,15 @@ class LDAPService:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import os
 
@@ -694,6 +757,15 @@ make ldap-test-server
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap.api import ldap
 
 
@@ -761,6 +833,15 @@ ldapwhoami -v -x -H ldap://server:389 -D \
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import cProfile
 import pstats
@@ -842,6 +923,15 @@ When reporting issues, include:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import sys
 

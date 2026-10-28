@@ -328,6 +328,15 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 ```{.python .notest}
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def example():
     pass
@@ -702,6 +711,15 @@ Create diagnostic scripts for complex issues:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 # docs/maintenance/diagnostics.py

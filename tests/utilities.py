@@ -76,7 +76,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def create_ldap3_server(
-                ldap_container: t.MappingKV[str, t.Scalar],
+                ldap_container: Mapping[str, t.Scalar],
             ) -> p.Ldif.Ldap3Server:
                 """Create an ldap3 server from container metadata.
 
@@ -93,7 +93,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def create_ldap3_connection(
                 server: p.Ldif.Ldap3Server,
-                ldap_container: t.MappingKV[str, t.Scalar],
+                ldap_container: Mapping[str, t.Scalar],
             ) -> p.Ldap.Ldap3Connection:
                 """Create an ldap3 connection from container metadata.
 
@@ -110,7 +110,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def create_connection_config(
-                ldap_container: t.MappingKV[str, t.Scalar],
+                ldap_container: Mapping[str, t.Scalar],
             ) -> m.Ldap.ConnectionConfig:
                 """Build a typed connection settings from container metadata.
 

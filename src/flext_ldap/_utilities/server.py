@@ -6,16 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 import ldap3
 
-from flext_ldap import c
-from flext_ldap._utilities.base import FlextLdapUtilitiesBase
-
-if TYPE_CHECKING:
-    # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
-    from flext_ldap import p
+from flext_ldap import c, p
+from flext_ldap._utilities import FlextLdapUtilitiesBase
 
 
 class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):

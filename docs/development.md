@@ -306,6 +306,15 @@ pytest --cov=src/flext_ldap --cov-report=term-missing | grep -E "operations\.py|
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 class FlextLdapUserService:
     """Single responsibility - user operations only."""
@@ -325,6 +334,15 @@ class FlextLdapUserService:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 # ✅ CORRECT - Explicit error handling
@@ -352,6 +370,15 @@ def create_user(self, request: CreateUserRequest) -> FlextLdapUser | None:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 # ✅ CORRECT - Parameter objects for complex operations
@@ -389,6 +416,15 @@ def search_entries(
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 @dataclass(frozen=True)
 class DN:
@@ -413,6 +449,15 @@ class DN:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 # All public APIs must have complete type annotations
@@ -444,6 +489,15 @@ class FlextLdapService(Generic[T]):
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import pytest
 
@@ -497,6 +551,15 @@ class TestFlextLdapUser:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import pytest
 
@@ -555,6 +618,15 @@ class TestLdapOperations:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 # tests/conftest.py
 import pytest
@@ -644,6 +716,15 @@ def authenticated_user():
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 class FlextLdapClients:

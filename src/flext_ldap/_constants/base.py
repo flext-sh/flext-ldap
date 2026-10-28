@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping, Sequence
 from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
@@ -19,8 +20,6 @@ from flext_ldif import FlextLdifConstants
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from flext_ldap import t
 
 
@@ -221,7 +220,7 @@ class FlextLdapConstantsBase:
     DEFAULT_SCOPE: Final[SearchScope] = SearchScope.SUBTREE
 
     LDAP3_SCOPE_BY_SEARCH_SCOPE: Final[
-        t.MappingKV[
+        Mapping[
             SearchScope,
             SearchScopeValue,
         ]
@@ -235,7 +234,7 @@ class FlextLdapConstantsBase:
         FlextLdifConstants.Ldif.ServerTypes.RFC
     )
 
-    ROOT_DSE_DETECTION_ORDER: Final[t.StrSequence] = (
+    ROOT_DSE_DETECTION_ORDER: Final[Sequence[str]] = (
         FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value,
         FlextLdifConstants.Ldif.ServerTypes.OID.value,
         FlextLdifConstants.Ldif.ServerTypes.OUD.value,
@@ -243,33 +242,29 @@ class FlextLdapConstantsBase:
         FlextLdifConstants.Ldif.ServerTypes.DS389.value,
     )
 
-    ROOT_DSE_EXTENSION_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
-        MappingProxyType({
-            FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value: frozenset({"openldap"}),
-            FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle", "oid"}),
-            FlextLdifConstants.Ldif.ServerTypes.OUD.value: frozenset({"oud"}),
-            FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
-                "microsoft",
-                "windows",
-            }),
-            FlextLdifConstants.Ldif.ServerTypes.DS389.value: frozenset({
-                "389",
-                "dirsrv",
-            }),
-        })
-    )
+    ROOT_DSE_EXTENSION_MARKERS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
+        FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value: frozenset({"openldap"}),
+        FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle", "oid"}),
+        FlextLdifConstants.Ldif.ServerTypes.OUD.value: frozenset({"oud"}),
+        FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
+            "microsoft",
+            "windows",
+        }),
+        FlextLdifConstants.Ldif.ServerTypes.DS389.value: frozenset({
+            "389",
+            "dirsrv",
+        }),
+    })
 
-    ROOT_DSE_CONTEXT_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
-        MappingProxyType({
-            FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle"}),
-            FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
-                "microsoft",
-                "windows",
-            }),
-        })
-    )
+    ROOT_DSE_CONTEXT_MARKERS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
+        FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle"}),
+        FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
+            "microsoft",
+            "windows",
+        }),
+    })
 
-    ROOT_DSE_VENDOR_REQUIRED_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+    ROOT_DSE_VENDOR_REQUIRED_MARKERS: Final[Mapping[str, frozenset[str]]] = (
         MappingProxyType({
             FlextLdifConstants.Ldif.ServerTypes.OUD.value: frozenset({
                 "oracle",
@@ -282,7 +277,7 @@ class FlextLdapConstantsBase:
         })
     )
 
-    ROOT_DSE_VENDOR_ANY_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+    ROOT_DSE_VENDOR_ANY_MARKERS: Final[Mapping[str, frozenset[str]]] = (
         MappingProxyType({
             FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({
                 "internet directory",
@@ -301,7 +296,7 @@ class FlextLdapConstantsBase:
         })
     )
 
-    ROOT_DSE_VENDOR_EXCLUDED_MARKERS: Final[t.MappingKV[str, frozenset[str]]] = (
+    ROOT_DSE_VENDOR_EXCLUDED_MARKERS: Final[Mapping[str, frozenset[str]]] = (
         MappingProxyType({
             FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({
                 "unified directory",
@@ -309,7 +304,7 @@ class FlextLdapConstantsBase:
         })
     )
 
-    ROOT_DSE_VENDOR_MAX_TOKENS: Final[t.MappingKV[str, int]] = MappingProxyType({
+    ROOT_DSE_VENDOR_MAX_TOKENS: Final[Mapping[str, int]] = MappingProxyType({
         FlextLdifConstants.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS,
     })
 

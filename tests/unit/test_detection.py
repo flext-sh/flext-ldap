@@ -27,11 +27,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, Sequence
 from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_ldap.services.detection import FlextLdapServerDetector
+from flext_ldap.services import FlextLdapServerDetector
 from tests import c, p, tm, u
 
 if TYPE_CHECKING:
@@ -50,12 +51,12 @@ class TestsFlextLdapDetection:
 
         def __init__(
             self,
-            attributes: t.MappingKV[str, t.Ldap.Ldap3EntryValue],
+            attributes: Mapping[str, t.Ldap.Ldap3EntryValue],
         ) -> None:
             self._attributes = attributes
 
         @property
-        def entry_attributes_as_dict(self) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
+        def entry_attributes_as_dict(self) -> Mapping[str, t.Ldap.Ldap3EntryValue]:
             return self._attributes
 
     class _ConnectionDouble:
@@ -64,7 +65,7 @@ class TestsFlextLdapDetection:
         def __init__(
             self,
             *,
-            entries: t.SequenceOf[
+            entries: Sequence[
                 p.Ldif.RootDseEntry
                 | t.Ldap.Ldap3EntryValue
                 | TestsFlextLdapDetection._RootDseEntryDouble
@@ -92,7 +93,7 @@ class TestsFlextLdapDetection:
             return {"description": "operation failed"}
 
         @property
-        def entries(self) -> t.SequenceOf[p.Ldif.RootDseEntry | t.Ldap.Ldap3EntryValue]:
+        def entries(self) -> Sequence[p.Ldif.RootDseEntry | t.Ldap.Ldap3EntryValue]:
             return self._entries
 
     @staticmethod
@@ -106,7 +107,7 @@ class TestsFlextLdapDetection:
             The resulting ``p.Ldif.RootDseConnection``.
 
         """
-        attributes: t.MutableMappingKV[str, t.Ldap.Ldap3EntryValue] = {}
+        attributes: MutableMapping[str, t.Ldap.Ldap3EntryValue] = {}
         if vendor_name is not None:
             attributes[c.Ldap.RootDseAttribute.VENDOR_NAME] = [vendor_name]
         if vendor_version is not None:
@@ -120,7 +121,7 @@ class TestsFlextLdapDetection:
     )
     @staticmethod
     def test_execute_reports_failure_for_invalid_connection_argument(
-        kwargs: t.MappingKV[str, bool | float | str | None] | None,
+        kwargs: Mapping[str, bool | float | str | None] | None,
         *,
         expect_failure: bool,
         error_substring: str,
@@ -140,7 +141,7 @@ class TestsFlextLdapDetection:
     )
     @staticmethod
     def test_get_first_attribute_value_returns_first_truthy_value(
-        attrs: t.MappingKV[str, t.StrSequence],
+        attrs: Mapping[str, Sequence[str]],
         key: str,
         expected: str | None,
     ) -> None:
@@ -157,7 +158,7 @@ class TestsFlextLdapDetection:
     def test_detect_server_type_classifies_vendor_metadata(
         vendor_name: str | None,
         vendor_version: str | None,
-        supported_controls: t.StrSequence,
+        supported_controls: Sequence[str],
         expected: str,
     ) -> None:
         """Vendor metadata resolves to the canonical server-type identifier."""

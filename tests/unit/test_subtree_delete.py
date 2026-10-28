@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
 import pytest
 
-from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.services import FlextLdapOperations
 from tests import c, m, p, r, t, u
 
 pytestmark = pytest.mark.unit
@@ -30,7 +31,7 @@ class TestsFlextLdapSubtreeDelete:
 
         def __init__(
             self,
-            subtree_entries: t.SequenceOf[m.Ldif.Entry],
+            subtree_entries: Sequence[m.Ldif.Entry],
             *,
             fail_on_dn: str | None = None,
         ) -> None:
@@ -228,7 +229,7 @@ class TestsFlextLdapPlanUpsert:
         u.Ldap.Tests.that(plan_result.failure, eq=True)
 
     @staticmethod
-    def _modify_entry(dn: str, *, additions: t.MappingKV[str, str]) -> m.Ldif.Entry:
+    def _modify_entry(dn: str, *, additions: Mapping[str, str]) -> m.Ldif.Entry:
         attributes: t.MutableStrSequenceMapping = {
             c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.ChangeType.MODIFY.value],
             c.Ldif.ChangeOperation.ADD: list(additions),

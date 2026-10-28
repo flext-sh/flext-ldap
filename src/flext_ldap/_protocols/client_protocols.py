@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_ldif import p
 
-from flext_ldap._protocols.service_protocols import FlextLdapProtocolsService
+from flext_ldap._protocols import FlextLdapProtocolsService
 
 if TYPE_CHECKING:
     import types
@@ -52,10 +53,10 @@ class FlextLdapProtocolsClient:
 
         def batch_upsert(
             self,
-            entries: t.SequenceOf[m.Ldif.Entry],
+            entries: Sequence[m.Ldif.Entry],
             *,
             progress_callback: t.Ldap.LdapProgressCallback | None = None,
-            retry_on_errors: t.StrSequence | None = None,
+            retry_on_errors: Sequence[str] | None = None,
             max_retries: int = 1,
             stop_on_error: bool = False,
         ) -> p.Result[m.Ldap.LdapBatchStats]:
@@ -93,7 +94,7 @@ class FlextLdapProtocolsClient:
 
         def plan_upsert(
             self,
-            entries: t.SequenceOf[m.Ldif.Entry],
+            entries: Sequence[m.Ldif.Entry],
         ) -> p.Result[m.Ldap.UpsertPlan]:
             """Classify entries for upsert without writing (dry plan).
 
@@ -110,7 +111,7 @@ class FlextLdapProtocolsClient:
             self,
             dn: str,
             *,
-            attributes: t.StrSequence | None = None,
+            attributes: Sequence[str] | None = None,
         ) -> p.Result[m.Ldap.SearchResult]:
             """Read one entry by DN; an absent entry is an empty result.
 

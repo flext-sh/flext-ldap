@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
 from flext_ldap import c, m, p, t, u
@@ -19,12 +20,12 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def value_to_str_list(
-        value: t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
-    ) -> t.MutableSequenceOf[str]:
+        value: t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str],
+    ) -> MutableSequence[str]:
         """Convert an ldap3 attribute payload through the canonical utility.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return list(u.Ldap.ldap3_value_to_strings(value))
@@ -50,8 +51,8 @@ class FlextLdapLdap3Wrappers:
     def add(
         connection: p.Ldap.Ldap3Connection,
         dn: str,
-        object_class: t.StrSequence | str | None,
-        attributes: t.MappingKV[str, t.StrSequence],
+        object_class: Sequence[str] | str | None,
+        attributes: Mapping[str, Sequence[str]],
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add().
 
@@ -126,7 +127,7 @@ class FlextLdapLdap3Wrappers:
             The resulting ``bool``.
 
         """
-        scope_map: t.MappingKV[int, c.Ldap.Ldap3SearchScope] = {
+        scope_map: Mapping[int, c.Ldap.Ldap3SearchScope] = {
             c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
             c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
             c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,

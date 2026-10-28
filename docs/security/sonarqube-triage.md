@@ -255,8 +255,8 @@ padrão.
 >>>    18          LDAPException: type[Exception] = _Ldap3LDAPException
        19
        20          type Ldap3AttributeScalar = str | bytes
-       21          type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
-       22          type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]
+       21          type Ldap3AttributeValues = Sequence[Ldap3AttributeScalar]
+       22          type Ldap3AttributeDict = Mapping[str, Ldap3AttributeValues]
 ```
 
 **Decisão**: pendente

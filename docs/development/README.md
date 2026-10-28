@@ -174,6 +174,15 @@ make clean-all # Deep clean including venvs
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import p, r
 
 
@@ -189,6 +198,15 @@ def my_operation(data: dict) -> p.Result[ProcessedData]:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import s
 
@@ -207,6 +225,15 @@ class MyService(s[None]):
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from pydantic import PositiveInt
 

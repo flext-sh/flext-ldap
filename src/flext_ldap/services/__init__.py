@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldap.services._subtree import FlextLdapServicesSubtreeDelete
-    from flext_ldap.services._upsert import FlextLdapServicesUpsertHandler
     from flext_ldap.services.api_runtime import FlextLdapApiRuntime
     from flext_ldap.services.connection import FlextLdapConnection
     from flext_ldap.services.detection import FlextLdapServerDetector
     from flext_ldap.services.operations import FlextLdapOperations
+    from flext_ldap.services.subtree import FlextLdapServicesSubtree
     from flext_ldap.services.sync import FlextLdapSync
+    from flext_ldap.services.upsert import FlextLdapServicesUpsert
 
 
 __all__: tuple[str, ...] = (
@@ -27,8 +27,8 @@ __all__: tuple[str, ...] = (
     "FlextLdapConnection",
     "FlextLdapOperations",
     "FlextLdapServerDetector",
-    "FlextLdapServicesSubtreeDelete",
-    "FlextLdapServicesUpsertHandler",
+    "FlextLdapServicesSubtree",
+    "FlextLdapServicesUpsert",
     "FlextLdapSync",
 )
 
@@ -40,9 +40,9 @@ install_lazy_exports(
         "FlextLdapConnection": ".connection",
         "FlextLdapOperations": ".operations",
         "FlextLdapServerDetector": ".detection",
-        "FlextLdapServicesSubtreeDelete": "._subtree_delete",
+        "FlextLdapServicesSubtree": ".subtree",
+        "FlextLdapServicesUpsert": ".upsert",
         "FlextLdapSync": ".sync",
-        "FlextLdapServicesUpsertHandler": "._upsert_handler",
     }),
     public_exports=__all__,
 )

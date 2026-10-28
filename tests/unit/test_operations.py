@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
 import pytest
 
-from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.services import FlextLdapOperations
 from tests import c, m, p, r, t, u
 
 pytestmark = pytest.mark.unit
@@ -28,7 +29,7 @@ class TestsFlextLdapOperations:
 
         def __init__(
             self,
-            results: t.SequenceOf[p.Result[m.Ldap.LdapOperationResult]],
+            results: Sequence[p.Result[m.Ldap.LdapOperationResult]],
         ) -> None:
             """Initialize the test double."""
             super().__init__()
@@ -39,7 +40,7 @@ class TestsFlextLdapOperations:
             self,
             entry: p.Ldif.Entry,
             *,
-            retry_on_errors: t.StrSequence | None = None,
+            retry_on_errors: Sequence[str] | None = None,
             max_retries: int = 1,
         ) -> p.Result[m.Ldap.LdapOperationResult]:
             _ = entry, retry_on_errors, max_retries

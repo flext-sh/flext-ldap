@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_core import FlextService
 from flext_ldif import FlextLdif
 
@@ -19,8 +21,8 @@ from flext_ldap import FlextLdapSettings, c, m, p, t
 
 
 class FlextLdapService[
-    TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload],
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] = t.JsonPayload
+    | Sequence[t.JsonPayload],
 ](FlextService[TResult]):
     """Base class for all flext-ldap services.
 

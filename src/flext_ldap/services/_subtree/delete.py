@@ -22,7 +22,9 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
-from flext_ldap import c, m, p, r, t, u
+from collections.abc import Sequence
+
+from flext_ldap import c, m, p, r, u
 
 
 class FlextLdapServicesSubtreeDelete:
@@ -100,11 +102,11 @@ class FlextLdapServicesSubtreeDelete:
             m.Ldap.SubtreeDeleteResult(base_dn=base_dn, deleted_count=deleted_count),
         )
 
-    def _collect_subtree_dns(self, base_dn: str) -> p.Result[t.SequenceOf[str]]:
+    def _collect_subtree_dns(self, base_dn: str) -> p.Result[Sequence[str]]:
         """Enumerate every DN under (and including) the base, attributes omitted.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[str]]``.
+            The resulting ``p.Result[Sequence[str]]``.
 
         """
         search_options = m.Ldap.SearchOptions(
@@ -115,12 +117,12 @@ class FlextLdapServicesSubtreeDelete:
         )
         search_result = self._ops.search(search_options)
         if search_result.failure:
-            return r[t.SequenceOf[str]].fail_op(
+            return r[Sequence[str]].fail_op(
                 "Subtree enumeration search",
                 search_result.error,
             )
         search_data = search_result.map_or(None)
-        entries: t.SequenceOf[m.Ldif.Entry] = (
+        entries: Sequence[m.Ldif.Entry] = (
             list(search_data.entries) if search_data is not None else []
         )
         subtree_dns: list[str] = [
@@ -130,7 +132,7 @@ class FlextLdapServicesSubtreeDelete:
         ]
         if base_dn not in subtree_dns:
             subtree_dns.append(base_dn)
-        return r[t.SequenceOf[str]].ok(subtree_dns)
+        return r[Sequence[str]].ok(subtree_dns)
 
     @staticmethod
     def _dn_depth(dn: str) -> int:

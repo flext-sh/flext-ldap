@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldap import c, e, m, p, r, s, t, u
+from flext_ldap.adapters import FlextLdapEntryAdapter
 from flext_ldap.adapters._ldap3 import (
     FlextLdapLdap3ConnectionManager,
     FlextLdapLdap3OperationExecutor,
@@ -19,7 +20,6 @@ from flext_ldap.adapters._ldap3 import (
     FlextLdapLdap3SearchExecutor,
     FlextLdapLdap3Wrappers,
 )
-from flext_ldap.adapters.entry import FlextLdapEntryAdapter
 
 
 class FlextLdapLdap3Adapter(s[bool]):

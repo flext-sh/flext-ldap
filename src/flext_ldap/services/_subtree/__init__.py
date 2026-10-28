@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for subtree.
+"""Flext Ldap.services. Subtree package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,13 +15,12 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_ldap.services._subtree.delete import FlextLdapServicesSubtreeDelete
 
+
 __all__: tuple[str, ...] = ("FlextLdapServicesSubtreeDelete",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextLdapServicesSubtreeDelete": ".delete",
-    }),
+    MappingProxyType({"FlextLdapServicesSubtreeDelete": ".delete"}),
     public_exports=__all__,
 )

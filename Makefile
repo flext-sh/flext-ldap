@@ -333,7 +333,7 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := setup upg gen mod fix fmt check tests help build clean
+PUBLIC_VERBS := setup upg gen mod fix fmt check tests tests-full help build clean
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -785,6 +785,9 @@ VERB_ARGUMENTS_check := CHECK_PHASE
 VERB_DESCRIPTION_tests := Discover the complete global pytest inventory and execute testmon-selected cases with the persistent external database.
 VERB_ARGUMENTS_tests :=
 
+VERB_DESCRIPTION_tests-full := Execute the complete applicable population once without Testmon or a preliminary incremental run, preserving the existing database untouched.
+VERB_ARGUMENTS_tests-full :=
+
 VERB_DESCRIPTION_help := Discover the declared public interface without effects.
 VERB_ARGUMENTS_help :=
 
@@ -800,7 +803,7 @@ VERB_HELP_LINE = printf '  %-16s %s\n' '$(1)' '$(VERB_DESCRIPTION_$(1))'$(if $(s
 ifeq ($(VERB_CONTRACT),)
 PROFILE_VERBS_PLAIN := gen
 PROFILE_VERBS_DISPATCH := help clean
-PROFILE_VERBS_ACTIVATED := mod fix fmt check tests build
+PROFILE_VERBS_ACTIVATED := mod fix fmt check tests tests-full build
 PROFILE_VERBS_INTERPRETER :=
 PROFILE_VERBS_HOOKED := $(foreach v,$(filter-out $(PROFILE_VERBS_INTERPRETER),$(PROFILE_VERBS_ACTIVATED)),$(if $(filter pre-$(v) _custom-$(v) post-$(v),$(CUSTOM_DECLARED_TARGETS)),$(v)))
 PROFILE_VERBS_DIRECT := $(filter-out $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INTERPRETER),$(PROFILE_VERBS_ACTIVATED))
@@ -1089,6 +1092,9 @@ _builtin_check_all: _builtin_require_environment
 _builtin_tests_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) workspace tests --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"
 
+_builtin_tests_full_all: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) workspace tests-full --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"
+
 # fmt is format-only (single-pass verb law): ruff formats Python, the
 # fmt_gates formatters run once through the checker's apply mode, and every
 # lint repair belongs to `make fix`. Every repair requires read-only native
@@ -1120,6 +1126,7 @@ _builtin-build: _builtin_build_artifacts
 _builtin-check: _builtin_check_all
 
 _builtin-tests: _builtin_tests_all
+_builtin-tests-full: _builtin_tests_full_all
 _builtin-fmt: _builtin_fmt_all
 _builtin-fix: _builtin_fix_all
 _builtin-clean: _builtin_clean_generated

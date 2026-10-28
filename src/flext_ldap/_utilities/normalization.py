@@ -6,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_ldap import c, m, t
-from flext_ldap._utilities.base import FlextLdapUtilitiesBase
+from flext_ldap._utilities import FlextLdapUtilitiesBase
 
 
 class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
@@ -19,7 +19,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
     def norm_in(
         cls,
         value: str,
-        collection: t.StrSequence | tuple[str, ...],
+        collection: Sequence[str] | tuple[str, ...],
         *,
         case: str | None = None,
     ) -> bool:
@@ -29,7 +29,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
             The resulting ``bool``.
 
         """
-        collection_list: t.StrSequence
+        collection_list: Sequence[str]
         match collection:
             case tuple():
                 collection_list = list(collection)
@@ -44,7 +44,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
     @classmethod
     def norm_join(
         cls,
-        values: t.StrSequence | tuple[str, ...],
+        values: Sequence[str] | tuple[str, ...],
         *,
         case: str | None = None,
     ) -> str:
@@ -54,7 +54,7 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
             The resulting ``str``.
 
         """
-        values_list: t.StrSequence
+        values_list: Sequence[str]
         match values:
             case tuple():
                 values_list = list(values)
@@ -70,9 +70,9 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
             t.JsonValue
             | t.Ldap.Ldap3AttributeValue
             | t.Ldap.Ldap3EntryValue
-            | t.StrSequence
+            | Sequence[str]
         ),
-    ) -> t.StrSequence:
+    ) -> Sequence[str]:
         match value:
             case None:
                 return []
@@ -93,16 +93,16 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
         cls,
         attrs: (
             t.Ldap.Ldap3AttributeDict
-            | t.MappingKV[str, t.Ldap.Ldap3AttributeValue]
-            | t.MappingKV[str, t.Ldap.Ldap3EntryValue]
+            | Mapping[str, t.Ldap.Ldap3AttributeValue]
+            | Mapping[str, t.Ldap.Ldap3EntryValue]
             | t.JsonMapping
-            | t.MappingKV[str, t.StrSequence]
+            | Mapping[str, Sequence[str]]
         ),
-    ) -> t.MappingKV[str, t.StrSequence]:
+    ) -> Mapping[str, Sequence[str]]:
         """Convert LDAP attributes into string sequences.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.StrSequence]``.
+            The resulting ``Mapping[str, Sequence[str]]``.
 
         """
         return {k: cls._convert_attr_value(v) for k, v in (attrs or {}).items()}
@@ -110,16 +110,16 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
     @staticmethod
     def ldap3_value_to_strings(
         value: t.Ldap.Ldap3EntryValue | t.JsonValue | None,
-    ) -> t.StrSequence:
+    ) -> Sequence[str]:
         """Convert an ldap3 attribute payload to canonical string values.
 
         Returns:
-            The resulting ``t.StrSequence``.
+            The resulting ``Sequence[str]``.
 
         """
         match value:
             case None:
-                empty_values: t.StrSequence = []
+                empty_values: Sequence[str] = []
                 return empty_values
             case bytes() as value_bytes:
                 return [
@@ -156,11 +156,11 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
     def normalize_original_attr_value(
         cls,
         value: t.Ldap.Ldap3EntryValue | None,
-    ) -> t.StrSequence:
+    ) -> Sequence[str]:
         """Normalize original ldap3 values while preserving list semantics.
 
         Returns:
-            The resulting ``t.StrSequence``.
+            The resulting ``Sequence[str]``.
 
         """
         return cls.ldap3_value_to_strings(value)
@@ -200,18 +200,18 @@ class FlextLdapUtilitiesNormalization(FlextLdapUtilitiesBase):
 
     @staticmethod
     def map_str(
-        values: t.StrSequence | tuple[str, ...],
+        values: Sequence[str] | tuple[str, ...],
         *,
         case: str | None = None,
         join: str | None = None,
-    ) -> str | t.StrSequence:
+    ) -> str | Sequence[str]:
         """Normalize a string collection and optionally join it.
 
         Returns:
-            The resulting ``str | t.StrSequence``.
+            The resulting ``str | Sequence[str]``.
 
         """
-        normalized: t.MutableSequenceOf[str] = []
+        normalized: MutableSequence[str] = []
         for val in values:
             normalized_val = val
             if case == "lower":

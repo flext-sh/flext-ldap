@@ -196,6 +196,15 @@ DEVELOPMENT_CONFIG = FlextLdapSettings(
 ````python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import os
 
 from Flext_ldap import FlextLdapSettings
@@ -297,6 +306,15 @@ TEST_CONFIG = FlextLdapSettings(
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldap.api import ldap
 

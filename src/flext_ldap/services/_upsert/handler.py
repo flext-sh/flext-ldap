@@ -21,6 +21,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_ldap import c, m, p, r, t, u
 
 
@@ -81,7 +83,7 @@ class FlextLdapServicesUpsertHandler:
 
         """
         attrs = u.Ldap.extract_entry_attributes(entry)
-        changetype_val: t.StrSequence = list(
+        changetype_val: Sequence[str] = list(
             attrs.get(c.Ldap.AttributeName.CHANGETYPE, []),
         )
         changetype = (
@@ -92,17 +94,17 @@ class FlextLdapServicesUpsertHandler:
         return changetype == c.Ldif.ChangeType.MODIFY
 
     @staticmethod
-    def _modify_additions(entry_model: m.Ldif.Entry) -> list[tuple[str, t.StrSequence]]:
+    def _modify_additions(entry_model: m.Ldif.Entry) -> list[tuple[str, Sequence[str]]]:
         """Collect the non-empty MODIFY_ADD values of a modify entry.
 
         Change operations are the carrier; the legacy ``add:`` attribute
         form is read only when no add operation carries values.
 
         Returns:
-            The resulting ``list[tuple[str, t.StrSequence]]``.
+            The resulting ``list[tuple[str, Sequence[str]]]``.
 
         """
-        additions: list[tuple[str, t.StrSequence]] = []
+        additions: list[tuple[str, Sequence[str]]] = []
         for change_operation in entry_model.change_operations:
             if change_operation.operation != c.Ldif.ChangeOperation.ADD:
                 continue
@@ -235,7 +237,7 @@ class FlextLdapServicesUpsertHandler:
             m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.MODIFIED),
         )
 
-    def plan(self, entries: t.SequenceOf[p.Ldif.Entry]) -> p.Result[m.Ldap.UpsertPlan]:
+    def plan(self, entries: Sequence[p.Ldif.Entry]) -> p.Result[m.Ldap.UpsertPlan]:
         """Classify entries against the directory without writing anything.
 
         Business Rules:
@@ -278,7 +280,7 @@ class FlextLdapServicesUpsertHandler:
                     "Plan search for existing entry",
                     found.error,
                 )
-            existing_entries: t.SequenceOf[m.Ldif.Entry] = list(found.value.entries)
+            existing_entries: Sequence[m.Ldif.Entry] = list(found.value.entries)
             if not existing_entries:
                 adds += 1
                 continue

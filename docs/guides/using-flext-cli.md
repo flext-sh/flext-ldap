@@ -74,6 +74,15 @@ class FlextApiSettings(FlextSettings):
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_cli import FlextCliCli, FlextCliSettings, m, t
 
 settings = FlextCliSettings.fetch_global()
@@ -121,10 +130,9 @@ Use `FlextCliCli.invoke_app` with the adapter-owned application, not Typer's `Cl
 directly. This independent example constructs and invokes a real model-backed command;
 handlers return their value but do not automatically print it.
 
-```python
-from tests import c, m, tm
-
+```{.python .notest}
 from flext_cli import FlextCliCli
+from tests import c, m, tm
 
 
 class GreetInput(m.BaseModel):

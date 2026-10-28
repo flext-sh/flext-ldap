@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_ldif import u
 
-from flext_ldap import c, t
+from flext_ldap import c
 from flext_ldap._utilities import FlextLdapUtilitiesNormalization
 
 
@@ -18,8 +20,8 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
     @classmethod
     def detect_from_extensions(
         cls,
-        supported_extensions: t.StrSequence,
-        naming_contexts: t.StrSequence,
+        supported_extensions: Sequence[str],
+        naming_contexts: Sequence[str],
     ) -> str:
         """Infer server type from rootDSE extensions and naming contexts.
 
@@ -50,7 +52,7 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
     @staticmethod
     def _contains_marker(
         haystack: str,
-        markers: t.StrSequence | frozenset[str],
+        markers: Sequence[str] | frozenset[str],
     ) -> bool:
         """Return True when any configured marker is present in the input text."""
         return any(marker in haystack for marker in markers)
@@ -117,8 +119,8 @@ class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):
         *,
         vendor_name: str | None,
         vendor_version: str | None,
-        naming_contexts: t.StrSequence,
-        supported_extensions: t.StrSequence,
+        naming_contexts: Sequence[str],
+        supported_extensions: Sequence[str],
     ) -> str:
         """Resolve the effective server type from rootDSE metadata.
 

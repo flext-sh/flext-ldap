@@ -33,12 +33,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
-from flext_ldif import ldif
-
-from flext_ldap import c, m, p, r, t, u
-from flext_ldap.adapters.host import FlextLdapAdapterHost
+from flext_ldap import c, ldif, m, p, r, t, u
+from flext_ldap.adapters import FlextLdapAdapterHost
 from flext_ldap.services._subtree import FlextLdapServicesSubtreeDelete
 from flext_ldap.services._upsert import FlextLdapServicesUpsertHandler
 
@@ -139,7 +138,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         self,
         dn: str,
         *,
-        attributes: t.StrSequence | None = None,
+        attributes: Sequence[str] | None = None,
     ) -> p.Result[m.Ldap.SearchResult]:
         """Read one entry by DN; an absent entry is an empty result, not a failure.
 
@@ -233,10 +232,10 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
     def batch_upsert(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
         *,
         progress_callback: t.Ldap.LdapProgressCallback | None = None,
-        retry_on_errors: t.StrSequence | None = None,
+        retry_on_errors: Sequence[str] | None = None,
         max_retries: int = 1,
         stop_on_error: bool = False,
     ) -> p.Result[m.Ldap.LdapBatchStats]:
@@ -400,7 +399,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
 
     def plan_upsert(
         self,
-        entries: t.SequenceOf[p.Ldif.Entry],
+        entries: Sequence[p.Ldif.Entry],
     ) -> p.Result[m.Ldap.UpsertPlan]:
         """Classify entries for upsert without writing (dry plan).
 
@@ -551,7 +550,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[m.Ldap.Response]):
         self,
         entry: p.Ldif.Entry,
         *,
-        retry_on_errors: t.StrSequence | None = None,
+        retry_on_errors: Sequence[str] | None = None,
         max_retries: int = 1,
     ) -> p.Result[m.Ldap.LdapOperationResult]:
         """Upsert an entry, optionally retrying for configured error patterns.

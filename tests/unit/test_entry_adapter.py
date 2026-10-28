@@ -16,9 +16,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
-from flext_ldap.adapters.entry import FlextLdapEntryAdapter
+from flext_ldap.adapters import FlextLdapEntryAdapter
 from tests import c, m, t, tm, u
 
 pytestmark = pytest.mark.unit
@@ -57,7 +59,7 @@ class TestsFlextLdapEntryAdapter:
             return self._dn
 
         @property
-        def entry_attributes(self) -> t.StrSequence:
+        def entry_attributes(self) -> Sequence[str]:
             return tuple(self._attributes)
 
         @property
@@ -73,7 +75,7 @@ class TestsFlextLdapEntryAdapter:
             )
 
     @staticmethod
-    def _ldif_entry(attributes: t.MappingKV[str, t.StrSequence]) -> m.Ldif.Entry:
+    def _ldif_entry(attributes: Mapping[str, Sequence[str]]) -> m.Ldif.Entry:
         """Build an ``m.Ldif.Entry`` via the public model API.
 
         Returns:
@@ -116,7 +118,7 @@ class TestsFlextLdapEntryAdapter:
     )
     def test_ldif_to_ldap3_attributes_preserves_names_and_values(
         self,
-        attributes: t.MappingKV[str, t.StrSequence],
+        attributes: Mapping[str, Sequence[str]],
     ) -> None:
         """Verify ldif to ldap3 attributes preserves names and values."""
         adapter = FlextLdapEntryAdapter()

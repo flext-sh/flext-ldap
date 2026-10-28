@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
+from collections.abc import Sequence
+from typing import Protocol, override, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
-
-if TYPE_CHECKING:
-    from flext_ldap import t
 
 
 class FlextLdapProtocolsSearch:
@@ -60,7 +58,7 @@ class FlextLdapProtocolsSearch:
         base_dn: str
         scope: str
         filter_str: str
-        attributes: t.StrSequence | None
+        attributes: Sequence[str] | None
         size_limit: int
         time_limit: int
 
@@ -81,7 +79,7 @@ class FlextLdapProtocolsSearch:
     class SearchResult(Protocol):
         """Protocol for LDAP search result (structural type)."""
 
-        entries: t.SequenceOf[FlextLdifProtocols.Ldif.Entry]
+        entries: Sequence[FlextLdifProtocols.Ldif.Entry]
         search_options: FlextLdapProtocolsSearch.SearchOptions
 
     @runtime_checkable

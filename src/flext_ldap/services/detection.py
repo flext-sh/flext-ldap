@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import override
 
 from flext_ldap import c, e, m, p, r, s, t, u
@@ -30,9 +31,9 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
     def _detect_from_attributes(
         vendor_name: str | None,
         vendor_version: str | None,
-        naming_contexts: t.StrSequence,
-        supported_controls: t.StrSequence,
-        supported_extensions: t.StrSequence,
+        naming_contexts: Sequence[str],
+        supported_controls: Sequence[str],
+        supported_extensions: Sequence[str],
     ) -> p.Result[str]:
         """Compatibility shim that delegates heuristic detection to utilities.
 

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flext_ldap import c, m, p, r, t, u
@@ -111,7 +112,7 @@ class FlextLdapLdap3OperationExecutor:
             The resulting ``p.Result[m.Ldap.OperationResult]``.
 
         """
-        attrs_dict: t.MappingKV[str, t.StrSequence] = {
+        attrs_dict: Mapping[str, Sequence[str]] = {
             k: list(v) for k, v in ldap_attrs.items()
         }
         return FlextLdapLdap3OperationExecutor._execute(

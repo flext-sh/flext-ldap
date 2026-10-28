@@ -7,13 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING
 
 from flext_ldap import c, m, p, r, t, u
-from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.services import FlextLdapOperations
 
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping
     from pathlib import Path
 
 
@@ -127,7 +127,7 @@ class FlextLdapSync(FlextLdapOperations):
 
     def sync_multiple_phases(
         self,
-        phase_files: t.MappingKV[str, Path],
+        phase_files: Mapping[str, Path],
         *,
         settings: m.Ldap.SyncPhaseConfig | None = None,
     ) -> p.Result[m.Ldap.MultiPhaseSyncResult]:

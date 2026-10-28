@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from flext_ldap.api import FlextLdap, ldap
     from flext_ldap.base import FlextLdapService, s
     from flext_ldap.cli import main
+    from flext_ldap.config_models import FlextLdapModelsConfigNamespace
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
     from flext_ldap.protocols import FlextLdapProtocols, p
@@ -61,6 +62,7 @@ __all__: tuple[str, ...] = (
     "FlextLdapConfig",
     "FlextLdapConstants",
     "FlextLdapModels",
+    "FlextLdapModelsConfigNamespace",
     "FlextLdapProtocols",
     "FlextLdapService",
     "FlextLdapSettings",
@@ -112,6 +114,7 @@ install_lazy_exports(
         "FlextLdapConfig": "._config",
         "FlextLdapConstants": ".constants",
         "FlextLdapModels": ".models",
+        "FlextLdapModelsConfigNamespace": ".config_models",
         "FlextLdapProtocols": ".protocols",
         "FlextLdapService": ".base",
         "FlextLdapSettings": "._settings",

@@ -19,8 +19,7 @@ from uuid import uuid4
 
 import pytest
 
-from flext_ldap import ldap
-from tests import c, m, t, tm, u
+from tests import c, ldap, m, t, tm, u
 
 pytestmark = pytest.mark.smoke
 
@@ -30,7 +29,7 @@ class TestsFlextLdapSmoke:
 
     @staticmethod
     def test_container_reachable_through_ldap3_boundary(
-        ldap_container: t.MappingKV[str, t.Scalar],
+        ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """The real LDAP container binds and exposes server info (precondition)."""
         # Arrange
@@ -48,7 +47,7 @@ class TestsFlextLdapSmoke:
 
     @staticmethod
     def test_connect_succeeds_and_toggles_public_connected_state(
-        ldap_container: t.MappingKV[str, t.Scalar],
+        ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
@@ -84,7 +83,7 @@ class TestsFlextLdapSmoke:
 
     @staticmethod
     def test_rejected_bind_releases_socket(
-        ldap_container: t.MappingKV[str, t.Scalar],
+        ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """A rejected bind leaves no open socket for finalization."""
         ldap.disconnect()
@@ -113,7 +112,7 @@ class TestsFlextLdapMultivalueAdd:
 
     @staticmethod
     def test_add_persists_full_objectclass_chain(
-        ldap_container: t.MappingKV[str, t.Scalar],
+        ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """A multi-class entry adds and reads back with every class."""
         # Arrange - real runtime connection and a unique leaf entry

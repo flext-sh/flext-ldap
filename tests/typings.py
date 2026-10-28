@@ -24,7 +24,7 @@ class TestsFlextLdapTypes(FlextTestsTypes, FlextLdapTypes):
             Use t.Ldap.Tests.* for all flext-ldap test types.
             """
 
-            type LdapContainerDict = FlextLdapTypes.MappingKV[
+            type LdapContainerDict = FlextLdapTypes.Mapping[
                 str,
                 FlextLdapTypes.Scalar,
             ]

@@ -194,6 +194,15 @@ settings = FlextLdapSettings(
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap.api import ldap
 
 
@@ -215,6 +224,15 @@ run(test_connection())
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -249,6 +267,15 @@ run(basic_search())
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap.api import ldap
 
 
@@ -280,6 +307,15 @@ FLEXT-LDAP provides server-specific implementations with automatic server detect
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import ldap3
 
@@ -381,6 +417,15 @@ Discover schema from different LDAP server types:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import ldap3
 
 from flext_ldap import OpenLDAP2Operations
@@ -416,6 +461,15 @@ Manage server-specific ACLs:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import ldap3
 
@@ -461,6 +515,15 @@ Execute paged searches with automatic pagination:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import ldap3
 

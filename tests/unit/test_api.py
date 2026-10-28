@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import ldap
 from flext_ldap.services import FlextLdapSync
-from tests import c, m, t, u
+from tests import c, ldap, m, t, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -62,7 +61,7 @@ class TestsFlextLdapApi:
         case: c.Ldap.Tests.CallbackGuardCase,
     ) -> t.Ldap.ProgressCallbackUnion | None:
         """Return the callback payload for one callback-guard case."""
-        callbacks: t.MappingKV[
+        callbacks: Mapping[
             c.Ldap.Tests.CallbackGuardCase,
             t.Ldap.ProgressCallbackUnion | None,
         ] = {

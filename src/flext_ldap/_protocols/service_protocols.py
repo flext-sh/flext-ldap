@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
 
-from flext_ldap._protocols.search_protocols import FlextLdapProtocolsSearch
+from flext_ldap._protocols import FlextLdapProtocolsSearch
 
 if TYPE_CHECKING:
     from collections.abc import Callable

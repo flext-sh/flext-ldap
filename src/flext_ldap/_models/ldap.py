@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Annotated, Self
 
 from flext_ldif import m
@@ -76,7 +77,7 @@ class FlextLdapModelsFlextLdap:
             filter_str: str = c.Ldap.ALL_ENTRIES_FILTER
             size_limit: t.NonNegativeInt = 0
             time_limit: t.NonNegativeInt = 0
-            attributes: t.StrSequence | None = None
+            attributes: Sequence[str] | None = None
 
         class SearchOptions(m.BaseModel):
             """Search options."""
@@ -87,7 +88,7 @@ class FlextLdapModelsFlextLdap:
             ]
             scope: str = c.Ldap.DEFAULT_SCOPE
             filter_str: str = c.Ldap.ALL_ENTRIES_FILTER
-            attributes: t.StrSequence | None = None
+            attributes: Sequence[str] | None = None
             size_limit: t.NonNegativeInt = 0
             time_limit: t.NonNegativeInt = 0
 
@@ -147,7 +148,7 @@ class FlextLdapModelsFlextLdap:
             base_dn: str
             filter_str: str
             ldap_scope: t.NonNegativeInt
-            search_attributes: t.StrSequence
+            search_attributes: Sequence[str]
             size_limit: t.NonNegativeInt
             time_limit: t.NonNegativeInt
 
@@ -234,7 +235,7 @@ class FlextLdapModelsFlextLdap:
             successful: t.NonNegativeInt = 0
             failed: t.NonNegativeInt = 0
             results: Annotated[
-                t.SequenceOf[FlextLdapModelsFlextLdap.FlextLdapModelsLdap.UpsertResult],
+                Sequence[FlextLdapModelsFlextLdap.FlextLdapModelsLdap.UpsertResult],
                 m.Field(
                     default_factory=list,
                     description="Validated per-entry upsert results",
@@ -259,29 +260,29 @@ class FlextLdapModelsFlextLdap:
             )
             server_type: str = c.Ldap.DEFAULT_TYPE
             progress_callback: t.Ldap.ProgressCallbackUnion | None = None
-            retry_on_errors: t.StrSequence = m.Field(default_factory=list[str])
+            retry_on_errors: Sequence[str] = m.Field(default_factory=list[str])
             max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
             stop_on_error: bool = False
 
         class ConversionMetadata(m.BaseModel):
             """Conversion metadata."""
 
-            source_attributes: t.StrSequence = m.Field(
+            source_attributes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Source attribute names",
             )
             source_dn: str = ""
-            removed_attributes: t.StrSequence = m.Field(
+            removed_attributes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Attributes removed during conversion",
             )
-            base64_encoded_attributes: t.StrSequence = m.Field(
+            base64_encoded_attributes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Attributes that were base64-encoded",
             )
             dn_changed: bool = False
             converted_dn: str = ""
-            attribute_changes: t.StrSequence = m.Field(
+            attribute_changes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Tracked attribute change descriptions",
             )
@@ -312,7 +313,7 @@ class FlextLdapModelsFlextLdap:
             """
 
             entries: Annotated[
-                t.SequenceOf[m.Ldif.Entry],
+                Sequence[m.Ldif.Entry],
                 m.Field(default_factory=list),
             ]
             search_options: FlextLdapModelsFlextLdap.FlextLdapModelsLdap.SearchOptions
@@ -334,7 +335,7 @@ class FlextLdapModelsFlextLdap:
             """Multi-phase sync result."""
 
             model_config = m.ConfigDict(arbitrary_types_allowed=True)
-            phase_results: t.MappingKV[
+            phase_results: Mapping[
                 str,
                 FlextLdapModelsFlextLdap.FlextLdapModelsLdap.PhaseSyncResult,
             ] = m.Field(

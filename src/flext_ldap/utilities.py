@@ -10,11 +10,8 @@ from __future__ import annotations
 from flext_ldif import u as flext_ldif_u
 
 from flext_ldap._utilities import (
-    FlextLdapUtilitiesBase,
     FlextLdapUtilitiesComparison,
     FlextLdapUtilitiesConversion,
-    FlextLdapUtilitiesDetection,
-    FlextLdapUtilitiesNormalization,
     FlextLdapUtilitiesRootDse,
     FlextLdapUtilitiesServer,
     FlextLdapUtilitiesValidation,
@@ -28,11 +25,8 @@ class FlextLdapUtilities(flext_ldif_u):
         FlextLdapUtilitiesComparison,
         FlextLdapUtilitiesConversion,
         FlextLdapUtilitiesRootDse,
-        FlextLdapUtilitiesDetection,
-        FlextLdapUtilitiesNormalization,
         FlextLdapUtilitiesServer,
         FlextLdapUtilitiesValidation,
-        FlextLdapUtilitiesBase,
     ):
         """LDAP-specific utility namespace."""
 

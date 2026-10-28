@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import pytest
 
 from tests import c, m, t, u
@@ -26,7 +28,7 @@ class TestsFlextLdapModelsSearch:
     @staticmethod
     def _entry(
         dn: str,
-        attributes: t.MappingKV[str, t.StrSequence] | None = None,
+        attributes: Mapping[str, Sequence[str]] | None = None,
     ) -> m.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),

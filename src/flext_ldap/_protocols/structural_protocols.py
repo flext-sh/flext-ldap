@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ class FlextLdapProtocolsStructural:
         """Protocol for objects with items() method."""
 
         @staticmethod
-        def items() -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
+        def items() -> Sequence[tuple[str, t.JsonValue]]:
             """Return items as sequence of tuples."""
             ...
 
@@ -50,7 +51,7 @@ class FlextLdapProtocolsStructural:
         """
 
         @property
-        def attributes(self) -> t.MappingKV[str, t.Ldap.Ldap3EntryValue]:
+        def attributes(self) -> Mapping[str, t.Ldap.Ldap3EntryValue]:
             """The attributes property - covariant Mapping.
 
             Structurally compatible.

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 
 from flext_ldap import c, m, p, t
@@ -73,7 +73,7 @@ class FlextLdapLdap3ResultExtract:
     @staticmethod
     def extract_attrs_dict(
         attrs: p.Ldap.HasAttributesProperty
-        | t.MappingKV[str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence]
+        | Mapping[str, t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str]]
         | p.Ldap.HasItemsMethod
         | m.Ldif.Attributes
         | m.BaseModel
@@ -88,7 +88,7 @@ class FlextLdapLdap3ResultExtract:
         if isinstance(attrs, p.Ldap.HasAttributesProperty):
             return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
-            model_attrs: t.MappingKV[str, t.Ldap.Ldap3EntryValue] | None = getattr(
+            model_attrs: Mapping[str, t.Ldap.Ldap3EntryValue] | None = getattr(
                 attrs,
                 "attributes",
                 None,
@@ -117,7 +117,7 @@ class FlextLdapLdap3ResultExtract:
                 result = parsed.metadata
             case _:
                 metadata_attr: (
-                    m.Ldif.ServerMetadata | t.MappingKV[str, t.Scalar | None] | None
+                    m.Ldif.ServerMetadata | Mapping[str, t.Scalar | None] | None
                 ) = getattr(parsed, "metadata", None)
                 match metadata_attr:
                     case None:
@@ -143,13 +143,13 @@ class FlextLdapLdap3ResultExtract:
 
     @staticmethod
     def _normalize_attr_values(
-        attrs_dict: t.MappingKV[
+        attrs_dict: Mapping[
             str,
-            t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
+            t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str],
         ]
         | None,
     ) -> t.Ldap.OperationAttributes:
-        """Normalize attribute values to ``t.StrSequence`` format.
+        """Normalize attribute values to ``Sequence[str]`` format.
 
         Returns:
             The resulting ``t.Ldap.OperationAttributes``.
@@ -166,23 +166,23 @@ class FlextLdapLdap3ResultExtract:
             elif hasattr(v, "__len__") and hasattr(v, "__getitem__"):
                 result[k] = FlextLdapLdap3Wrappers.value_to_str_list(v)
             else:
-                empty_values: t.MutableSequenceOf[str] = []
+                empty_values: MutableSequence[str] = []
                 result[k] = empty_values
         return result
 
     @staticmethod
     def _normalize_metadata(
-        metadata: t.MappingKV[str, t.Scalar | None] | None,
-    ) -> t.MappingKV[str, t.Scalar | t.ScalarList] | None:
+        metadata: Mapping[str, t.Scalar | None] | None,
+    ) -> Mapping[str, t.Scalar | Sequence[t.Scalar]] | None:
         """Filter metadata to ``ServerMetadata``-compatible primitive values.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.Scalar | t.ScalarList] | None``.
+            The resulting ``Mapping[str, t.Scalar | Sequence[t.Scalar]] | None``.
 
         """
         if not metadata:
             return None
-        metadata_dict: t.MutableMappingKV[str, t.Scalar | t.ScalarList] = {}
+        metadata_dict: MutableMapping[str, t.Scalar | Sequence[t.Scalar]] = {}
         for raw_key, raw_value in metadata.items():
             if isinstance(raw_value, c.PRIMITIVES_TYPES):
                 metadata_dict[raw_key] = raw_value

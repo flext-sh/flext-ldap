@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
@@ -26,7 +27,7 @@ pytestmark = pytest.mark.unit
 
 
 def _entry(
-    attributes: t.MappingKV[str, t.StrSequence] | None,
+    attributes: Mapping[str, Sequence[str]] | None,
     dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
 ) -> m.Ldif.Entry:
     """Build an LDIF entry on the given DN (canonical test DN by default).
@@ -78,7 +79,7 @@ class TestsFlextLdapRootDseProbePayload:
     """Shared ldap3-shaped ``result``/``entries`` payload for root-DSE probes."""
 
     result_payload: ClassVar[t.JsonMapping] = {}
-    entry_payloads: ClassVar[t.SequenceOf[str]] = ()
+    entry_payloads: ClassVar[Sequence[str]] = ()
 
     @property
     def result(self) -> t.JsonMapping:
@@ -86,7 +87,7 @@ class TestsFlextLdapRootDseProbePayload:
         return self.result_payload
 
     @property
-    def entries(self) -> t.SequenceOf[str]:
+    def entries(self) -> Sequence[str]:
         """The ldap3 raw entries."""
         return self.entry_payloads
 
@@ -114,7 +115,7 @@ class TestsFlextLdapUtilitiesUnit:
             case c.Ldap.Tests.AttrToStrListCase.LIST:
                 result = u.Ldap.attr_to_str_list({"cn": list(c.Ldap.Tests.LIST_ABC)})
             case c.Ldap.Tests.AttrToStrListCase.LIST_BYTES:
-                list_bytes: t.MappingKV[str, t.Ldap.Ldap3AttributeValue] = {
+                list_bytes: Mapping[str, t.Ldap.Ldap3AttributeValue] = {
                     "key": [b"bytes", "str"],
                 }
                 result = u.Ldap.attr_to_str_list(list_bytes)
@@ -181,7 +182,7 @@ class TestsFlextLdapUtilitiesUnit:
     @staticmethod
     def test_compare_entries_identical_entries_have_no_changes() -> None:
         """Verify identical entries compare equal (empty change set)."""
-        entry_data: t.MappingKV[str, t.StrSequence] = {
+        entry_data: Mapping[str, Sequence[str]] = {
             "cn": [c.Ldap.Tests.STRING_SIMPLE],
             "sn": [c.ContextScope.USER],
         }
@@ -582,7 +583,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
     @staticmethod
     def test_process_new_attributes_ignored() -> None:
         """Verify process new attributes ignored."""
-        existing_attrs: t.MappingKV[str, t.StrSequence] = {}
+        existing_attrs: Mapping[str, Sequence[str]] = {}
         changes, _processed = u.Ldap.process_new_attributes(
             {"cn": ["val"]},
             existing_attrs,
@@ -642,7 +643,7 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
 
         class BadEntry(TestsFlextLdapRootDseProbePayload):
             result_payload: ClassVar[t.JsonMapping] = {"result": 0}
-            entry_payloads: ClassVar[t.SequenceOf[str]] = ["not_ldap3_entry"]
+            entry_payloads: ClassVar[Sequence[str]] = ["not_ldap3_entry"]
 
             @staticmethod
             def search(**_kwargs: str | int | bool | None) -> bool:
