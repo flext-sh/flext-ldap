@@ -13,7 +13,7 @@ from __future__ import annotations
 from flext_ldif import m
 
 
-class FlextLdapConfigModels:
+class FlextLdapModelsConfig:
     """Namespace of typed flext-ldap config models (pure Pydantic)."""
 
     class Identity(m.BaseModel):
@@ -79,13 +79,13 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
-        identity: FlextLdapConfigModels.Identity = m.Field(
+        identity: FlextLdapModelsConfig.Identity = m.Field(
             description="LDAP identity metadata.",
         )
-        connection: FlextLdapConfigModels.Connection = m.Field(
+        connection: FlextLdapModelsConfig.Connection = m.Field(
             description="LDAP connection defaults and thresholds.",
         )
-        validation: FlextLdapConfigModels.Validation = m.Field(
+        validation: FlextLdapModelsConfig.Validation = m.Field(
             description="LDAP validation and example defaults.",
         )
 
@@ -94,9 +94,9 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="ignore")
 
-        Ldap: FlextLdapConfigModels.Ldap = m.Field(
+        Ldap: FlextLdapModelsConfig.Ldap = m.Field(
             description="LDAP business-rule config namespace.",
         )
 
 
-__all__: list[str] = ["FlextLdapConfigModels"]
+__all__: list[str] = ["FlextLdapModelsConfig"]

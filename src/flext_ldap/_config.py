@@ -15,18 +15,18 @@ from typing import Annotated
 from flext_core import FlextConfig
 from pydantic import Field
 
-from flext_ldap.config_models import FlextLdapConfigNamespaceModels
+from flext_ldap.config_models import FlextLdapModelsConfigNamespace
 
 
 class FlextLdapConfig(FlextConfig):
     """Ldap config auto-loaded model-less from ``config/*.yaml``."""
 
     Ldap: Annotated[
-        FlextLdapConfigNamespaceModels.ConfigNamespace,
+        FlextLdapModelsConfigNamespace.ConfigNamespace,
         Field(
             description="Open namespace exposing ``config/*.yaml`` under ``Ldap``.",
         ),
-    ] = FlextLdapConfigNamespaceModels.ConfigNamespace()
+    ] = FlextLdapModelsConfigNamespace.ConfigNamespace()
 
 
 config: FlextLdapConfig = FlextLdapConfig.fetch_global()

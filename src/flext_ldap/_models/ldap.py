@@ -15,7 +15,7 @@ from flext_ldif import m
 from flext_ldap import c, t
 
 
-class FlextLdapFlextModelsLdap:
+class FlextLdapModelsFlextLdap:
     """Canonical namespace owner."""
 
     class FlextLdapModelsLdap:
@@ -95,9 +95,9 @@ class FlextLdapFlextModelsLdap:
             def normalized(
                 cls,
                 base_dn: str,
-                settings: FlextLdapFlextModelsLdap.FlextLdapModelsLdap.NormalizedConfig
+                settings: FlextLdapModelsFlextLdap.FlextLdapModelsLdap.NormalizedConfig
                 | None = None,
-            ) -> FlextLdapFlextModelsLdap.FlextLdapModelsLdap.SearchOptions:
+            ) -> FlextLdapModelsFlextLdap.FlextLdapModelsLdap.SearchOptions:
                 """Create SearchOptions with normalized configuration.
 
                 Args:
@@ -109,7 +109,7 @@ class FlextLdapFlextModelsLdap:
 
                 """
                 norm_config = (
-                    FlextLdapFlextModelsLdap.FlextLdapModelsLdap.NormalizedConfig()
+                    FlextLdapModelsFlextLdap.FlextLdapModelsLdap.NormalizedConfig()
                     if settings is None
                     else settings
                 )
@@ -234,7 +234,7 @@ class FlextLdapFlextModelsLdap:
             successful: t.NonNegativeInt = 0
             failed: t.NonNegativeInt = 0
             results: Annotated[
-                t.SequenceOf[FlextLdapFlextModelsLdap.FlextLdapModelsLdap.UpsertResult],
+                t.SequenceOf[FlextLdapModelsFlextLdap.FlextLdapModelsLdap.UpsertResult],
                 m.Field(
                     default_factory=list,
                     description="Validated per-entry upsert results",
@@ -315,7 +315,7 @@ class FlextLdapFlextModelsLdap:
                 t.SequenceOf[m.Ldif.Entry],
                 m.Field(default_factory=list),
             ]
-            search_options: FlextLdapFlextModelsLdap.FlextLdapModelsLdap.SearchOptions
+            search_options: FlextLdapModelsFlextLdap.FlextLdapModelsLdap.SearchOptions
 
         class LdapOperationResult(m.BaseModel):
             """LDAP operation result."""
@@ -336,11 +336,11 @@ class FlextLdapFlextModelsLdap:
             model_config = m.ConfigDict(arbitrary_types_allowed=True)
             phase_results: t.MappingKV[
                 str,
-                FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
+                FlextLdapModelsFlextLdap.FlextLdapModelsLdap.PhaseSyncResult,
             ] = m.Field(
                 default_factory=dict[
                     str,
-                    "FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult",
+                    "FlextLdapModelsFlextLdap.FlextLdapModelsLdap.PhaseSyncResult",
                 ],
                 description="Per-phase sync results keyed by phase name",
             )
@@ -364,4 +364,4 @@ class FlextLdapFlextModelsLdap:
         )
 
 
-__all__: list[str] = ["FlextLdapFlextModelsLdap"]
+__all__: list[str] = ["FlextLdapModelsFlextLdap"]
