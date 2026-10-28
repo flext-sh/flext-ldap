@@ -137,11 +137,15 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         parsed = FlextLdifUtilities.Ldif.parse_rdn(components[0])
         if parsed.failure:
             return r[frozenset[str]].fail_op("Entry DN RDN parse", parsed.error)
-        return parsed.map(
-            lambda pairs: frozenset(
+
+        def lowercased_attributes(
+            pairs: t.MutableStrPairSequence,
+        ) -> frozenset[str]:
+            return frozenset(
                 cls.norm_str(attr_name, case="lower") for attr_name, _value in pairs
-            ),
-        )
+            )
+
+        return parsed.map(lowercased_attributes)
 
     @classmethod
     def compare_entries(
