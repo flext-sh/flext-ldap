@@ -12,16 +12,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Callable, Mapping, Sequence
+from typing import ClassVar
 
 import pytest
 from ldap3 import MOCK_SYNC, Connection, Server
 
 from tests import c, m, t, tm, u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 pytestmark = pytest.mark.unit
 

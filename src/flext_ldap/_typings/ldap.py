@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
 
 from flext_ldif import FlextLdifTypes
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
@@ -16,33 +16,29 @@ class FlextLdapTypesLdap:
     LDAPException: type[Exception] = _Ldap3LDAPException
 
     type Ldap3AttributeScalar = str | bytes
-    type Ldap3AttributeValues = FlextLdifTypes.Sequence[Ldap3AttributeScalar]
-    type Ldap3AttributeDict = FlextLdifTypes.Mapping[str, Ldap3AttributeValues]
+    type Ldap3AttributeValues = Sequence[Ldap3AttributeScalar]
+    type Ldap3AttributeDict = Mapping[str, Ldap3AttributeValues]
     type Ldap3AttributeValue = Ldap3AttributeScalar | Ldap3AttributeValues
-    type Ldap3AddAttributeValue = (
-        Ldap3AttributeScalar
-        | FlextLdifTypes.Sequence[str]
-        | FlextLdifTypes.Sequence[bytes]
-    )
-    type Ldap3AddAttributes = FlextLdifTypes.Mapping[str, Ldap3AddAttributeValue]
+    type Ldap3AddAttributeValue = Ldap3AttributeScalar | Sequence[str] | Sequence[bytes]
+    type Ldap3AddAttributes = Mapping[str, Ldap3AddAttributeValue]
     type Ldap3ModifyChangeValue = tuple[
         str,
-        FlextLdifTypes.MutableSequence[str],
+        MutableSequence[str],
     ]
-    type Ldap3ModifyChangesDict = FlextLdifTypes.MutableMapping[
+    type Ldap3ModifyChangesDict = MutableMapping[
         str,
-        FlextLdifTypes.MutableSequence[Ldap3ModifyChangeValue],
+        MutableSequence[Ldap3ModifyChangeValue],
     ]
-    type OperationChangeValue = tuple[int, FlextLdifTypes.Sequence[str]]
+    type OperationChangeValue = tuple[int, Sequence[str]]
     type OperationChanges = dict[
         str,
-        FlextLdifTypes.MutableSequence[OperationChangeValue],
+        MutableSequence[OperationChangeValue],
     ]
-    type OperationAttributes = FlextLdifTypes.Mapping[
+    type OperationAttributes = Mapping[
         str,
-        FlextLdifTypes.Sequence[str],
+        Sequence[str],
     ]
-    type Ldap3EntrySequenceValue = FlextLdifTypes.Sequence[
+    type Ldap3EntrySequenceValue = Sequence[
         Ldap3AttributeScalar | FlextLdifTypes.Numeric | bool
     ]
     type Ldap3EntryValue = (
@@ -53,11 +49,11 @@ class FlextLdapTypesLdap:
     type ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback
     type LdapModifyChangeValue = tuple[
         str | int,
-        FlextLdifTypes.Sequence[str],
+        Sequence[str],
     ]
-    type LdapModifyChanges = FlextLdifTypes.Mapping[
+    type LdapModifyChanges = Mapping[
         str,
-        FlextLdifTypes.Sequence[LdapModifyChangeValue],
+        Sequence[LdapModifyChangeValue],
     ]
 
 

@@ -16,8 +16,10 @@ from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
 class FlextLdapLdap3ResultExtract:
     """Extraction helpers for DN, attributes, and metadata from LDAP entries."""
 
-    @staticmethod
-    def extract_dn(parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue) -> m.Ldif.DN:
+    @classmethod
+    def extract_dn(
+        cls, parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue
+    ) -> m.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
         Delegates to ``u.Ldif.resolve_dn_value()`` for normalization. Returns
@@ -41,8 +43,9 @@ class FlextLdapLdap3ResultExtract:
             return dn_with_value
         return m.Ldif.DN.empty()
 
-    @staticmethod
+    @classmethod
     def extract_attributes(
+        cls,
         parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.Attributes:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model.
@@ -57,7 +60,7 @@ class FlextLdapLdap3ResultExtract:
         if isinstance(parsed, m.Ldif.Entry):
             return parsed.attributes if parsed.attributes is not None else empty
         if isinstance(parsed, p.Ldif.Ldap3Entry):
-            attrs_dict = FlextLdapLdap3ResultExtract.extract_attrs_dict(
+            attrs_dict = cls.extract_attrs_dict(
                 parsed.entry_attributes_as_dict,
             )
             model_attrs: t.MutableStrSequenceMapping = {
@@ -70,8 +73,9 @@ class FlextLdapLdap3ResultExtract:
             )
         return empty
 
-    @staticmethod
+    @classmethod
     def extract_attrs_dict(
+        cls,
         attrs: p.Ldap.HasAttributesProperty
         | Mapping[str, t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str]]
         | p.Ldap.HasItemsMethod
@@ -86,7 +90,7 @@ class FlextLdapLdap3ResultExtract:
 
         """
         if isinstance(attrs, p.Ldap.HasAttributesProperty):
-            return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
+            return cls._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
             model_attrs: Mapping[str, t.Ldap.Ldap3EntryValue] | None = getattr(
                 attrs,
@@ -94,14 +98,17 @@ class FlextLdapLdap3ResultExtract:
                 None,
             )
             if model_attrs is not None:
-                return FlextLdapLdap3ResultExtract._normalize_attr_values(model_attrs)
-            return {}
+                return cls._normalize_attr_values(model_attrs)
+            empty_attrs: t.Ldap.OperationAttributes = {}
+            return empty_attrs
         if isinstance(attrs, Mapping):
-            return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs)
-        return {}
+            return cls._normalize_attr_values(attrs)
+        no_attrs: t.Ldap.OperationAttributes = {}
+        return no_attrs
 
-    @staticmethod
+    @classmethod
     def extract_metadata(
+        cls,
         parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
     ) -> m.Ldif.ServerMetadata | None:
         """Extract server metadata from LDAP entry, returning ``None`` when absent.
@@ -125,7 +132,7 @@ class FlextLdapLdap3ResultExtract:
                     case m.Ldif.ServerMetadata():
                         result = metadata_attr
                     case Mapping():
-                        normalized = FlextLdapLdap3ResultExtract._normalize_metadata(
+                        normalized = cls._normalize_metadata(
                             metadata_attr,
                         )
                         if normalized and isinstance(
@@ -141,8 +148,9 @@ class FlextLdapLdap3ResultExtract:
                             result = None
         return result
 
-    @staticmethod
+    @classmethod
     def _normalize_attr_values(
+        cls,
         attrs_dict: Mapping[
             str,
             t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str],
@@ -156,7 +164,8 @@ class FlextLdapLdap3ResultExtract:
 
         """
         if attrs_dict is None:
-            return {}
+            no_input: t.Ldap.OperationAttributes = {}
+            return no_input
         result: t.MutableStrSequenceMapping = {}
         for k, v in attrs_dict.items():
             if isinstance(v, str):

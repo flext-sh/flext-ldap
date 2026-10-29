@@ -6,13 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence, Sequence
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
 from flext_ldap import c, m, p, t, u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class FlextLdapLdap3Wrappers:

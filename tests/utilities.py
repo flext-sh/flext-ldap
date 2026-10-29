@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from pathlib import Path
 
 from flext_tests import FlextTestsUtilities
@@ -24,55 +24,13 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
         """Provide the test double for ldap."""
 
         class Tests(FlextTestsUtilities.Tests):
-            """Direct test utility surface for flext-ldap."""
+            """Direct test utility surface for flext-ldap.
 
-            @staticmethod
-            def that[SubjectT](
-                value: SubjectT,
-                *,
-                where: Callable[[SubjectT], bool] | None = None,
-                **kwargs: p.Tests.MatcherOption,
-            ) -> None:
-                """Provide that."""
-                tm.that(value, where=where, **kwargs)
+            Assertion matchers (``that``/``fail``/``ok``/``check``) are inherited
+            from the composed ``FlextTestsUtilities.Tests`` root; no local
+            re-publication is needed.
 
-            @staticmethod
-            def fail[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult],
-                **kwargs: p.AttributeProbe,
-            ) -> str:
-                """Provide fail.
-
-                Returns:
-                    The resulting ``str``.
-
-                """
-                failure_message: str = tm.fail(result, **kwargs)
-                return failure_message
-
-            @staticmethod
-            def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult],
-            ) -> TResult:
-                """Provide ok.
-
-                Returns:
-                    The resulting ``TResult``.
-
-                """
-                return tm.ok(result)
-
-            @staticmethod
-            def check[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult],
-            ) -> m.Tests.Chain[TResult]:
-                """Provide check.
-
-                Returns:
-                    The resulting ``m.Tests.Chain[TResult]``.
-
-                """
-                return tm.check(result)
+            """
 
             @staticmethod
             def create_ldap3_server(
