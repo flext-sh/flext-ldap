@@ -7,12 +7,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from flext_ldif import u as flext_ldif_u
 
 from flext_ldap._utilities import (
-    FlextLdapUtilitiesBase,
     FlextLdapUtilitiesComparison,
     FlextLdapUtilitiesConversion,
     FlextLdapUtilitiesRootDse,
@@ -32,8 +29,6 @@ class FlextLdapUtilities(flext_ldif_u):
         FlextLdapUtilitiesValidation,
     ):
         """LDAP-specific utility namespace."""
-
-        FlextLdapUtilitiesBase: TypeAlias = FlextLdapUtilitiesBase
 
 
 u = FlextLdapUtilities
