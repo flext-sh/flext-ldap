@@ -15,6 +15,13 @@
 
 > Project profile: `flext-ldap`
 
+The active rewrite's 2026-10-30 handoff
+records owners, source changes, unresolved bootstrap/candidate failures and exact
+runtime limits. Bead `flext-u9h2i` remains open. Existing templates also form the
+base for refactoring existing modules: the existing Infra Rope catalog assembles
+typed slot content, preserving authored code and native identity. See
+ADR-018.
+
 | Workspace declaration | Accepted decision |
 | --- | --- |
 | This page; the living census and wave status (beads `flext-pipol`, `flext-u9h2i`). | ADR-028 Decision 17, amendment 2026-10-28 |
@@ -75,6 +82,25 @@ transport mirrors while rewiring the existing planner and renderer; do not
 replace them with another wrapper model or another source scan. Pydantic remains
 the owner of validated input and publication contracts.
 
+The approved facade-planner cutover is defined by
+ADR-018's nested projection contract.
+Rewrite `codegen_facades.py` as a few declarative composition lines over the
+existing families and add facade planning to the existing workspace DSL. Retire
+`CodegenFacadeSyntax` and its authored CST/AST routes through the same consumer
+cutover. Do not relocate the monolith, conceal it in a wrapper or reproduce its
+visitors over Rope syntax nodes. Reuse native queries and utility operations;
+the existing candidate and publisher retain their owners. Preserve functionality
+and prove net code reduction over the complete change. This is the accepted
+target, not a receipt of implementation or runtime recovery.
+
+The same ADR owns scope-aware error handling: existing typed results/models and
+the publisher retain the cause, traceback, context and reached/unreached work.
+A failed local unit blocks unsafe dependents while proven independent cohorts
+continue; any error makes the final command nonzero. Preserve valid effects and
+WIP. Neither silent continuation nor broad exception capture that reports
+unexpected failure as success is an error-handling strategy; add no parallel
+error framework.
+
 Initializer import rendering uses complete declared module identities. It may
 shorten a target relative to the current package only when both identities share
 their actual root. An underscore prefix or a repeated private path segment never
@@ -112,33 +138,13 @@ consumes them; the public documentation holder inherits that declaration by MRO.
 A leaf cannot resolve its own package's fields through the upstream core `m`
 facade or import its unfinished aggregate facade to complete a schema.
 
-For an explicitly bounded Python dependency upgrade, the existing `upg` owner
-receives `FLEXT_INFRA_UPGRADE_PACKAGES` as a JSON array through typed Infra
-settings. It delegates selection to native `uv lock --upgrade-package`, verifies
-the resulting lock and does not resolve unrelated Python packages or Mise tools.
-An empty selection retains the complete upgrade operation. The one-time Rope
-exception in ADR-030 authorizes only that package for the current repair;
-`setup` activates the resulting locked candidate through its normal owner.
-
-When the settings model disables automatic decoding globally, this collection
-field uses Pydantic Settings' native `ForceDecode` metadata through the core
-models facade. The environment is decoded at its owner before tuple validation;
-the global settings policy and native tuple constructor inputs remain unchanged.
-
-Before native resolution, that same selected-upgrade owner projects only the
-selected global dependency overrides from typed SSOT into the native project
-document. The existing TOML parser preserves authorial content and the existing
-file publisher authenticates the original file state. This is resolution input
-metadata, not general generation; no facade planner, alternate resolver view,
-manual pyproject patch or unrelated dependency rewrite participates.
-
-In a workspace, the existing governed-root inventory supplies each owned
-manifest to that same selected metadata pass. Direct URL requirements for a
-selected package follow its declared global source as well, so an explicitly
-provided editable distribution cannot reintroduce the previous SDK source.
-Registry constraints, unrelated requirements and scoped overrides retain their
-owners. All changed metadata keeps its original witness and publishes through
-one shared batch before native resolution.
+`upg` upgrades the complete Python declaration through one native writer:
+generated `make upg` runs `uv lock --upgrade` before any FLEXT Python;
+`workspace verify-lock` then verifies that lock and `deps upgrade-mise-lock`
+upgrades the Mise half. No package-selected upgrade or selected-override projection
+exists; the former `FLEXT_INFRA_UPGRADE_PACKAGES` route was a second UV writer running
+inside the environment it had to repair. `setup` activates the resulting locked candidate
+through its normal owner.
 
 ## What stays canonical
 
