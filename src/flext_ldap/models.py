@@ -41,6 +41,7 @@ class FlextLdapModels(flext_ldif_m):
         FlextLdapModelsBase,
         FlextLdapModelsConfig,
         FlextLdapModelsFlextLdap.FlextLdapModelsLdap,
+        FlextLdapModelsFlextLdap,
     ):
         """LDAP-specific models namespace via pure MRO composition."""
 

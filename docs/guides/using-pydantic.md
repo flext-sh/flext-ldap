@@ -337,6 +337,23 @@ models, generic specialization, defaults, aliases, validators, computed fields
 and settings. A descriptor returning the original callable at runtime does not,
 by itself, prove that a checker recognizes its field-specifier identity.
 
+For source-level recovery, use the consumer's own physical environment with
+editable installations of the selected FLEXT and analysis SDK sources. Record
+the interpreter and the origins actually loaded by the failing public command.
+Preserve that command as the acceptance boundary; an isolated probe or a parallel
+script does not qualify the consumer. Installation, source edits and dependency
+lock updates are separate operations.
+
+Before changing the SDK, identify the receiver's role, the arguments supplied by
+Infra and the native API's declared contract. A facade namespace, a concrete model
+and an instance do not have interchangeable contracts. Repair an invalid request
+at its caller. Change the SDK only for a demonstrated violation of its contract
+or an explicitly identified missing native capability. Do not broaden a result,
+filter an error or manufacture a base class to accommodate an invalid consumer.
+Re-exercise the same public command after each repair; an unchanged first failure
+keeps the cause unresolved. This diagnosis supports the existing Rope DSL and
+protocol-projection plan; it does not open another refactoring pipeline.
+
 Pydantic documents that static constructor synthesis does not interpret
 `default`, `default_factory` and `alias` inside `Annotated`. Keep constraints as
 metadata and expose constructor-relevant declarations in a statically

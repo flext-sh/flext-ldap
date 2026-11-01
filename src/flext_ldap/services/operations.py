@@ -36,7 +36,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import override
 
-from flext_ldap import c, ldif, m, p, r, t, u
+from flext_ldif import ldif
+
+from flext_ldap import c, m, p, r, t, u
 from flext_ldap.adapters import FlextLdapAdapterHost
 from flext_ldap.services._subtree import FlextLdapServicesSubtreeDelete
 from flext_ldap.services._upsert import FlextLdapServicesUpsertHandler
