@@ -1,7 +1,6 @@
 Ldap:
   identity:
     name: flext-ldap
-    version: "0.20.0-dev"
   connection:
     port: 389
     timeout_seconds: 30

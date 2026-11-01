@@ -22,7 +22,6 @@ class FlextLdapModelsConfig:
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
         name: str = m.Field(description="LDAP project name.")
-        version: str = m.Field(description="LDAP project version.")
 
     class Connection(m.BaseModel):
         """LDAP connection defaults and thresholds."""

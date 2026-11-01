@@ -325,7 +325,7 @@ python maintenance/validate_style.py --file docs/example.md --verbose
 
 ````text
 # Manually specify language
-```{.python .notest}
+```python
 from __future__ import annotations
 
 from collections.abc import (
