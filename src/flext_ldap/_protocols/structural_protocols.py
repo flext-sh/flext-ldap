@@ -20,7 +20,7 @@ class FlextLdapProtocolsStructural:
         """Protocol for objects with items() method."""
 
         @staticmethod
-        def items() -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
+        def items() -> t.SequenceOf[tuple[str, t.JsonValue]]:
             """Return items as sequence of tuples."""
             ...
 

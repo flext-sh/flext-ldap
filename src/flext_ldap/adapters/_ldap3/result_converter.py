@@ -30,18 +30,18 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
     @staticmethod
     def convert_ldap3_results(
         connection: p.Ldap.Ldap3Connection,
-    ) -> t.SequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]]:
+    ) -> t.SequenceOf[tuple[str, t.MappingKV[str, t.StrSequence]]]:
         """Convert ``connection.entries`` to parser-compatible (dn, attrs) tuples.
 
         None values become empty lists; single values become ``[value]``;
         multi-values stay as lists. Type information is normalized to strings.
 
         Returns:
-            The resulting ``t.SequenceOf[t.Pair[str, t.MappingKV[str,
+            The resulting ``t.SequenceOf[tuple[str, t.MappingKV[str,
                 t.StrSequence]]]``.
 
         """
-        results: t.MutableSequenceOf[t.Pair[str, t.MappingKV[str, t.StrSequence]]] = []
+        results: t.MutableSequenceOf[tuple[str, t.MappingKV[str, t.StrSequence]]] = []
         entries: t.SequenceOf[p.Ldif.Ldap3Entry] = getattr(connection, "entries", [])
         for entry in entries:
             dn = entry.entry_dn or ""

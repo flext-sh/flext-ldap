@@ -173,16 +173,17 @@ class FlextLdapLdap3ResultExtract:
     @staticmethod
     def _normalize_metadata(
         metadata: t.MappingKV[str, t.Scalar | None] | None,
-    ) -> t.MappingKV[str, t.Scalar | t.ScalarList] | None:
+    ) -> t.MappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]] | None:
         """Filter metadata to ``ServerMetadata``-compatible primitive values.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.Scalar | t.ScalarList] | None``.
+            The resulting ``t.MappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]]
+            | None``.
 
         """
         if not metadata:
             return None
-        metadata_dict: t.MutableMappingKV[str, t.Scalar | t.ScalarList] = {}
+        metadata_dict: t.MutableMappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]] = {}
         for raw_key, raw_value in metadata.items():
             if isinstance(raw_value, c.PRIMITIVES_TYPES):
                 metadata_dict[raw_key] = raw_value

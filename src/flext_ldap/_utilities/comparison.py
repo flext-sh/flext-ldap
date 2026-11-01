@@ -74,11 +74,11 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         new_attrs: t.MappingKV[str, t.StrSequence],
         existing_attrs: t.MappingKV[str, t.StrSequence],
         ignore: frozenset[str],
-    ) -> t.Pair[t.Ldap.OperationChanges, set[str]]:
+    ) -> tuple[t.Ldap.OperationChanges, set[str]]:
         """Build replacement changes for non-operational attributes.
 
         Returns:
-            The resulting ``t.Pair[t.Ldap.OperationChanges, set[str]]``.
+            The resulting ``tuple[t.Ldap.OperationChanges, set[str]]``.
 
         """
         changes: t.Ldap.OperationChanges = {}

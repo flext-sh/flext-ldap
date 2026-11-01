@@ -25,7 +25,7 @@ class FlextLdapTypesLdap:
         | FlextLdifTypes.SequenceOf[bytes]
     )
     type Ldap3AddAttributes = FlextLdifTypes.MappingKV[str, Ldap3AddAttributeValue]
-    type Ldap3ModifyChangeValue = FlextLdifTypes.Pair[
+    type Ldap3ModifyChangeValue = tuple[
         str,
         FlextLdifTypes.MutableSequenceOf[str],
     ]
@@ -33,7 +33,7 @@ class FlextLdapTypesLdap:
         str,
         FlextLdifTypes.MutableSequenceOf[Ldap3ModifyChangeValue],
     ]
-    type OperationChangeValue = FlextLdifTypes.Pair[int, FlextLdifTypes.StrSequence]
+    type OperationChangeValue = tuple[int, FlextLdifTypes.StrSequence]
     type OperationChanges = dict[
         str,
         FlextLdifTypes.MutableSequenceOf[OperationChangeValue],
@@ -51,7 +51,7 @@ class FlextLdapTypesLdap:
     type LdapProgressCallback = Callable[..., None]
     type MultiPhaseProgressCallback = Callable[..., None]
     type ProgressCallbackUnion = LdapProgressCallback | MultiPhaseProgressCallback
-    type LdapModifyChangeValue = FlextLdifTypes.Pair[
+    type LdapModifyChangeValue = tuple[
         str | int,
         FlextLdifTypes.StrSequence,
     ]
