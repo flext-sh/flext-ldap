@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Annotated, Self
 
-from flext_ldif import m, p
+from flext_ldif import m
 
 from flext_ldap import c, p, t
 
@@ -313,7 +313,11 @@ class FlextLdapModelsFlextLdap:
             """
 
             entries: Annotated[
-                Sequence[p.Ldif.Entry],
+                Sequence[
+                    Annotated[
+                        p.Ldif.Entry, m.ValidateAs(m.Ldif.Entry, lambda entry: entry)
+                    ]
+                ],
                 m.Field(default_factory=list),
             ]
             search_options: FlextLdapModelsFlextLdap.FlextLdapModelsLdap.SearchOptions

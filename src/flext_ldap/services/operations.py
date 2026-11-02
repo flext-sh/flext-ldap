@@ -44,7 +44,7 @@ from flext_ldap.services._subtree import FlextLdapServicesSubtreeDelete
 from flext_ldap.services._upsert import FlextLdapServicesUpsertHandler
 
 
-class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.Response]):
+class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
     """Coordinate LDAP operations on an active connection.
 
     Protocol calls are delegated to
@@ -369,7 +369,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.Response]):
         if dn_build.failure:
             return r[p.Ldap.OperationResult].from_failure(dn_build)
         dn_model: p.Ldif.DN = dn_build.unwrap()
-        return self._ensure_adapter().delete(dn_model)
+        return self._ensure_adapter().delete(dn_model.value)
 
     def delete_subtree(
         self,
@@ -424,7 +424,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.Response]):
         return self._upsert_handler.plan(entries)
 
     @override
-    def execute(self) -> p.Result[p.Ldap.Response]:
+    def execute(self) -> p.Result[p.Ldap.SearchResult]:
         """Report readiness; fails when the connection is not bound.
 
         Business Rules:
@@ -442,9 +442,9 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.Response]):
 
         """
         if not self.is_connected:
-            return r[p.Ldap.Response].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
+            return r[p.Ldap.SearchResult].fail(c.Ldap.ErrorMessage.NOT_CONNECTED)
         base_dn: str = c.Ldap.EXAMPLE_BASE_DN
-        return r[p.Ldap.Response].ok(
+        return r[p.Ldap.SearchResult].ok(
             m.Ldap.SearchResult(
                 entries=[],
                 search_options=m.Ldap.SearchOptions(
@@ -494,7 +494,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.Response]):
         concrete_changes: t.Ldap.OperationChanges = {
             k: [(int(op), list(vals)) for op, vals in v] for k, v in changes.items()
         }
-        return self._ensure_adapter().modify(dn_model, concrete_changes)
+        return self._ensure_adapter().modify(dn_model.value, concrete_changes)
 
     def search(
         self,

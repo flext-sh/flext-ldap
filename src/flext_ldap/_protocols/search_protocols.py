@@ -16,7 +16,7 @@ class FlextLdapProtocolsSearch:
     """LDAP search protocol contracts composed into ``p.Ldap``."""
 
     @runtime_checkable
-    class LdapBatchStats(Protocol):
+    class LdapBatchStats(FlextLdifProtocols.Model, Protocol):
         """Protocol for LDAP batch statistics (structural type)."""
 
         synced: int
@@ -63,24 +63,34 @@ class FlextLdapProtocolsSearch:
         time_limit: int
 
     @runtime_checkable
-    class OperationResult(Protocol):
+    class OperationResult(FlextLdifProtocols.Model, Protocol):
         """Protocol for LDAP operation result (structural type).
 
         Accepts both simple types and complex types (StrEnum).
         StrEnum is compatible with str in structural typing.
         """
 
-        success: bool
-        operation_type: str
-        message: str
-        entries_affected: int
+        @property
+        def success(self) -> bool: ...
+
+        @property
+        def operation_type(self) -> str: ...
+
+        @property
+        def message(self) -> str: ...
+
+        @property
+        def entries_affected(self) -> int: ...
 
     @runtime_checkable
-    class SearchResult(Protocol):
+    class SearchResult(FlextLdifProtocols.Model, Protocol):
         """Protocol for LDAP search result (structural type)."""
 
-        entries: Sequence[FlextLdifProtocols.Ldif.Entry]
-        search_options: FlextLdapProtocolsSearch.SearchOptions
+        @property
+        def entries(self) -> Sequence[FlextLdifProtocols.Ldif.Entry]: ...
+
+        @property
+        def search_options(self) -> FlextLdapProtocolsSearch.SearchOptions: ...
 
     @runtime_checkable
     class PhaseSyncResult(Protocol):

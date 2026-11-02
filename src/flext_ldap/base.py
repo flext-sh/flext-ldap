@@ -21,13 +21,12 @@ from flext_ldap import FlextLdapSettings, c, m, p, t
 
 
 class FlextLdapService[
-    TResult: t.JsonPayload | Sequence[t.JsonPayload] = t.JsonPayload
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.Model = t.JsonPayload
     | Sequence[t.JsonPayload],
 ](FlextService[TResult]):
     """Base class for all flext-ldap services.
 
-    Services default to the centralized ``m.Ldap.Response`` pipeline and may
-    specialize only when bridging adapter-level protocols.
+    Services accept validated payloads or structural model results.
     """
 
     _ldif: p.Ldif.LdifClient = m.PrivateAttr(default_factory=FlextLdif)

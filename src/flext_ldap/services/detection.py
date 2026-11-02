@@ -7,49 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import override
 
-from flext_ldap import c, e, m, p, r, s, t, u
+from flext_ldap import c, e, m, p, s, u
 
 
-class FlextLdapServerDetector(s[p.Ldap.Response]):
+class FlextLdapServerDetector(s[p.Ldap.OperationResult]):
     """High-level detector that delegates rootDSE parsing to ``u.Ldap``."""
-
-    @staticmethod
-    def _get_first_value(attrs: t.Ldap.OperationAttributes, key: str) -> str | None:
-        """Compatibility shim for unit tests and older callers.
-
-        Returns:
-            The resulting ``str | None``.
-
-        """
-        value: str | None = u.Ldap.resolve_first_attribute_value(attrs, key)
-        return value
-
-    @staticmethod
-    def _detect_from_attributes(
-        vendor_name: str | None,
-        vendor_version: str | None,
-        naming_contexts: Sequence[str],
-        supported_controls: Sequence[str],
-        supported_extensions: Sequence[str],
-    ) -> p.Result[str]:
-        """Compatibility shim that delegates heuristic detection to utilities.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-
-        """
-        _ = supported_controls
-        return r[str].ok(
-            u.Ldap.detect_server_type(
-                vendor_name=vendor_name,
-                vendor_version=vendor_version,
-                naming_contexts=naming_contexts,
-                supported_extensions=supported_extensions,
-            ),
-        )
 
     @staticmethod
     def detect_from_connection(
@@ -65,11 +29,13 @@ class FlextLdapServerDetector(s[p.Ldap.Response]):
         return detection_result
 
     @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[p.Ldap.Response]:
+    def execute(
+        self, **kwargs: p.Ldap.Ldap3Connection | str | float | bool | None
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Detect server type using the provided ``connection`` keyword argument.
 
         Returns:
-            The resulting ``p.Result[p.Ldap.Response]``.
+            The resulting ``p.Result[p.Ldap.OperationResult]``.
 
         """
         connection_raw = kwargs.get("connection")
@@ -84,7 +50,7 @@ class FlextLdapServerDetector(s[p.Ldap.Response]):
                 ),
             )
         return self.detect_from_connection(connection_raw).map(
-            lambda detected_type: p.Ldap.OperationResult(
+            lambda detected_type: m.Ldap.OperationResult(
                 success=True,
                 operation_type=c.Ldap.OperationName.DETECT_FROM_CONNECTION,
                 message=detected_type,

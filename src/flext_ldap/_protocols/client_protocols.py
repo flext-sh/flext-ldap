@@ -16,7 +16,7 @@ from flext_ldap._protocols import FlextLdapProtocolsService
 if TYPE_CHECKING:
     import types
 
-    from flext_ldap import m, p, t
+    from flext_ldap import p, t
 
 
 class FlextLdapProtocolsClient:
@@ -78,7 +78,7 @@ class FlextLdapProtocolsClient:
 
         def delete_subtree(
             self,
-            dn: str | m.Ldif.DN,
+            dn: str | p.Ldif.DN,
         ) -> p.Result[p.Ldap.SubtreeDeleteResult]:
             """Delete an entry and its descendants, deepest-first.
 
@@ -173,7 +173,7 @@ class FlextLdapProtocolsClient:
 
         def delete(
             self,
-            dn: str | m.Ldif.DN,
+            dn: str | p.Ldif.DN,
         ) -> p.Result[p.Ldap.OperationResult]:
             """Delete LDAP entry.
 
@@ -189,7 +189,7 @@ class FlextLdapProtocolsClient:
         def execute(
             self,
             **kwargs: t.Scalar,
-        ) -> p.Result[p.Ldap.Response]:
+        ) -> p.Result[p.Ldap.SearchResult]:
             """Execute health check or default operation.
 
             Args:
@@ -204,7 +204,7 @@ class FlextLdapProtocolsClient:
 
         def modify(
             self,
-            dn: str | m.Ldif.DN,
+            dn: str | p.Ldif.DN,
             changes: t.Ldap.LdapModifyChanges,
         ) -> p.Result[p.Ldap.OperationResult]:
             """Modify LDAP entry.
@@ -291,7 +291,7 @@ class FlextLdapProtocolsClient:
 
         @staticmethod
         def delete(
-            dn: str | m.Ldif.DN,
+            dn: str | p.Ldif.DN,
         ) -> p.Result[p.Ldap.OperationResult]:
             """Delete LDAP entry, returning the operation result.
 
@@ -306,7 +306,7 @@ class FlextLdapProtocolsClient:
 
         @staticmethod
         def modify(
-            dn: str | m.Ldif.DN,
+            dn: str | p.Ldif.DN,
             changes: t.Ldap.OperationChanges,
         ) -> p.Result[p.Ldap.OperationResult]:
             """Modify LDAP entry, returning the operation result.

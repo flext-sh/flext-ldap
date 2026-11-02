@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_ldap import m, s, t
+from flext_ldap import m, p, s, t
 from flext_ldap.adapters import FlextLdapLdap3Adapter
 
 
 class FlextLdapAdapterHost[
-    TResult: t.JsonPayload | Sequence[t.JsonPayload] = t.JsonPayload
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.Model = t.JsonPayload
     | Sequence[t.JsonPayload],
 ](s[TResult]):
     """Own the shared ldap3 adapter behind the ``p.Ldap.LdapAdapter`` contract.
