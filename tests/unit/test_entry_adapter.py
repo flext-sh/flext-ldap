@@ -21,7 +21,7 @@ from collections.abc import Mapping, Sequence
 import pytest
 
 from flext_ldap.adapters import FlextLdapEntryAdapter
-from tests import c, m, t, tm, u
+from tests import c, m, p, t, tm, u
 
 pytestmark = pytest.mark.unit
 
@@ -75,7 +75,7 @@ class TestsFlextLdapEntryAdapter:
             )
 
     @staticmethod
-    def _ldif_entry(attributes: Mapping[str, Sequence[str]]) -> m.Ldif.Entry:
+    def _ldif_entry(attributes: Mapping[str, Sequence[str]]) -> p.Ldif.Entry:
         """Build an ``m.Ldif.Entry`` via the public model API.
 
         Returns:

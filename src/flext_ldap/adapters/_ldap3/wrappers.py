@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
-from flext_ldap import c, m, p, t, u
+from flext_ldap import c, p, t, u
 
 
 class FlextLdapLdap3Wrappers:
@@ -116,7 +116,7 @@ class FlextLdapLdap3Wrappers:
         return modify_fn(dn, changes)
 
     @staticmethod
-    def search(connection: p.Ldap.Ldap3Connection, params: m.Ldap.SearchParams) -> bool:
+    def search(connection: p.Ldap.Ldap3Connection, params: p.Ldap.SearchParams) -> bool:
         """Safely invoke ldap3 search on dynamic connection objects.
 
         Returns:

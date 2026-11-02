@@ -42,7 +42,7 @@ class FlextLdapServicesSubtreeDelete:
         super().__init__()
         self._ops = operations
 
-    def run(self, dn: str) -> p.Result[m.Ldap.SubtreeDeleteResult]:
+    def run(self, dn: str) -> p.Result[p.Ldap.SubtreeDeleteResult]:
         """Delete the subtree rooted at ``dn``, children before parents.
 
         Business Rules:
@@ -60,23 +60,23 @@ class FlextLdapServicesSubtreeDelete:
 
         """
         if not dn or not dn.strip():
-            return r[m.Ldap.SubtreeDeleteResult].fail(
+            return r[p.Ldap.SubtreeDeleteResult].fail(
                 "Subtree delete requires a non-empty base DN",
             )
         base_dn = dn.strip()
         existence_result = self._ops.find_entry(base_dn)
         if existence_result.failure:
-            return r[m.Ldap.SubtreeDeleteResult].fail_op(
+            return r[p.Ldap.SubtreeDeleteResult].fail_op(
                 "Subtree delete existence check",
                 existence_result.error,
             )
         if not existence_result.value.entries:
-            return r[m.Ldap.SubtreeDeleteResult].fail(
+            return r[p.Ldap.SubtreeDeleteResult].fail(
                 f"Subtree delete base does not exist: {base_dn}",
             )
         collect_result = self._collect_subtree_dns(base_dn)
         if collect_result.failure:
-            return r[m.Ldap.SubtreeDeleteResult].fail_op(
+            return r[p.Ldap.SubtreeDeleteResult].fail_op(
                 "Subtree delete enumeration",
                 collect_result.error,
             )
@@ -87,7 +87,7 @@ class FlextLdapServicesSubtreeDelete:
             delete_result = self._ops.delete(entry_dn)
             if delete_result.failure:
                 cause = u.to_str(delete_result.error, default="Unknown error")
-                return r[m.Ldap.SubtreeDeleteResult].fail(
+                return r[p.Ldap.SubtreeDeleteResult].fail(
                     f"Subtree delete stopped at dn={entry_dn} "
                     f"(deleted_count={deleted_count}, base_dn={base_dn}): {cause}",
                 )
@@ -98,7 +98,7 @@ class FlextLdapServicesSubtreeDelete:
             base_dn=base_dn,
             deleted_count=deleted_count,
         )
-        return r[m.Ldap.SubtreeDeleteResult].ok(
+        return r[p.Ldap.SubtreeDeleteResult].ok(
             m.Ldap.SubtreeDeleteResult(base_dn=base_dn, deleted_count=deleted_count),
         )
 
@@ -122,7 +122,7 @@ class FlextLdapServicesSubtreeDelete:
                 search_result.error,
             )
         search_data = search_result.map_or(None)
-        entries: Sequence[m.Ldif.Entry] = (
+        entries: Sequence[p.Ldif.Entry] = (
             list(search_data.entries) if search_data is not None else []
         )
         subtree_dns: list[str] = [

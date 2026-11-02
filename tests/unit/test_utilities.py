@@ -18,7 +18,7 @@ from typing import ClassVar
 import pytest
 from ldap3 import MOCK_SYNC, Connection, Server
 
-from tests import c, m, t, tm, u
+from tests import c, m, p, t, tm, u
 
 pytestmark = pytest.mark.unit
 
@@ -26,7 +26,7 @@ pytestmark = pytest.mark.unit
 def _entry(
     attributes: Mapping[str, Sequence[str]] | None,
     dn: str = c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE,
-) -> m.Ldif.Entry:
+) -> p.Ldif.Entry:
     """Build an LDIF entry on the given DN (canonical test DN by default).
 
     Returns:

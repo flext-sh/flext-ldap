@@ -68,7 +68,7 @@ class FlextLdapEntryAdapter(s[bool]):
         base64_attrs: Sequence[str],
         original_attrs_dict: Mapping[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
-    ) -> m.Ldap.ConversionMetadata:
+    ) -> p.Ldap.ConversionMetadata:
         """Build conversion metadata tracking ldap3 to LDIF transformation.
 
         Returns:
@@ -84,12 +84,12 @@ class FlextLdapEntryAdapter(s[bool]):
 
     @staticmethod
     def _track_conversion_differences(
-        conversion_metadata: m.Ldap.ConversionMetadata,
+        conversion_metadata: p.Ldap.ConversionMetadata,
         original_dn: str,
         converted_dn: str,
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: Mapping[str, Sequence[str]],
-    ) -> m.Ldap.ConversionMetadata:
+    ) -> p.Ldap.ConversionMetadata:
         """Track DN and attribute differences in conversion metadata.
 
         Returns:
@@ -134,7 +134,7 @@ class FlextLdapEntryAdapter(s[bool]):
     def ldap3_to_ldif_entry(
         self,
         ldap3_entry: p.Ldif.Ldap3Entry,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Convert ldap3.Entry to p.Ldif.Entry.
 
         Business Rules:
@@ -184,11 +184,11 @@ class FlextLdapEntryAdapter(s[bool]):
     def _build_ldif_entry_from_ldap3(
         self,
         ldap3_entry: p.Ldif.Ldap3Entry,
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Build an LDIF entry from an ldap3 entry without exception handling.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         dn_str = str(ldap3_entry.entry_dn)
@@ -231,7 +231,7 @@ class FlextLdapEntryAdapter(s[bool]):
 
     def ldif_entry_to_ldap3_attributes(
         self,
-        entry: m.Ldif.Entry,
+        entry: p.Ldif.Entry,
     ) -> p.Result[t.Ldap.OperationAttributes]:
         """Convert p.Ldif.Entry to ldap3 attributes format.
 
@@ -255,7 +255,7 @@ class FlextLdapEntryAdapter(s[bool]):
             - Returns Mapping[str, Sequence[str]] format expected by ldap3
 
         Args:
-            entry: m.Ldif.Entry with attributes to convert.
+            entry: p.Ldif.Entry with attributes to convert.
                 Must have non-empty attributes.attributes dict.
 
         Returns:

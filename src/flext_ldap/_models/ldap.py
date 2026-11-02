@@ -313,7 +313,7 @@ class FlextLdapModelsFlextLdap:
             """
 
             entries: Annotated[
-                Sequence[m.Ldif.Entry],
+                Sequence[p.Ldif.Entry],
                 m.Field(default_factory=list),
             ]
             search_options: FlextLdapModelsFlextLdap.FlextLdapModelsLdap.SearchOptions

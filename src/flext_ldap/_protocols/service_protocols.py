@@ -15,7 +15,7 @@ from flext_ldap._protocols import FlextLdapProtocolsSearch
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_ldap import m, t
+    from flext_ldap import t
 
 
 class FlextLdapProtocolsService:
@@ -111,7 +111,7 @@ class FlextLdapProtocolsService:
         def find_entry(
             self,
             dn: str,
-        ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.SearchResult]:
             """Read one entry by DN; an absent entry is an empty result.
 
             Args:
@@ -126,7 +126,7 @@ class FlextLdapProtocolsService:
         def add(
             self,
             entry: FlextLdifProtocols.Ldif.Entry,
-        ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.OperationResult]:
             """Add an LDAP entry, returning the operation result.
 
             Args:
@@ -142,7 +142,7 @@ class FlextLdapProtocolsService:
             self,
             dn: str,
             changes: t.Ldap.OperationChanges,
-        ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.OperationResult]:
             """Modify an LDAP entry with the provided change set.
 
             Args:
@@ -158,7 +158,7 @@ class FlextLdapProtocolsService:
         def delete(
             self,
             dn: str,
-        ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.OperationResult]:
             """Delete an LDAP entry identified by DN.
 
             Args:
@@ -173,7 +173,7 @@ class FlextLdapProtocolsService:
         def search(
             self,
             search_options: FlextLdapProtocolsSearch.SearchOptions,
-        ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.SearchResult]:
             """Perform an LDAP search, returning the search result.
 
             Args:

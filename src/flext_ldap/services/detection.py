@@ -13,7 +13,7 @@ from typing import override
 from flext_ldap import c, e, m, p, r, s, t, u
 
 
-class FlextLdapServerDetector(s[m.Ldap.Response]):
+class FlextLdapServerDetector(s[p.Ldap.Response]):
     """High-level detector that delegates rootDSE parsing to ``u.Ldap``."""
 
     @staticmethod
@@ -65,11 +65,11 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
         return detection_result
 
     @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
+    def execute(self, **kwargs: str | float | bool | None) -> p.Result[p.Ldap.Response]:
         """Detect server type using the provided ``connection`` keyword argument.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.Response]``.
+            The resulting ``p.Result[p.Ldap.Response]``.
 
         """
         connection_raw = kwargs.get("connection")
@@ -84,7 +84,7 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
                 ),
             )
         return self.detect_from_connection(connection_raw).map(
-            lambda detected_type: m.Ldap.OperationResult(
+            lambda detected_type: p.Ldap.OperationResult(
                 success=True,
                 operation_type=c.Ldap.OperationName.DETECT_FROM_CONNECTION,
                 message=detected_type,

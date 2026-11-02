@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 
 import pytest
 
-from tests import c, m, t, u
+from tests import c, m, p, t, u
 
 pytestmark = pytest.mark.unit
 
@@ -29,7 +29,7 @@ class TestsFlextLdapModelsSearch:
     def _entry(
         dn: str,
         attributes: Mapping[str, Sequence[str]] | None = None,
-    ) -> m.Ldif.Entry:
+    ) -> p.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate({

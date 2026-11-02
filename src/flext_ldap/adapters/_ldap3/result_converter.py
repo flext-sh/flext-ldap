@@ -22,7 +22,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
         - ``convert_ldap3_results`` — translate ``connection.entries`` to parser
           ``(dn, attrs)`` tuples.
         - ``convert_parsed_entries`` — translate ``ParseResponse`` from
-          ``FlextLdifParser`` into ``r[Sequence[m.Ldif.Entry]]``.
+          ``FlextLdifParser`` into ``r[Sequence[p.Ldif.Entry]]``.
 
     Internal helpers (DN/attribute/metadata extraction + value normalization)
     are inherited via ``FlextLdapLdap3ResultExtract`` per AGENTS.md §2.3
@@ -55,8 +55,8 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
 
     @staticmethod
     def convert_parsed_entries(
-        parse_response: m.Ldif.ParseResponse | p.Ldif.Ldap3ParseResponse,
-    ) -> p.Result[Sequence[m.Ldif.Entry]]:
+        parse_response: p.Ldif.ParseResponse | p.Ldif.Ldap3ParseResponse,
+    ) -> p.Result[Sequence[p.Ldif.Entry]]:
         """Translate ``ParseResponse`` from ``FlextLdifParser`` into typed entries.
 
         Pre-validated ``m.Ldif.Entry`` instances pass through unchanged;
@@ -64,13 +64,13 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
         ``extract_attributes``, ``extract_metadata``.
 
         Returns:
-            The resulting ``p.Result[Sequence[m.Ldif.Entry]]``.
+            The resulting ``p.Result[Sequence[p.Ldif.Entry]]``.
 
         """
         entries_raw = parse_response.entries
         if not entries_raw:
-            return r[Sequence[m.Ldif.Entry]].ok([])
-        entries: MutableSequence[m.Ldif.Entry] = []
+            return r[Sequence[p.Ldif.Entry]].ok([])
+        entries: MutableSequence[p.Ldif.Entry] = []
         for entry_raw in entries_raw:
             if isinstance(entry_raw, m.Ldif.Entry):
                 entries.append(entry_raw)
@@ -87,7 +87,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
                     validation_metadata=None,
                 ),
             )
-        return r[Sequence[m.Ldif.Entry]].ok(entries)
+        return r[Sequence[p.Ldif.Entry]].ok(entries)
 
 
 __all__: list[str] = ["FlextLdapLdap3ResultConverter"]

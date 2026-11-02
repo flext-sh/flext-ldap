@@ -23,13 +23,13 @@ class TestsFlextLdapOperations:
     class BatchPathOperations(FlextLdapOperations):
         """Deterministic operations service for exercising public batch flow."""
 
-        _queued_results: list[p.Result[m.Ldap.LdapOperationResult]] = m.PrivateAttr(
-            default_factory=list[p.Result[m.Ldap.LdapOperationResult]],
+        _queued_results: list[p.Result[p.Ldap.LdapOperationResult]] = m.PrivateAttr(
+            default_factory=list[p.Result[p.Ldap.LdapOperationResult]],
         )
 
         def __init__(
             self,
-            results: Sequence[p.Result[m.Ldap.LdapOperationResult]],
+            results: Sequence[p.Result[p.Ldap.LdapOperationResult]],
         ) -> None:
             """Initialize the test double."""
             super().__init__()
@@ -42,14 +42,14 @@ class TestsFlextLdapOperations:
             *,
             retry_on_errors: Sequence[str] | None = None,
             max_retries: int = 1,
-        ) -> p.Result[m.Ldap.LdapOperationResult]:
+        ) -> p.Result[p.Ldap.LdapOperationResult]:
             _ = entry, retry_on_errors, max_retries
             if not self._queued_results:
-                return r[m.Ldap.LdapOperationResult].fail("No queued upsert result")
+                return r[p.Ldap.LdapOperationResult].fail("No queued upsert result")
             return self._queued_results.pop(0)
 
     @staticmethod
-    def _entry(dn: str) -> m.Ldif.Entry:
+    def _entry(dn: str) -> p.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(attributes={}, attribute_metadata={}),
@@ -158,11 +158,11 @@ class TestsFlextLdapOperations:
     def test_batch_upsert_partial_failure_returns_failure(self) -> None:
         """Verify batch upsert partial failure returns failure."""
         operations = self.BatchPathOperations((
-            r[m.Ldap.LdapOperationResult].ok(
+            r[p.Ldap.LdapOperationResult].ok(
                 m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.ADDED),
             ),
-            r[m.Ldap.LdapOperationResult].fail("planned batch failure"),
-            r[m.Ldap.LdapOperationResult].ok(
+            r[p.Ldap.LdapOperationResult].fail("planned batch failure"),
+            r[p.Ldap.LdapOperationResult].ok(
                 m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.SKIPPED),
             ),
         ))
@@ -187,7 +187,7 @@ class TestsFlextLdapOperations:
         failed and zero synced/skipped entries.
         """
         operations = self.BatchPathOperations((
-            r[m.Ldap.LdapOperationResult].ok(
+            r[p.Ldap.LdapOperationResult].ok(
                 m.Ldap.LdapOperationResult(operation=c.Ldap.Tests.STRING_SIMPLE),
             ),
         ))
@@ -319,6 +319,6 @@ class TestsFlextLdapOperations:
     def test_batch_upsert_empty_batch_returns_success() -> None:
         """Test batch_upsert with empty entry list (not connected scenario)."""
         operations = FlextLdapOperations()
-        entries: list[m.Ldif.Entry] = []
+        entries: list[p.Ldif.Entry] = []
         result = operations.batch_upsert(entries, stop_on_error=False)
         u.Ldap.Tests.ok(result)

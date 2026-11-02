@@ -69,7 +69,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def create_connection_config(
                 ldap_container: Mapping[str, t.Scalar],
-            ) -> m.Ldap.ConnectionConfig:
+            ) -> p.Ldap.ConnectionConfig:
                 """Build a typed connection settings from container metadata.
 
                 Returns:

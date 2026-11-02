@@ -18,8 +18,8 @@ class FlextLdapLdap3ResultExtract:
 
     @classmethod
     def extract_dn(
-        cls, parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue
-    ) -> m.Ldif.DN:
+        cls, parsed: p.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue
+    ) -> p.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
         Delegates to ``u.Ldif.resolve_dn_value()`` for normalization. Returns
@@ -37,7 +37,7 @@ class FlextLdapLdap3ResultExtract:
             entry_dn = parsed.entry_dn
             if entry_dn is None:
                 return m.Ldif.DN.empty()
-            dn_with_value: m.Ldif.DN = m.Ldif.DN.empty().model_copy(
+            dn_with_value: p.Ldif.DN = m.Ldif.DN.empty().model_copy(
                 update={"value": entry_dn},
             )
             return dn_with_value
@@ -46,8 +46,8 @@ class FlextLdapLdap3ResultExtract:
     @classmethod
     def extract_attributes(
         cls,
-        parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.Attributes:
+        parsed: p.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
+    ) -> p.Ldif.Attributes:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model.
 
         Returns:
@@ -109,8 +109,8 @@ class FlextLdapLdap3ResultExtract:
     @classmethod
     def extract_metadata(
         cls,
-        parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.ServerMetadata | None:
+        parsed: p.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
+    ) -> p.Ldif.ServerMetadata | None:
         """Extract server metadata from LDAP entry, returning ``None`` when absent.
 
         Returns:

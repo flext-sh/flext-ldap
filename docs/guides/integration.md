@@ -117,7 +117,7 @@ class UserService:
 
     def process_user_authentication(
         self, username: str, password: str
-    ) -> p.Result[m.Dict]:
+    ) -> p.Result[p.Dict]:
         """Process authentication using FLEXT + LDAP patterns."""
         self.logger.info("Processing user authentication", extra={"username": username})
 
@@ -126,12 +126,12 @@ class UserService:
             self.logger.error(
                 "Authentication failed", extra={"error": auth_result.error}
             )
-            return r[m.Dict].fail(f"Authentication failed: {auth_result.error}")
+            return r[p.Dict].fail(f"Authentication failed: {auth_result.error}")
 
         user = auth_result.unwrap()
         self.logger.info("User authenticated successfully", extra={"uid": user.uid})
 
-        return r[m.Dict].ok({
+        return r[p.Dict].ok({
             "uid": user.uid,
             "cn": user.cn,
             "email": user.mail,

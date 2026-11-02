@@ -23,7 +23,7 @@ from flext_ldif import FlextLdifSettings
 class FlextLdapSettings(FlextLdifSettings):
     """LDAP runtime settings."""
 
-    model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
+    model_config: ClassVar[p.SettingsConfigDict] = m.SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
         extra="ignore",
     )

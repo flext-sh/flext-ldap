@@ -29,7 +29,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         base64_attrs: Sequence[str],
         original_attrs_dict: Mapping[str, t.JsonValue | t.Ldap.Ldap3AttributeValue],
         original_dn: str,
-    ) -> m.Ldap.ConversionMetadata:
+    ) -> p.Ldap.ConversionMetadata:
         """Create canonical conversion metadata for LDAP entry adaptation.
 
         Returns:
@@ -47,18 +47,18 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
     def search_entry_to_ldif_entry(
         cls,
         entry: Mapping[str, t.Ldap.Ldap3AttributeValue | t.JsonValue],
-    ) -> p.Result[m.Ldif.Entry]:
+    ) -> p.Result[p.Ldif.Entry]:
         """Convert LDAP search-result mappings into canonical LDIF entries.
 
         Returns:
-            The resulting ``p.Result[m.Ldif.Entry]``.
+            The resulting ``p.Result[p.Ldif.Entry]``.
 
         """
         raw_entry = dict(entry)
         dn_raw = raw_entry.get("dn")
         dn_values = cls.ldap3_value_to_strings(dn_raw)
         if not dn_values:
-            return r[m.Ldif.Entry].fail("Search entry missing DN")
+            return r[p.Ldif.Entry].fail("Search entry missing DN")
         dn_value = dn_values[0]
         attributes: MutableMapping[str, MutableSequence[str] | str] = {
             key: list(cls.ldap3_value_to_strings(value))
@@ -70,13 +70,13 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
     @classmethod
     def track_conversion_differences(
         cls,
-        conversion_metadata: m.Ldap.ConversionMetadata,
+        conversion_metadata: p.Ldap.ConversionMetadata,
         *,
         original_dn: str,
         converted_dn: str,
         original_attrs_dict: t.Ldap.Ldap3AttributeDict,
         converted_attrs_dict: Mapping[str, Sequence[str]],
-    ) -> m.Ldap.ConversionMetadata:
+    ) -> p.Ldap.ConversionMetadata:
         """Record DN and attribute changes observed during entry conversion.
 
         Returns:
@@ -99,7 +99,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
             updates["attribute_changes"] = changed_attrs
         if not updates:
             return conversion_metadata
-        updated: m.Ldap.ConversionMetadata = conversion_metadata.model_copy(
+        updated: p.Ldap.ConversionMetadata = conversion_metadata.model_copy(
             update=updates,
         )
         return updated
@@ -155,8 +155,8 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
     @classmethod
     def group_entries_by_objectclass(
         cls,
-        entries: Sequence[m.Ldif.Entry],
-    ) -> m.Ldif.FlexibleCategories:
+        entries: Sequence[p.Ldif.Entry],
+    ) -> p.Ldif.FlexibleCategories:
         """Group LDIF entries by their objectclass category.
 
         Returns:
