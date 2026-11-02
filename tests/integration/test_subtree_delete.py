@@ -15,7 +15,7 @@ from uuid import uuid4
 
 import pytest
 
-from tests import c, ldap, m, t, tm, u
+from tests import c, ldap, m, p, t, tm, u
 
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
 

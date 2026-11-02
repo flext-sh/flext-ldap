@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import m
+from flext_core import m, t
 from flext_ldif import FlextLdifSettings
 
 
 class FlextLdapSettings(FlextLdifSettings):
     """LDAP runtime settings."""
 
-    model_config: ClassVar[p.SettingsConfigDict] = m.SettingsConfigDict(
+    model_config: ClassVar[t.SettingsConfigDict] = m.SettingsConfigDict(
         env_prefix="FLEXT_LDAP_",
         extra="ignore",
     )

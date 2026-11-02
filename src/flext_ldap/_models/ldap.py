@@ -11,9 +11,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Annotated, Self
 
-from flext_ldif import m
+from flext_ldif import m, p
 
-from flext_ldap import c, t
+from flext_ldap import c, p, t
 
 
 class FlextLdapModelsFlextLdap:

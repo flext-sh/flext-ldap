@@ -15,7 +15,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from tests import c, ldap, m, u
+from tests import c, ldap, m, p, u
 
 pytestmark = [pytest.mark.unit]
 

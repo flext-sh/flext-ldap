@@ -250,7 +250,7 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_ldap import m
+from flext_ldap import m, p
 
 
 def validate_dn(dn_string: str) -> bool:
