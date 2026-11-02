@@ -10,7 +10,7 @@ from typing import override
 
 from flext_tests.base import FlextTestsServiceBase
 
-from flext_ldap import m, p
+from flext_ldap import m
 from tests import TestsFlextLdapSettings, p
 
 

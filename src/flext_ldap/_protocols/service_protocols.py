@@ -15,7 +15,7 @@ from flext_ldap._protocols import FlextLdapProtocolsSearch
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_ldap import t
+    from flext_ldap import p, t
 
 
 class FlextLdapProtocolsService:
