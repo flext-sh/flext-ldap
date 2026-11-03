@@ -15,7 +15,7 @@ class FlextLdapProtocolsSettings:
     """LDAP settings protocol contracts composed into ``p.Ldap``."""
 
     @runtime_checkable
-    class LdapSettings(FlextLdifProtocols.Model, Protocol):
+    class LdapSettings(FlextLdifProtocols.BaseModel, Protocol):
         """Namespaced LDAP runtime settings branch."""
 
         host: str

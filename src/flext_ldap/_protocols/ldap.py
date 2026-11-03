@@ -24,7 +24,7 @@ class FlextLdapProtocolsLdap:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ConnectionConfig(FlextLdifProtocols.Model, Protocol):
+    class ConnectionConfig(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         host: str
@@ -38,7 +38,7 @@ class FlextLdapProtocolsLdap:
         auto_range: bool
 
     @runtime_checkable
-    class NormalizedConfig(FlextLdifProtocols.Model, Protocol):
+    class NormalizedConfig(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         scope: str
@@ -48,7 +48,7 @@ class FlextLdapProtocolsLdap:
         attributes: Sequence[str] | None
 
     @runtime_checkable
-    class SearchOptions(FlextLdifProtocols.Model, Protocol):
+    class SearchOptions(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         base_dn: t.NonEmptyStr
@@ -59,7 +59,7 @@ class FlextLdapProtocolsLdap:
         time_limit: t.NonNegativeInt
 
     @runtime_checkable
-    class SearchParams(FlextLdifProtocols.Model, Protocol):
+    class SearchParams(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -93,7 +93,7 @@ class FlextLdapProtocolsLdap:
             ...
 
     @runtime_checkable
-    class LdapBatchStats(FlextLdifProtocols.Model, Protocol):
+    class LdapBatchStats(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         synced: t.NonNegativeInt
@@ -101,7 +101,7 @@ class FlextLdapProtocolsLdap:
         skipped: t.NonNegativeInt
 
     @runtime_checkable
-    class SubtreeDeleteResult(FlextLdifProtocols.Model, Protocol):
+    class SubtreeDeleteResult(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         base_dn: str
@@ -110,7 +110,7 @@ class FlextLdapProtocolsLdap:
         cause: str | None
 
     @runtime_checkable
-    class UpsertPlan(FlextLdifProtocols.Model, Protocol):
+    class UpsertPlan(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         adds: t.NonNegativeInt
@@ -118,7 +118,7 @@ class FlextLdapProtocolsLdap:
         unchanged: t.NonNegativeInt
 
     @runtime_checkable
-    class UpsertResult(FlextLdifProtocols.Model, Protocol):
+    class UpsertResult(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         success: bool
@@ -127,7 +127,7 @@ class FlextLdapProtocolsLdap:
         error: str | None
 
     @runtime_checkable
-    class BatchUpsertResult(FlextLdifProtocols.Model, Protocol):
+    class BatchUpsertResult(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         total_processed: t.NonNegativeInt
@@ -145,7 +145,7 @@ class FlextLdapProtocolsLdap:
             ...
 
     @runtime_checkable
-    class SyncPhaseConfig(FlextLdifProtocols.Model, Protocol):
+    class SyncPhaseConfig(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         server_type: str
@@ -160,7 +160,7 @@ class FlextLdapProtocolsLdap:
         stop_on_error: bool
 
     @runtime_checkable
-    class ConversionMetadata(FlextLdifProtocols.Model, Protocol):
+    class ConversionMetadata(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         source_attributes: Sequence[str]
@@ -172,7 +172,7 @@ class FlextLdapProtocolsLdap:
         attribute_changes: Sequence[str]
 
     @runtime_checkable
-    class OperationResult(FlextLdifProtocols.Model, Protocol):
+    class OperationResult(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -196,7 +196,7 @@ class FlextLdapProtocolsLdap:
             ...
 
     @runtime_checkable
-    class SearchResult(FlextLdifProtocols.Model, Protocol):
+    class SearchResult(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         entries: Sequence[p.Ldif.Entry]
@@ -207,7 +207,7 @@ class FlextLdapProtocolsLdap:
             ...
 
     @runtime_checkable
-    class LdapOperationResult(FlextLdifProtocols.Model, Protocol):
+    class LdapOperationResult(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         operation: str
@@ -222,7 +222,7 @@ class FlextLdapProtocolsLdap:
         success_rate: t.NonNegativeFloat
 
     @runtime_checkable
-    class MultiPhaseSyncResult(FlextLdifProtocols.Model, Protocol):
+    class MultiPhaseSyncResult(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

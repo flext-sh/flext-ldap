@@ -20,7 +20,7 @@ class FlextLdapProtocolsConfig:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Identity(FlextLdifProtocols.Model, Protocol):
+    class Identity(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -29,7 +29,7 @@ class FlextLdapProtocolsConfig:
             ...
 
     @runtime_checkable
-    class Connection(FlextLdifProtocols.Model, Protocol):
+    class Connection(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -68,7 +68,7 @@ class FlextLdapProtocolsConfig:
             ...
 
     @runtime_checkable
-    class Validation(FlextLdifProtocols.Model, Protocol):
+    class Validation(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -97,7 +97,7 @@ class FlextLdapProtocolsConfig:
             ...
 
     @runtime_checkable
-    class Ldap(FlextLdifProtocols.Model, Protocol):
+    class Ldap(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -116,7 +116,7 @@ class FlextLdapProtocolsConfig:
             ...
 
     @runtime_checkable
-    class Root(FlextLdifProtocols.Model, Protocol):
+    class Root(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         Ldap: FlextLdapProtocolsConfig.Ldap

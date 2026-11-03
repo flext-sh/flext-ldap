@@ -21,7 +21,7 @@ from flext_ldap import FlextLdapSettings, c, m, p, t
 
 
 class FlextLdapService[
-    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.Model = t.JsonPayload
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.BaseModel = t.JsonPayload
     | Sequence[t.JsonPayload],
 ](FlextService[TResult]):
     """Base class for all flext-ldap services.

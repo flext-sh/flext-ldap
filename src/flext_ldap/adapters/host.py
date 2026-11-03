@@ -17,7 +17,7 @@ from flext_ldap.adapters import FlextLdapLdap3Adapter
 
 
 class FlextLdapAdapterHost[
-    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.Model = t.JsonPayload
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.BaseModel = t.JsonPayload
     | Sequence[t.JsonPayload],
 ](s[TResult]):
     """Own the shared ldap3 adapter behind the ``p.Ldap.LdapAdapter`` contract.
