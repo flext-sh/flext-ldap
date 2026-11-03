@@ -10,12 +10,11 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
 
-from flext_ldap._protocols import FlextLdapProtocolsSearch
-
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_ldap import p, t
+    from flext_ldap._protocols import FlextLdapProtocolsLdap
 
 
 class FlextLdapProtocolsService:
@@ -42,7 +41,7 @@ class FlextLdapProtocolsService:
 
         @staticmethod
         def connect(
-            connection_config: FlextLdapProtocolsSearch.ConnectionConfig,
+            connection_config: FlextLdapProtocolsLdap.ConnectionConfig,
             *,
             auto_retry: bool = False,
             max_retries: int = 3,
@@ -74,9 +73,7 @@ class FlextLdapProtocolsService:
             ...
 
         @staticmethod
-        def execute() -> FlextLdifProtocols.Result[
-            FlextLdapProtocolsSearch.SearchResult
-        ]:
+        def execute() -> FlextLdifProtocols.Result[FlextLdapProtocolsLdap.SearchResult]:
             """Run the connection service health check/default operation."""
             ...
 
@@ -172,7 +169,7 @@ class FlextLdapProtocolsService:
 
         def search(
             self,
-            search_options: FlextLdapProtocolsSearch.SearchOptions,
+            search_options: FlextLdapProtocolsLdap.SearchOptions,
         ) -> FlextLdifProtocols.Result[p.Ldap.SearchResult]:
             """Perform an LDAP search, returning the search result.
 
