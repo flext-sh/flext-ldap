@@ -986,8 +986,29 @@ For additional support and community resources:
 
 ### LDAP detector result contract
 
-`FlextLdapServerDetector` referenced an unavailable protocol union during class creation and attempted to instantiate a protocol for successful results. It now returns the structural `p.Ldap.OperationResult` contract and constructs the existing `m.Ldap.OperationResult` model. The result port exposes read-only properties matching the frozen model, and the LDAP service admits structural model results. Two unused private compatibility shims were removed after a workspace reference search. With the staged LDIF candidate, the original import succeeds, a missing connection is rejected, and a real result model satisfies the runtime-checkable port. Ruff and Pyrefly pass on the three changed modules. Live LDAP detection and the complete suite remain unverified.
+`FlextLdapServerDetector` referenced an unavailable protocol union during class creation
+and attempted to instantiate a protocol for successful results. It now returns the
+structural `p.Ldap.OperationResult` contract and constructs the existing
+`m.Ldap.OperationResult` model. The result port exposes read-only properties matching
+the frozen model, and the LDAP service admits structural model results. Two unused
+private compatibility shims were removed after a workspace reference search. With the
+staged LDIF candidate, the original import succeeds, a missing connection is rejected,
+and a real result model satisfies the runtime-checkable port. Ruff and Pyrefly pass on
+the three changed modules. Live LDAP detection and the complete suite remain unverified.
 
-The connection and operation health interfaces also referenced the nonexistent `p.Ldap.Response` union. Their existing model results are now exposed through the structural `p.Ldap.SearchResult` contract, without changing the returned model. DN ports in the LDAP client use `p.Ldif.DN`; delete and modify pass the already-normalized DN value accepted by the existing adapter. Search-result views are read-only and batch-statistics declare their actual model capability. The connection import passes against the staged LDIF candidate. Ruff passes on the affected source files; Pyrefly still reports eight missing LDAP protocol references in operations, so this is not complete acceptance.
+The connection and operation health interfaces also referenced the nonexistent
+`p.Ldap.Response` union. Their existing model results are now exposed through the
+structural `p.Ldap.SearchResult` contract, without changing the returned model. DN ports
+in the LDAP client use `p.Ldif.DN`; delete and modify pass the already-normalized DN
+value accepted by the existing adapter. Search-result views are read-only and
+batch-statistics declare their actual model capability. The connection import passes
+against the staged LDIF candidate. Ruff passes on the affected source files; Pyrefly
+still reports eight missing LDAP protocol references in operations, so this is not
+complete acceptance.
 
-`SearchResult.entries` also used a structural LDIF protocol directly as a Pydantic field without a schema. It now delegates validation to the existing LDIF entry model through `ValidateAs` while retaining the protocol as its annotation. A real entry retains identity and survives JSON roundtrip; the focused regression ran once successfully with the staged LDIF candidate and an external Testmon database. This does not establish the complete LDAP suite or live directory behavior.
+`SearchResult.entries` also used a structural LDIF protocol directly as a Pydantic field
+without a schema. It now delegates validation to the existing LDIF entry model through
+`ValidateAs` while retaining the protocol as its annotation. A real entry retains
+identity and survives JSON roundtrip; the focused regression ran once successfully with
+the staged LDIF candidate and an external Testmon database. This does not establish the
+complete LDAP suite or live directory behavior.

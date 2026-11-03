@@ -8,9 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
+
+if TYPE_CHECKING:
+    from flext_ldap._protocols import FlextLdapProtocolsConfig
 
 
 class FlextLdapProtocolsConfig:
@@ -116,10 +119,7 @@ class FlextLdapProtocolsConfig:
     class Root(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def Ldap(self) -> FlextLdapProtocolsConfig.Ldap:
-            """LDAP business-rule config namespace."""
-            ...
+        Ldap: FlextLdapProtocolsConfig.Ldap
 
 
 __all__: list[str] = [

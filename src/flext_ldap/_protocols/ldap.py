@@ -13,11 +13,10 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
 
-from flext_ldap import t
-
 if TYPE_CHECKING:
     from flext_ldif import p
 
+    from flext_ldap import t
     from flext_ldap._typings import FlextLdapTypesLdap
 
 
@@ -28,50 +27,15 @@ class FlextLdapProtocolsLdap:
     class ConnectionConfig(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def host(self) -> str:
-            """LDAP server hostname."""
-            ...
-
-        @property
-        def port(self) -> t.PortNumber:
-            """LDAP server port."""
-            ...
-
-        @property
-        def use_ssl(self) -> bool:
-            """Enable SSL (LDAPS)."""
-            ...
-
-        @property
-        def use_tls(self) -> bool:
-            """Enable StartTLS."""
-            ...
-
-        @property
-        def bind_dn(self) -> str | None:
-            """Bind DN for authentication."""
-            ...
-
-        @property
-        def bind_password(self) -> str | None:
-            """Bind password for authentication."""
-            ...
-
-        @property
-        def timeout(self) -> t.PositiveInt:
-            """Connection timeout in seconds."""
-            ...
-
-        @property
-        def auto_bind(self) -> bool:
-            """Auto-bind on connection."""
-            ...
-
-        @property
-        def auto_range(self) -> bool:
-            """Enable auto-range for paged results."""
-            ...
+        host: str
+        port: t.PortNumber
+        use_ssl: bool
+        use_tls: bool
+        bind_dn: str | None
+        bind_password: str | None
+        timeout: t.PositiveInt
+        auto_bind: bool
+        auto_range: bool
 
     @runtime_checkable
     class NormalizedConfig(FlextLdifProtocols.Model, Protocol):
@@ -87,11 +51,7 @@ class FlextLdapProtocolsLdap:
     class SearchOptions(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def base_dn(self) -> t.NonEmptyStr:
-            """Base DN for search (required, non-empty)."""
-            ...
-
+        base_dn: t.NonEmptyStr
         scope: str
         filter_str: str
         attributes: Sequence[str] | None
@@ -136,87 +96,35 @@ class FlextLdapProtocolsLdap:
     class LdapBatchStats(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def synced(self) -> t.NonNegativeInt:
-            """Entries synced successfully."""
-            ...
-
-        @property
-        def failed(self) -> t.NonNegativeInt:
-            """Entries that failed."""
-            ...
-
-        @property
-        def skipped(self) -> t.NonNegativeInt:
-            """Entries skipped."""
-            ...
+        synced: t.NonNegativeInt
+        failed: t.NonNegativeInt
+        skipped: t.NonNegativeInt
 
     @runtime_checkable
     class SubtreeDeleteResult(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def base_dn(self) -> str:
-            """Base DN of the targeted subtree."""
-            ...
-
-        @property
-        def deleted_count(self) -> t.NonNegativeInt:
-            """Entries deleted before the run stopped."""
-            ...
-
-        @property
-        def failed_dn(self) -> str | None:
-            """DN of the first failed deletion, if any."""
-            ...
-
-        @property
-        def cause(self) -> str | None:
-            """Failure cause reported for failed_dn."""
-            ...
+        base_dn: str
+        deleted_count: t.NonNegativeInt
+        failed_dn: str | None
+        cause: str | None
 
     @runtime_checkable
     class UpsertPlan(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def adds(self) -> t.NonNegativeInt:
-            """Entries absent from the directory (would be added)."""
-            ...
-
-        @property
-        def modifies(self) -> t.NonNegativeInt:
-            """Entries present with differences (would be modified)."""
-            ...
-
-        @property
-        def unchanged(self) -> t.NonNegativeInt:
-            """Entries already matching the desired state."""
-            ...
+        adds: t.NonNegativeInt
+        modifies: t.NonNegativeInt
+        unchanged: t.NonNegativeInt
 
     @runtime_checkable
     class UpsertResult(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def success(self) -> bool:
-            """Whether the upsert succeeded."""
-            ...
-
-        @property
-        def dn(self) -> str:
-            """Distinguished name of the entry."""
-            ...
-
-        @property
-        def operation(self) -> str:
-            """Operation performed (ADD/MODIFY/SKIP)."""
-            ...
-
-        @property
-        def error(self) -> str | None:
-            """Error message if operation failed."""
-            ...
+        success: bool
+        dn: str
+        operation: str
+        error: str | None
 
     @runtime_checkable
     class BatchUpsertResult(FlextLdifProtocols.Model, Protocol):
@@ -291,10 +199,7 @@ class FlextLdapProtocolsLdap:
     class SearchResult(FlextLdifProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def entries(self) -> Sequence[p.Ldif.Entry]:
-            """Structural member projected from the owning model."""
-            ...
+        entries: Sequence[p.Ldif.Entry]
 
         @property
         def search_options(self) -> FlextLdapProtocolsLdap.SearchOptions:
