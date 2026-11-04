@@ -63,7 +63,7 @@ facades follow ADR-028 Decision 10; they are not layer-zero self-imports.
 Generation and native-scan agreement require runtime validation after source changes.
 
 | Layer | ast-grep rules | Text rules |
-|---|---|---|
+| --- | --- | --- |
 | Universal (every project) | `flext-infra/src/flext_infra/config/rules/ast-grep/` (`sgconfig.yml` with `scope: universal`) | `flext-infra/src/flext_infra/config/rules/mod/sed.yaml` |
 | Runtime (consumers of a provider) | an installed package's `sgconfig.yml` with `scope: runtime` | none |
 | Project overlay | `<repo>/config/rules/ast-grep/sgconfig.yml` | `<repo>/config/rules/mod/sed.yaml` |
@@ -92,7 +92,7 @@ its owned snapshot operation in `flext-infra/config/codegen.yaml`
 (`repository.extra_verbs`), with the native handler in `flext-infra/custom.mk`.
 
 | Surface | Effect |
-|---|---|
+| --- | --- |
 | `make mod` | Apply ast-grep, semantic and text rules to a proven fixed point; committed snapshots are verified, never rewritten. |
 | `make check` | Run the root's declared read-only admission and retain native findings. |
 | `make tests` | Exercise the public transformation and consumer contracts through the persistent incremental test owner. |
@@ -262,7 +262,7 @@ The engine reads these `metadata` keys, declared in
 `flext-infra/src/flext_infra/_constants/refactor.py` (`CODEMOD_RULE_*`):
 
 | Key | Meaning |
-|---|---|
+| --- | --- |
 | `scope` | File scopes as computed fact selectors: `{in: [selector], not-in: [selector]}` narrows the rule's `files`/`ignores`. No rule is partitioned or rendered per package. |
 | `owner` | The distribution that owns the law; that project's own plan drops the rule. |
 | `consumers_of` | The rule applies only to projects whose runtime closure includes that distribution. |
@@ -478,7 +478,7 @@ plans. Retirement uses `CodegenFilePlan` with absent desired bytes and mode;
 constants in `_constants/refactor.py`; any other key fails:
 
 | Key | Meaning |
-|---|---|
+| --- | --- |
 | `id`, `description` | Unique identity and the law it states. |
 | `find`, `replace` | Python `re` pattern and replacement (`\g<name>` groups). |
 | `flags` | Any of `IGNORECASE`, `MULTILINE`, `DOTALL`. |
