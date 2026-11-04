@@ -94,6 +94,70 @@ class FlextLdapServicesUpsertHandler:
         return changetype == c.Ldif.ChangeType.MODIFY
 
     @staticmethod
+    def _modify_operations(
+        entry_model: p.Ldif.Entry,
+    ) -> list[tuple[str, int, Sequence[str]]]:
+        """Collect the operations and non-empty values of a modify entry.
+
+        Maps RFC 2849 operations (add, delete, replace) to LDAP modify operations.
+        Falls back to legacy attributes if change_operations has no matches.
+
+        Returns:
+            The resulting ``list[tuple[str, int, Sequence[str]]]``.
+
+        """
+        op_map: t.Mapping[c.Ldif.ChangeOperation, c.Ldap.ModifyOperation] = {
+            c.Ldif.ChangeOperation.ADD: c.Ldap.ModifyOperation.ADD,
+            c.Ldif.ChangeOperation.DELETE: c.Ldap.ModifyOperation.DELETE,
+            c.Ldif.ChangeOperation.REPLACE: c.Ldap.ModifyOperation.REPLACE,
+        }
+        operations: list[tuple[str, int, Sequence[str]]] = []
+        for change_operation in entry_model.change_operations:
+            if change_operation.operation not in op_map:
+                continue
+            ldap_op = op_map[change_operation.operation]
+            filtered_values = [
+                change_value.value
+                for change_value in change_operation.values
+                if change_value.value
+            ]
+            if filtered_values or ldap_op in {
+                c.Ldap.ModifyOperation.DELETE,
+                c.Ldap.ModifyOperation.REPLACE,
+            }:
+                operations.append((
+                    change_operation.attribute,
+                    int(ldap_op),
+                    filtered_values,
+                ))
+        if operations:
+            return operations
+        attrs = u.Ldap.extract_entry_attributes(entry_model)
+        for attr_type in list(attrs.get(c.Ldif.ChangeOperation.ADD, [])):
+            filtered_values = [item for item in attrs.get(attr_type, []) if item]
+            if filtered_values:
+                operations.append((
+                    attr_type,
+                    int(c.Ldap.ModifyOperation.ADD),
+                    filtered_values,
+                ))
+        for attr_type in list(attrs.get(c.Ldif.ChangeOperation.REPLACE, [])):
+            filtered_values = [item for item in attrs.get(attr_type, []) if item]
+            operations.append((
+                attr_type,
+                int(c.Ldap.ModifyOperation.REPLACE),
+                filtered_values,
+            ))
+        for attr_type in list(attrs.get(c.Ldif.ChangeOperation.DELETE, [])):
+            filtered_values = [item for item in attrs.get(attr_type, []) if item]
+            operations.append((
+                attr_type,
+                int(c.Ldap.ModifyOperation.DELETE),
+                filtered_values,
+            ))
+        return operations
+
+    @staticmethod
     def _modify_additions(entry_model: p.Ldif.Entry) -> list[tuple[str, Sequence[str]]]:
         """Collect the non-empty MODIFY_ADD values of a modify entry.
 
@@ -198,18 +262,17 @@ class FlextLdapServicesUpsertHandler:
         self,
         entry: p.Ldif.Entry,
     ) -> p.Result[p.Ldap.LdapOperationResult]:
-        """Apply a schema modification entry (supports multiple add operations).
+        """Apply a schema modification entry (supports multiple operations).
 
         Business Rules:
-            - Entry must have 'add' attribute specifying schema attribute(s) to add
-            - Loops ALL add operations (supports both split and interleaved entries)
-            - Uses MODIFY_ADD operation (not REPLACE) for additive schema changes
-            - LDAP modify failures are returned as failures with original context
+            - Entry must have modify operations (add, replace, delete)
+            - Loops operations and maps to LDAP modify operations
+            - Preserves LDAP error context for modify failures
             - Empty values are filtered out before modification
 
         Audit Implication:
-            Schema modifications are critical; returns MODIFIED or error.
-            Preserves LDAP error context for schema validation failures.
+            Modifications are critical; returns MODIFIED or error.
+            Preserves LDAP error context for validation failures.
 
         Returns:
             r with operation type MODIFIED.
@@ -219,15 +282,15 @@ class FlextLdapServicesUpsertHandler:
         if entry_model.dn is None or not entry_model.dn.value:
             return r[p.Ldap.LdapOperationResult].fail("Schema modify entry missing DN")
         dn_str = entry_model.dn.value
-        schema_additions = self._modify_additions(entry_model)
-        if not schema_additions:
+        operations = self._modify_operations(entry_model)
+        if not operations:
             return r[p.Ldap.LdapOperationResult].fail(
                 c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS,
             )
         changes: t.Ldap.OperationChanges = {}
-        for attr_type, filtered in schema_additions:
+        for attr_type, mod_op, filtered in operations:
             changes.setdefault(attr_type, []).append((
-                c.Ldap.ModifyOperation.ADD,
+                mod_op,
                 filtered,
             ))
         modified = self._ops.modify(dn_str, changes)
@@ -243,7 +306,7 @@ class FlextLdapServicesUpsertHandler:
         Business Rules:
             - Routes each entry exactly like :meth:`execute`: a
               ``changetype: modify`` entry is planned as ``modifies`` when it
-              carries add operations (the write path issues MODIFY_ADD without
+              carries modify operations (the write path issues modify without
               searching) and fails like the write path when it carries none
             - Any other entry is read with ``find_entry`` and compared with
               ``u.Ldap.compare_entries``: absent counts as ``adds``,
@@ -268,7 +331,7 @@ class FlextLdapServicesUpsertHandler:
             if entry.dn is None or not entry.dn.value:
                 return r[p.Ldap.UpsertPlan].fail("Plan entry missing DN")
             if self._is_modify(entry):
-                if not self._modify_additions(u.Ldif.as_entry(entry)):
+                if not self._modify_operations(u.Ldif.as_entry(entry)):
                     return r[p.Ldap.UpsertPlan].fail(
                         c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS,
                     )

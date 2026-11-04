@@ -227,7 +227,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                 ),
             )
             .map(
-                lambda entries: p.Ldap.SearchResult(
+                lambda entries: m.Ldap.SearchResult(
                     entries=entries,
                     search_options=search_options,
                 ),
