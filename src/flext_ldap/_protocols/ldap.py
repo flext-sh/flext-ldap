@@ -16,8 +16,7 @@ from flext_ldif import FlextLdifProtocols
 if TYPE_CHECKING:
     from flext_ldif import p
 
-    from flext_ldap import t
-    from flext_ldap._typings import FlextLdapTypesLdap
+    from flext_ldap import c, t
 
 
 class FlextLdapProtocolsLdap:
@@ -31,6 +30,9 @@ class FlextLdapProtocolsLdap:
         port: t.PortNumber
         use_ssl: bool
         use_tls: bool
+        tls_validate: c.Ldap.TlsValidation
+        ca_certs_file: t.FilePath | None
+        server_name: t.NonEmptyStr | None
         bind_dn: str | None
         bind_password: str | None
         timeout: t.PositiveInt
@@ -149,12 +151,7 @@ class FlextLdapProtocolsLdap:
         """Structural data contract projected from the owning model."""
 
         server_type: str
-
-        @property
-        def progress_callback(self) -> FlextLdapTypesLdap.ProgressCallbackUnion | None:
-            """Structural member projected from the owning model."""
-            ...
-
+        progress_callback: t.Ldap.ProgressCallbackUnion | None
         retry_on_errors: Sequence[str]
         max_retries: t.RetryCount
         stop_on_error: bool
