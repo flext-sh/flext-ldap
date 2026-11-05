@@ -60,6 +60,45 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
         return server
 
     @staticmethod
+    def create_connection_server(
+        settings: p.Ldap.ConnectionConfig,
+    ) -> p.Ldap.Ldap3TlsServer:
+        """Create the ldap3 Server for a connection configuration.
+
+        LDAPS and StartTLS always carry an explicit TLS policy: the peer
+        certificate is verified against ``ca_certs_file`` (or the system trust
+        store) and the certificate must match ``host`` or ``server_name``
+        unless ``tls_validate`` is the explicit ``NONE`` mode. No network call
+        happens during construction.
+
+        Returns:
+            The resulting ``p.Ldap.Ldap3TlsServer``.
+
+        """
+        tls: ldap3.Tls | None = None
+        if settings.use_ssl or settings.use_tls:
+            tls = ldap3.Tls(
+                validate=c.Ldap.TLS_VERIFY_MODE_BY_VALIDATION[settings.tls_validate],
+                ca_certs_file=(
+                    None
+                    if settings.ca_certs_file is None
+                    else str(settings.ca_certs_file)
+                ),
+                valid_names=(
+                    None if settings.server_name is None else [settings.server_name]
+                ),
+                sni=settings.server_name,
+            )
+        server: p.Ldap.Ldap3TlsServer = ldap3.Server(
+            host=settings.host,
+            port=settings.port,
+            use_ssl=settings.use_ssl,
+            tls=tls,
+            connect_timeout=settings.timeout,
+        )
+        return server
+
+    @staticmethod
     def create_server_from_url(
         server_url: str,
         *,
