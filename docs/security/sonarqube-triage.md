@@ -187,10 +187,10 @@ padrão.
 
 ```text
        73
-       74      @pytest.mark.parametrize("port", [0, -1, 65536, 70000, 999999])
+       74      @c.Tests.MARK.parametrize("port", [0, -1, 65536, 70000, 999999])
        75      def test_out_of_range_port_is_rejected(self, port: int) -> None:
        76          """Verify out of range port is rejected."""
->>>    77          with pytest.raises(c.ValidationError):
+>>>    77          with u.Tests.raises(c.ValidationError):
        78              LdapTestSettings(Ldap=_LdapSettings(port=port))
        79
        80      # ── Host values ────────────────────────────────────────────────────
@@ -211,7 +211,7 @@ padrão.
       144              c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
       145          )
       146          # Act / Assert: an unsupported arity is a contract violation, not ...
->>>   147          with pytest.raises(TypeError, match="single-phase"):
+>>>   147          with u.Tests.raises(TypeError, match="single-phase"):
       148              ldap.sync_phase_entries(
       149                  ldif_file,
       150                  c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,

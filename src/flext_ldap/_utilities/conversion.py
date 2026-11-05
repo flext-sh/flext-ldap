@@ -9,13 +9,16 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
-from flext_ldap import c, m, r, t
+from flext_ldif import r
+
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.typings import t
 
 if TYPE_CHECKING:
     # Annotation-only reverse import: keeps the lazy p resolution cycle-free.
 
     from flext_ldap import p
-
 
 from flext_ldap._utilities import FlextLdapUtilitiesNormalization
 

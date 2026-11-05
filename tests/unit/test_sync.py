@@ -159,7 +159,7 @@ class TestsFlextLdapSync:
         )
         # Act / Assert: an unsupported arity is a contract violation, not a failure
         # result
-        with pytest.raises(TypeError, match="single-phase"):
+        with u.Tests.raises(TypeError, match="single-phase"):
             ldap.sync_phase_entries(
                 ldif_file,
                 c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,

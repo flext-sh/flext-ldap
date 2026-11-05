@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
-from flext_ldap import c, p, t, u
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
 class FlextLdapLdap3Wrappers:

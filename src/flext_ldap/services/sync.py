@@ -10,8 +10,14 @@ import inspect
 from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING
 
-from flext_ldap import c, m, p, r, t, u
+from flext_ldif import r
+
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
 from flext_ldap.services import FlextLdapOperations
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 if TYPE_CHECKING:
     from pathlib import Path

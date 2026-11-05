@@ -33,7 +33,14 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from typing import override
 
-from flext_ldap import c, e, m, p, r, s, t, u
+from flext_ldif import e, r
+
+from flext_ldap.base import s
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
 class FlextLdapEntryAdapter(s[bool]):

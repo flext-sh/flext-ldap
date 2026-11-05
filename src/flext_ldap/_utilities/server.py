@@ -10,8 +10,9 @@ from typing import Literal
 
 import ldap3
 
-from flext_ldap import c, p
 from flext_ldap._utilities import FlextLdapUtilitiesBase
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
 
 
 class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):

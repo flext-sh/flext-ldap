@@ -9,8 +9,14 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_ldap import c, m, p, r, t, u
+from flext_ldif import r
+
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

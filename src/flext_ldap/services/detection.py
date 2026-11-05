@@ -9,7 +9,13 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, e, m, p, s, u
+from flext_ldif import e
+
+from flext_ldap.base import s
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.utilities import u
 
 
 class FlextLdapServerDetector(s[p.Ldap.OperationResult]):

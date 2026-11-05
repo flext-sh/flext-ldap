@@ -10,8 +10,8 @@ from collections.abc import Sequence
 
 from flext_ldif import u
 
-from flext_ldap import c
 from flext_ldap._utilities import FlextLdapUtilitiesNormalization
+from flext_ldap.constants import c
 
 
 class FlextLdapUtilitiesDetection(FlextLdapUtilitiesNormalization):

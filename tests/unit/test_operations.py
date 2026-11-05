@@ -252,7 +252,7 @@ class TestsFlextLdapOperations:
         invalid_dn = c.Ldap.Tests.ENTRY_DN_SCENARIOS[
             c.Ldap.Tests.EntryOperationCase.INVALID_DN
         ]
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.Ldif.DN(value=invalid_dn)
 
     @staticmethod

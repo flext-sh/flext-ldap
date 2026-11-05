@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif import e, r
 from ldap3 import Connection, Server
 
-from flext_ldap import c, e, p, r
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
 
 
 class FlextLdapLdap3ConnectionManager:

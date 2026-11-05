@@ -13,7 +13,9 @@ from typing import Annotated, Self
 
 from flext_ldif import m
 
-from flext_ldap import c, p, t
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapModelsFlextLdap:

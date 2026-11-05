@@ -530,7 +530,7 @@ class TestFlextLdapUser:
 
         assert not user.is_valid()
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "uid,expected",
         [
             ("john.doe", True),

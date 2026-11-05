@@ -12,8 +12,11 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_ldap import m, p, s, t
 from flext_ldap.adapters import FlextLdapLdap3Adapter
+from flext_ldap.base import s
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapAdapterHost[

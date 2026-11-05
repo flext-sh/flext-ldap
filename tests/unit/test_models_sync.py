@@ -131,7 +131,7 @@ class TestsFlextLdapModelsSync:
     @staticmethod
     def test_batch_stats_rejects_negative_counters(field: str) -> None:
         """Verify batch stats rejects negative counters."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.Ldap.LdapBatchStats(**{field: -1})
 
     # ── ConversionMetadata: tracked change contract ────────────────────

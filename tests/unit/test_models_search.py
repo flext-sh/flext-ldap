@@ -75,7 +75,7 @@ class TestsFlextLdapModelsSearch:
     @staticmethod
     def test_connection_config_rejects_ssl_and_tls_together() -> None:
         """Verify connection config rejects ssl and tls together."""
-        with pytest.raises(c.ValidationError, match="mutually exclusive"):
+        with u.Tests.raises(c.ValidationError, match="mutually exclusive"):
             m.Ldap.ConnectionConfig(use_ssl=True, use_tls=True)
 
     @pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
@@ -84,7 +84,7 @@ class TestsFlextLdapModelsSearch:
         invalid_port: int,
     ) -> None:
         """Verify connection config rejects out of range port."""
-        with pytest.raises(c.ValidationError, match="port"):
+        with u.Tests.raises(c.ValidationError, match="port"):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
     # ------------------------------------------------------------------ #
@@ -237,7 +237,7 @@ class TestsFlextLdapModelsSearchSearch(TestsFlextLdapModelsSearch):
     @staticmethod
     def test_search_options_rejects_empty_base_dn() -> None:
         """Verify search options rejects empty base dn."""
-        with pytest.raises(c.ValidationError, match="base_dn"):
+        with u.Tests.raises(c.ValidationError, match="base_dn"):
             m.Ldap.SearchOptions(base_dn="")
 
     @staticmethod
@@ -300,7 +300,7 @@ class TestsFlextLdapModelsSearchSearch(TestsFlextLdapModelsSearch):
     @staticmethod
     def test_search_options_rejects_negative_size_limit() -> None:
         """Verify search options rejects negative size limit."""
-        with pytest.raises(c.ValidationError, match="size_limit"):
+        with u.Tests.raises(c.ValidationError, match="size_limit"):
             m.Ldap.SearchOptions(
                 base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
                 size_limit=-1,

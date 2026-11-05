@@ -78,7 +78,7 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_out_of_range_port_is_rejected(port: int) -> None:
         """Verify out of range port is rejected."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             TestsFlextLdapSettings(Ldap=_LdapSettings(port=port))
 
     # ── Host values ────────────────────────────────────────────────────

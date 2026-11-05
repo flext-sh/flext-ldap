@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from typing import TypeIs
 
-from flext_ldap import c, t
 from flext_ldap._utilities import FlextLdapUtilitiesBase
+from flext_ldap.constants import c
+from flext_ldap.typings import t
 
 
 class FlextLdapUtilitiesValidation(FlextLdapUtilitiesBase):

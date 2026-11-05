@@ -11,8 +11,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence, Sequence
 
-from flext_ldap import m, p, r
+from flext_ldif import r
+
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3ResultExtract
+from flext_ldap.models import m
+from flext_ldap.protocols import p
 
 
 class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):

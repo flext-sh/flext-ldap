@@ -24,7 +24,12 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from flext_ldap import c, m, p, r, u
+from flext_ldif import r
+
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.utilities import u
 
 
 class FlextLdapServicesSubtreeDelete:

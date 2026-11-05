@@ -9,8 +9,11 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 
-from flext_ldap import c, m, p, t
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapLdap3ResultExtract:

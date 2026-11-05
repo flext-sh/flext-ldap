@@ -41,7 +41,7 @@ class TestsFlextLdapApi:
             RuntimeError: Always.
 
         """
-        with pytest.raises(RuntimeError), ldap:
+        with u.Tests.raises(RuntimeError), ldap:
             raise RuntimeError(c.Ldap.Tests.RFC_DEFAULT_FILTER)
 
     # --- Connection state invariant ---

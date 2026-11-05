@@ -8,11 +8,15 @@ from __future__ import annotations
 
 from collections.abc import MutableMapping, MutableSequence, Sequence
 
-from flext_ldap import c, m, p, r
+from flext_ldif import r
+
 from flext_ldap.adapters._ldap3 import (
     FlextLdapLdap3ResultConverter,
     FlextLdapLdap3Wrappers,
 )
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
 
 
 class FlextLdapLdap3SearchExecutor:

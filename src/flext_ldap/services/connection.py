@@ -13,9 +13,15 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, m, p, r, t, u
+from flext_ldif import r
+
 from flext_ldap.adapters import FlextLdapAdapterHost
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
 from flext_ldap.services import FlextLdapServerDetector
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
 class FlextLdapConnection(FlextLdapAdapterHost[p.Ldap.SearchResult]):

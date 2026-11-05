@@ -9,9 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from flext_ldif import FlextLdifUtilities
+from flext_ldif import FlextLdifUtilities, r
 
-from flext_ldap import c, r, t
+from flext_ldap.constants import c
+from flext_ldap.typings import t
 
 if TYPE_CHECKING:
     # Reverse import: protocols are annotation-only here. A runtime import
