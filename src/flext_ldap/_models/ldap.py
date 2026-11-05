@@ -35,6 +35,33 @@ class FlextLdapModelsFlextLdap:
             )
             use_ssl: Annotated[bool, m.Field(description="Enable SSL (LDAPS)")] = False
             use_tls: Annotated[bool, m.Field(description="Enable StartTLS")] = False
+            tls_validate: Annotated[
+                c.Ldap.TlsValidation,
+                m.Field(
+                    description=(
+                        "Peer certificate and hostname validation for LDAPS or "
+                        "StartTLS; disabling it requires the explicit NONE mode"
+                    ),
+                ),
+            ] = c.Ldap.DEFAULT_TLS_VALIDATION
+            ca_certs_file: Annotated[
+                t.FilePath | None,
+                m.Field(
+                    description=(
+                        "PEM CA bundle trusted for the server certificate; "
+                        "the system trust store applies when unset"
+                    ),
+                ),
+            ] = None
+            server_name: Annotated[
+                t.NonEmptyStr | None,
+                m.Field(
+                    description=(
+                        "Expected certificate server name, sent as SNI and "
+                        "accepted by the hostname check besides host"
+                    ),
+                ),
+            ] = None
             bind_dn: Annotated[
                 str | None,
                 m.Field(description="Bind DN for authentication"),
@@ -69,6 +96,38 @@ class FlextLdapModelsFlextLdap:
                 """
                 if self.use_ssl and self.use_tls:
                     msg = "use_ssl and use_tls are mutually exclusive"
+                    raise ValueError(msg)
+                return self
+
+            @m.model_validator(mode="after")
+            def validate_tls_options(self) -> Self:
+                """Reject TLS options that cannot take effect.
+
+                Returns:
+                    The resulting ``Self``.
+
+                Raises:
+                    ValueError: If TLS options are set without LDAPS or StartTLS,
+                        or a CA bundle is combined with disabled validation.
+
+                """
+                tls_enabled = self.use_ssl or self.use_tls
+                tls_options_set = (
+                    self.ca_certs_file is not None
+                    or self.server_name is not None
+                    or self.tls_validate != c.Ldap.DEFAULT_TLS_VALIDATION
+                )
+                if tls_options_set and not tls_enabled:
+                    msg = (
+                        "tls_validate, ca_certs_file and server_name require "
+                        "use_ssl or use_tls"
+                    )
+                    raise ValueError(msg)
+                if (
+                    self.tls_validate == c.Ldap.TlsValidation.NONE
+                    and self.ca_certs_file is not None
+                ):
+                    msg = "ca_certs_file contradicts tls_validate=none"
                     raise ValueError(msg)
                 return self
 

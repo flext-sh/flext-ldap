@@ -192,6 +192,25 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             FIELD_PROPERTIES: Final[FieldName] = FieldName.PROPERTIES
             FIELD_TYPE: Final[FieldName] = FieldName.TYPE
 
+            TLS_URL_VAR: Final[str] = "FLEXT_LDAP_TEST_LDAPS_URL"
+            "LDAPS endpoint whose certificate names TLS_SERVER_NAME_VAR only."
+            TLS_SERVER_NAME_VAR: Final[str] = "FLEXT_LDAP_TEST_TLS_SERVER_NAME"
+            TLS_CA_FILE_VAR: Final[str] = "FLEXT_LDAP_TEST_TLS_CA_FILE"
+            TLS_WRONG_CA_FILE_VAR: Final[str] = "FLEXT_LDAP_TEST_TLS_WRONG_CA_FILE"
+            TLS_REQUIRED_VARS: Final[Sequence[str]] = (
+                "FLEXT_LDAP_BIND_DN",
+                "FLEXT_LDAP_BIND_PASSWORD",
+                TLS_SERVER_NAME_VAR,
+                TLS_CA_FILE_VAR,
+                TLS_WRONG_CA_FILE_VAR,
+            )
+            TLS_CA_FILENAME: Final[str] = "ca.pem"
+            TLS_SERVER_NAME: Final[str] = "ldap.flext.test"
+            TLS_CERTIFICATE_ERROR: Final[str] = "certificate verify failed"
+            TLS_HOSTNAME_ERROR: Final[str] = "doesn't match"
+            TLS_OPTIONS_REQUIRE_TLS_ERROR: Final[str] = "require use_ssl or use_tls"
+            TLS_CA_CONTRADICTS_NONE_ERROR: Final[str] = "contradicts tls_validate"
+
             DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
             DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
             DOCKER_SERVICE_NAME: Final[str] = "openldap"

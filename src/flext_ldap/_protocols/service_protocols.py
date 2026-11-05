@@ -183,6 +183,39 @@ class FlextLdapProtocolsService:
             ...
 
     @runtime_checkable
+    class Ldap3Tls(Protocol):
+        """Structural contract for the TLS policy carried by an ldap3 server."""
+
+        @property
+        def validate(self) -> int:
+            """The stdlib peer verification mode (``ssl.VerifyMode`` value)."""
+            ...
+
+        @property
+        def ca_certs_file(self) -> str | None:
+            """The trusted CA bundle path, or ``None`` for the system store."""
+            ...
+
+        @property
+        def sni(self) -> str | None:
+            """The server name sent through Server Name Indication."""
+            ...
+
+        @property
+        def valid_names(self) -> list[str] | None:
+            """Additional certificate names accepted by the hostname check."""
+            ...
+
+    @runtime_checkable
+    class Ldap3TlsServer(FlextLdifProtocols.Ldif.Ldap3Server, Protocol):
+        """ldap3 server contract exposing its TLS policy."""
+
+        @property
+        def tls(self) -> FlextLdapProtocolsService.Ldap3Tls | None:
+            """The TLS policy, present whenever LDAPS or StartTLS is enabled."""
+            ...
+
+    @runtime_checkable
     class Ldap3Connection(FlextLdifProtocols.Ldif.Ldap3Connection, Protocol):
         """Structural contract for ldap3-compatible connection objects.
 
