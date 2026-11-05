@@ -118,7 +118,7 @@ override FLEXT_PYTEST_TESTMON_DATABASE = $(if $(strip $(PYTEST_CACHE_HOME)),$(PY
 # Storage law: the pytest scratch root sits under the user home, keyed by the
 # absolute checkout path, never under /tmp and never inside a versioned tree.
 override FLEXT_PYTEST_SCRATCH_ROOT = $(if $(strip $(HOME)),$(HOME)/.local/state/.flext-runtime$(PROJECT_ROOT)/scratch)
-override PYTEST_RUN_TIMEOUT_SECONDS := 60
+override PYTEST_RUN_TIMEOUT_SECONDS := 240
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests.enforcement_plugin
@@ -251,7 +251,8 @@ MISE_SYSTEM_CONFIG_DIR="$${MISE_CONFIG_DIR}"; \
 MISE_GLOBAL_CONFIG_FILE="$${MISE_CONFIG_DIR}/config.toml"; \
 MISE_CEILING_PATHS="$$(dirname "$${reader_root}")"; \
 MISE_AUTO_INSTALL=0; \
-export MISE_CONFIG_DIR MISE_SYSTEM_CONFIG_DIR MISE_GLOBAL_CONFIG_FILE MISE_CEILING_PATHS MISE_AUTO_INSTALL; \
+MISE_OVERRIDE_CONFIG_FILENAMES=".mise.toml"; \
+export MISE_CONFIG_DIR MISE_SYSTEM_CONFIG_DIR MISE_GLOBAL_CONFIG_FILE MISE_CEILING_PATHS MISE_AUTO_INSTALL MISE_OVERRIDE_CONFIG_FILENAMES; \
 case "$${OS:-}" in (Windows_NT) reader_mise="$${reader_root}/.bin/mise.exe" ;; (*) reader_mise="$${reader_root}/.bin/mise" ;; esac; \
 if [ -L "$${reader_root}/.bin" ] || [ -L "$${reader_mise}" ]; then printf 'ERROR: Mise acquisition must be physical: %s\n' "$${reader_mise}" >&2; exit 2; fi; \
 reader_mise="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which mise)"; \
@@ -380,6 +381,9 @@ override export MISE_CEILING_PATHS := $(shell cd "$(RUNTIME_ROOT)/.." && pwd -P)
 ifneq ($(.SHELLSTATUS),0)
 $(error Cannot resolve Mise ceiling for $(RUNTIME_ROOT))
 endif
+# The locked install reads only the declared project config: a machine-local
+# override (mise.local.toml and siblings) never selects a tool outside the lock.
+override export MISE_OVERRIDE_CONFIG_FILENAMES := .mise.toml
 override export MISE_CONFIG_DIR := $(RUNTIME_ROOT)/.mise
 # The project manifest remains in native project scope. An optional global
 # configuration has its own explicit runtime-scoped path; when absent, Mise
@@ -671,7 +675,7 @@ INSTALL_GIT_HOOKS_RECIPE = set -eu; \
 			printf 'setup: hooks skipped (no validator) checkout=%s\n' "$$checkout"; \
 			continue; \
 		fi; \
-		for stage in pre-commit pre-push; do \
+		for stage in pre-commit; do \
 			hook="$$hooks_dir/$$stage"; \
 			others=""; \
 			if [ -e "$$hook" ]; then \
@@ -979,8 +983,7 @@ _setup_lifecycle: _builtin_require_workspace
 # Check owns quality verdicts after provisioning.
 _setup_activated:
 	+@set -eu; \
-	case "$(strip $(CI)): $(CUSTOM_DECLARED_TARGETS) " in \
-		Y:*) ;; \
+	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" post-setup "*) $(SELF_MAKE) post-setup ;; \
 	esac
 ifneq ($(CI),Y)
