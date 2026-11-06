@@ -6,11 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import c, m, p, r, t
+from collections.abc import MutableMapping, MutableSequence, Sequence
+
+from flext_ldif import r
+
 from flext_ldap.adapters._ldap3 import (
     FlextLdapLdap3ResultConverter,
     FlextLdapLdap3Wrappers,
 )
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
 
 
 class FlextLdapLdap3SearchExecutor:
@@ -24,25 +30,25 @@ class FlextLdapLdap3SearchExecutor:
     @staticmethod
     def execute(
         connection: p.Ldap.Ldap3Connection,
-        params: m.Ldap.SearchParams,
+        params: p.Ldap.SearchParams,
         server_type: c.Ldif.ServerTypes | str,
-    ) -> p.Result[t.SequenceOf[m.Ldif.Entry]]:
+    ) -> p.Result[Sequence[p.Ldif.Entry]]:
         """Execute LDAP search and return entries parsed by the result converter.
 
         Returns:
-            The resulting ``p.Result[t.SequenceOf[m.Ldif.Entry]]``.
+            The resulting ``p.Result[Sequence[p.Ldif.Entry]]``.
 
         """
         try:
             _ = FlextLdapLdap3Wrappers.search(connection, params)
         except c.EXC_BROAD_IO_TYPE as exc:
-            return r[t.SequenceOf[m.Ldif.Entry]].fail_op("Search", exc)
+            return r[Sequence[p.Ldif.Entry]].fail_op("Search", exc)
         conn_result = connection.result or {}
         result_code = conn_result.get("result", -1)
         if result_code not in c.Ldap.PARTIAL_SUCCESS_CODES:
             error_msg = conn_result.get("message", "LDAP search failed")
             error_desc = conn_result.get("description", "unknown")
-            return r[t.SequenceOf[m.Ldif.Entry]].fail(
+            return r[Sequence[p.Ldif.Entry]].fail(
                 f"LDAP search failed: {error_desc} - {error_msg}",
             )
         try:
@@ -52,21 +58,21 @@ class FlextLdapLdap3SearchExecutor:
                 else c.Ldif.ServerTypes(server_type)
             )
         except ValueError:
-            return r[t.SequenceOf[m.Ldif.Entry]].fail(
+            return r[Sequence[p.Ldif.Entry]].fail(
                 f"Unsupported server type: {server_type}",
             )
         _ = server_type_enum
         ldap3_results = FlextLdapLdap3ResultConverter.convert_ldap3_results(connection)
-        entries: t.MutableSequenceOf[m.Ldif.Entry] = []
+        entries: MutableSequence[p.Ldif.Entry] = []
         for dn, attrs in ldap3_results:
-            str_attrs: t.MutableMappingKV[str, t.MutableSequenceOf[str] | str] = {
+            str_attrs: MutableMapping[str, MutableSequence[str] | str] = {
                 k: list(v) for k, v in attrs.items()
             }
             entry_result = m.Ldif.Entry.create(dn=dn, attributes=str_attrs)
             if entry_result.failure:
-                return r[t.SequenceOf[m.Ldif.Entry]].from_failure(entry_result)
+                return r[Sequence[p.Ldif.Entry]].from_failure(entry_result)
             entries.append(entry_result.value)
-        return r[t.SequenceOf[m.Ldif.Entry]].ok(entries)
+        return r[Sequence[p.Ldif.Entry]].ok(entries)
 
 
 __all__: list[str] = ["FlextLdapLdap3SearchExecutor"]

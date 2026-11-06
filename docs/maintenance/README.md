@@ -548,6 +548,15 @@ Extend the system with custom validation:
 ````python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 # docs/maintenance/custom_validators.py
 from docs import BaseValidator
 
@@ -569,6 +578,15 @@ Connect with documentation platforms:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 # docs/maintenance/integrations.py

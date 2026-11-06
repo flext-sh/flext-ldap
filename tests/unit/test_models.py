@@ -75,7 +75,7 @@ class TestsFlextLdapModelsUnit:
     @staticmethod
     def test_connection_config_rejects_ssl_and_tls_together() -> None:
         """Verify connection config rejects ssl and tls together."""
-        with pytest.raises(c.ValidationError, match="mutually exclusive"):
+        with u.Tests.raises(c.ValidationError, match="mutually exclusive"):
             m.Ldap.ConnectionConfig(port=c.Ldap.PORT, use_ssl=True, use_tls=True)
 
     @staticmethod
@@ -112,7 +112,7 @@ class TestsFlextLdapModelsUnit:
         invalid_port: int,
     ) -> None:
         """Verify connection config rejects out of range ports."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.Ldap.ConnectionConfig(port=invalid_port)
 
     @staticmethod

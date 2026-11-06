@@ -405,6 +405,15 @@ Create custom validation rules:
 ````python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 # docs/maintenance/custom_rules.py
 def custom_audit_rule(content, file_path):

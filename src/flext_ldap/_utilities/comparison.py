@@ -6,11 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flext_ldif import FlextLdifUtilities, r
 
-from flext_ldap import c, t
+from flext_ldap.constants import c
+from flext_ldap.typings import t
 
 if TYPE_CHECKING:
     # Reverse import: protocols are annotation-only here. A runtime import
@@ -28,11 +30,11 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
     def extract_entry_attributes(
         cls,
         entry: p.Ldif.Entry,
-    ) -> t.MappingKV[str, t.StrSequence]:
+    ) -> Mapping[str, Sequence[str]]:
         """Normalize entry attributes to the canonical LDAP comparison mapping.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.StrSequence]``.
+            The resulting ``Mapping[str, Sequence[str]]``.
 
         """
         attrs = entry.attributes
@@ -44,12 +46,12 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
     def find_existing_values(
         cls,
         attr_name: str,
-        existing_attrs: t.MappingKV[str, t.StrSequence],
-    ) -> t.StrSequence | None:
+        existing_attrs: Mapping[str, Sequence[str]],
+    ) -> Sequence[str] | None:
         """Resolve attribute values by case-insensitive LDAP name matching.
 
         Returns:
-            The resulting ``t.StrSequence | None``.
+            The resulting ``Sequence[str] | None``.
 
         """
         normalized_target = cls.norm_str(attr_name, case="lower")
@@ -59,7 +61,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         return None
 
     @staticmethod
-    def normalize_value_set(values: t.StrSequence) -> set[str]:
+    def normalize_value_set(values: Sequence[str]) -> set[str]:
         """Normalize LDAP attribute values for stable comparison.
 
         Returns:
@@ -71,14 +73,14 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
     @classmethod
     def process_new_attributes(
         cls,
-        new_attrs: t.MappingKV[str, t.StrSequence],
-        existing_attrs: t.MappingKV[str, t.StrSequence],
+        new_attrs: Mapping[str, Sequence[str]],
+        existing_attrs: Mapping[str, Sequence[str]],
         ignore: frozenset[str],
-    ) -> t.Pair[t.Ldap.OperationChanges, set[str]]:
+    ) -> tuple[t.Ldap.OperationChanges, set[str]]:
         """Build replacement changes for non-operational attributes.
 
         Returns:
-            The resulting ``t.Pair[t.Ldap.OperationChanges, set[str]]``.
+            The resulting ``tuple[t.Ldap.OperationChanges, set[str]]``.
 
         """
         changes: t.Ldap.OperationChanges = {}
@@ -100,7 +102,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
     @classmethod
     def process_deleted_attributes(
         cls,
-        existing_attrs: t.MappingKV[str, t.StrSequence],
+        existing_attrs: Mapping[str, Sequence[str]],
         ignore: frozenset[str],
         processed: set[str],
     ) -> t.Ldap.OperationChanges:
@@ -110,7 +112,7 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
             The resulting ``t.Ldap.OperationChanges``.
 
         """
-        empty_values: t.StrSequence = []
+        empty_values: Sequence[str] = []
         ignored = {value.lower() for value in ignore}
         return {
             attr_name: [(c.Ldap.ModifyOperation.DELETE, empty_values)]
@@ -137,11 +139,15 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
         parsed = FlextLdifUtilities.Ldif.parse_rdn(components[0])
         if parsed.failure:
             return r[frozenset[str]].fail_op("Entry DN RDN parse", parsed.error)
-        return parsed.map(
-            lambda pairs: frozenset(
+
+        def lowercased_attributes(
+            pairs: t.MutableStrPairSequence,
+        ) -> frozenset[str]:
+            return frozenset(
                 cls.norm_str(attr_name, case="lower") for attr_name, _value in pairs
-            ),
-        )
+            )
+
+        return parsed.map(lowercased_attributes)
 
     @classmethod
     def compare_entries(

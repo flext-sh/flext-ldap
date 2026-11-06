@@ -7,31 +7,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_ldif import (
-        build_lazy_import_map,
-        cleanup_submodule_namespace,
-        cli,
-        core,
-        d,
-        e,
-        h,
-        install_lazy_exports,
-        lazy,
-        lazy_getattr,
-        lazy_member,
-        ldif,
-        merge_lazy_imports,
-        normalize_lazy_imports,
-        r,
-        resolve_lazy_members,
-        x,
-    )
+    from flext_ldif import d, e, h, r, x
 
     from flext_ldap.__version__ import (
         FlextLdapVersion,
@@ -49,6 +30,7 @@ if TYPE_CHECKING:
     from flext_ldap.api import FlextLdap, ldap
     from flext_ldap.base import FlextLdapService, s
     from flext_ldap.cli import main
+    from flext_ldap.config_models import FlextLdapModelsConfigNamespace
     from flext_ldap.constants import FlextLdapConstants, c
     from flext_ldap.models import FlextLdapModels, m
     from flext_ldap.protocols import FlextLdapProtocols, p
@@ -61,6 +43,7 @@ __all__: tuple[str, ...] = (
     "FlextLdapConfig",
     "FlextLdapConstants",
     "FlextLdapModels",
+    "FlextLdapModelsConfigNamespace",
     "FlextLdapProtocols",
     "FlextLdapService",
     "FlextLdapSettings",
@@ -75,28 +58,16 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
-    "build_lazy_import_map",
     "c",
-    "cleanup_submodule_namespace",
-    "cli",
     "config",
-    "core",
     "d",
     "e",
     "h",
-    "install_lazy_exports",
-    "lazy",
-    "lazy_getattr",
-    "lazy_member",
     "ldap",
-    "ldif",
     "m",
     "main",
-    "merge_lazy_imports",
-    "normalize_lazy_imports",
     "p",
     "r",
-    "resolve_lazy_members",
     "s",
     "settings",
     "t",
@@ -107,11 +78,12 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "FlextLdap": ".api",
         "FlextLdapConfig": "._config",
         "FlextLdapConstants": ".constants",
         "FlextLdapModels": ".models",
+        "FlextLdapModelsConfigNamespace": ".config_models",
         "FlextLdapProtocols": ".protocols",
         "FlextLdapService": ".base",
         "FlextLdapSettings": "._settings",
@@ -125,34 +97,22 @@ install_lazy_exports(
         "__title__": ".__version__",
         "__url__": ".__version__",
         "__version_info__": ".__version__",
-        "build_lazy_import_map": "flext_ldif",
         "c": ".constants",
-        "cleanup_submodule_namespace": "flext_ldif",
-        "cli": "flext_ldif",
         "config": "._config",
-        "core": "flext_ldif",
         "d": "flext_ldif",
         "e": "flext_ldif",
         "h": "flext_ldif",
-        "install_lazy_exports": "flext_ldif",
-        "lazy": "flext_ldif",
-        "lazy_getattr": "flext_ldif",
-        "lazy_member": "flext_ldif",
         "ldap": ".api",
-        "ldif": "flext_ldif",
         "m": ".models",
         "main": ".cli",
-        "merge_lazy_imports": "flext_ldif",
-        "normalize_lazy_imports": "flext_ldif",
         "p": ".protocols",
         "r": "flext_ldif",
-        "resolve_lazy_members": "flext_ldif",
         "s": ".base",
         "settings": "._settings",
         "t": ".typings",
         "u": ".utilities",
         "x": "flext_ldif",
-    }),
+    },
     public_exports=__all__,
 )
 

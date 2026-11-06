@@ -6,10 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif import e, r
 from ldap3 import Connection, Server
 
-from flext_ldap import c, e, m, p, r
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.utilities import u
 
 
 class FlextLdapLdap3ConnectionManager:
@@ -18,7 +21,7 @@ class FlextLdapLdap3ConnectionManager:
     @staticmethod
     def create_connection(
         server: p.Ldif.Ldap3Server,
-        settings: m.Ldap.ConnectionConfig,
+        settings: p.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
         """Create ldap3 p.Ldap.Ldap3Connection t.JsonValue.
 
@@ -59,44 +62,30 @@ class FlextLdapLdap3ConnectionManager:
         )
 
     @staticmethod
-    def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldif.Ldap3Server:
-        """Create ldap3 Server t.JsonValue.
+    def create_server(settings: p.Ldap.ConnectionConfig) -> p.Ldif.Ldap3Server:
+        """Create the ldap3 Server for ``settings``.
 
         Business Rules:
-            - SSL connections use use_ssl=True (port 636 default)
-            - Non-SSL connections use use_ssl=False (port 389 default)
+            - LDAPS (use_ssl) and StartTLS (use_tls) always carry an explicit
+              TLS policy built from tls_validate, ca_certs_file and server_name
+            - Certificate and hostname validation are required by default;
+              only the explicit tls_validate=NONE mode disables them
             - Connect timeout uses settings.timeout value
-            - Server t.JsonValue is created without connection attempt
-
-        Architecture:
-            - Uses ldap3 Server() constructor directly
-            - Returns Server instance for Connection creation
-            - No network calls - object creation only
+            - No network call happens during construction
 
         Args:
-            settings: Connection configuration with host, port, SSL/TLS settings.
+            settings: Connection configuration with host, port and TLS options.
 
         Returns:
-            ldap3 Server t.JsonValue configured for connection.
+            ldap3 Server configured for connection.
 
         """
-        if settings.use_ssl:
-            return Server(
-                host=settings.host,
-                port=settings.port,
-                use_ssl=True,
-                connect_timeout=settings.timeout,
-            )
-        return Server(
-            host=settings.host,
-            port=settings.port,
-            connect_timeout=settings.timeout,
-        )
+        return u.Ldap.create_connection_server(settings)
 
     @staticmethod
     def handle_tls(
         connection: p.Ldap.Ldap3Connection,
-        settings: m.Ldap.ConnectionConfig,
+        settings: p.Ldap.ConnectionConfig,
     ) -> p.Result[bool]:
         """Handle STARTTLS if requested.
 

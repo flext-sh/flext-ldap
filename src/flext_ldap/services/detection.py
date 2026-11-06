@@ -9,46 +9,17 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, e, m, p, r, s, t, u
+from flext_ldif import e
+
+from flext_ldap.base import s
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.utilities import u
 
 
-class FlextLdapServerDetector(s[m.Ldap.Response]):
+class FlextLdapServerDetector(s[p.Ldap.OperationResult]):
     """High-level detector that delegates rootDSE parsing to ``u.Ldap``."""
-
-    @staticmethod
-    def _get_first_value(attrs: t.Ldap.OperationAttributes, key: str) -> str | None:
-        """Compatibility shim for unit tests and older callers.
-
-        Returns:
-            The resulting ``str | None``.
-
-        """
-        value: str | None = u.Ldap.resolve_first_attribute_value(attrs, key)
-        return value
-
-    @staticmethod
-    def _detect_from_attributes(
-        vendor_name: str | None,
-        vendor_version: str | None,
-        naming_contexts: t.StrSequence,
-        supported_controls: t.StrSequence,
-        supported_extensions: t.StrSequence,
-    ) -> p.Result[str]:
-        """Compatibility shim that delegates heuristic detection to utilities.
-
-        Returns:
-            The resulting ``p.Result[str]``.
-
-        """
-        _ = supported_controls
-        return r[str].ok(
-            u.Ldap.detect_server_type(
-                vendor_name=vendor_name,
-                vendor_version=vendor_version,
-                naming_contexts=naming_contexts,
-                supported_extensions=supported_extensions,
-            ),
-        )
 
     @staticmethod
     def detect_from_connection(
@@ -64,11 +35,13 @@ class FlextLdapServerDetector(s[m.Ldap.Response]):
         return detection_result
 
     @override
-    def execute(self, **kwargs: str | float | bool | None) -> p.Result[m.Ldap.Response]:
+    def execute(
+        self, **kwargs: p.Ldap.Ldap3Connection | str | float | bool | None
+    ) -> p.Result[p.Ldap.OperationResult]:
         """Detect server type using the provided ``connection`` keyword argument.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.Response]``.
+            The resulting ``p.Result[p.Ldap.OperationResult]``.
 
         """
         connection_raw = kwargs.get("connection")

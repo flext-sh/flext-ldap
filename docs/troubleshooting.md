@@ -176,6 +176,15 @@ AuthenticationError: Authentication failed: Invalid credentials
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap.api import ldap
 
 
@@ -232,7 +241,16 @@ dn = "cn=John\\, Doe,ou=users,dc=example,dc=com"
 ```python
 from __future__ import annotations
 
-from flext_ldap import m
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
+from flext_ldap import m, p
 
 
 def validate_dn(dn_string: str) -> bool:
@@ -296,6 +314,15 @@ filter_str = "(|(cn=John*)(mail=*@example.com))"
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def validate_filter(filter_string: str) -> bool:
     """Validate LDAP filter syntax."""
@@ -332,6 +359,15 @@ SearchError: No such t.JsonValue: ou=users,dc=example,dc=com
 
 ```text
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldap import FlextLdapEntities
 from flext_ldap.api import ldap
@@ -376,6 +412,15 @@ run(diagnose_base_dn())
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import time
 
@@ -511,6 +556,15 @@ settings = FlextLdapSettings(
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 class LDAPService:
     def __init__(self):
@@ -535,6 +589,15 @@ class LDAPService:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import os
 
@@ -694,6 +757,15 @@ make ldap-test-server
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap.api import ldap
 
 
@@ -761,6 +833,15 @@ ldapwhoami -v -x -H ldap://server:389 -D \
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import cProfile
 import pstats
@@ -843,6 +924,15 @@ When reporting issues, include:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import sys
 
 import pkg_resources
@@ -893,3 +983,32 @@ For additional support and community resources:
 ---
 
 **Previous:** Integration Guide ←
+
+### LDAP detector result contract
+
+`FlextLdapServerDetector` referenced an unavailable protocol union during class creation
+and attempted to instantiate a protocol for successful results. It now returns the
+structural `p.Ldap.OperationResult` contract and constructs the existing
+`m.Ldap.OperationResult` model. The result port exposes read-only properties matching
+the frozen model, and the LDAP service admits structural model results. Two unused
+private compatibility shims were removed after a workspace reference search. With the
+staged LDIF candidate, the original import succeeds, a missing connection is rejected,
+and a real result model satisfies the runtime-checkable port. Ruff and Pyrefly pass on
+the three changed modules. Live LDAP detection and the complete suite remain unverified.
+
+The connection and operation health interfaces also referenced the nonexistent
+`p.Ldap.Response` union. Their existing model results are now exposed through the
+structural `p.Ldap.SearchResult` contract, without changing the returned model. DN ports
+in the LDAP client use `p.Ldif.DN`; delete and modify pass the already-normalized DN
+value accepted by the existing adapter. Search-result views are read-only and
+batch-statistics declare their actual model capability. The connection import passes
+against the staged LDIF candidate. Ruff passes on the affected source files; Pyrefly
+still reports eight missing LDAP protocol references in operations, so this is not
+complete acceptance.
+
+`SearchResult.entries` also used a structural LDIF protocol directly as a Pydantic field
+without a schema. It now delegates validation to the existing LDIF entry model through
+`ValidateAs` while retaining the protocol as its annotation. A real entry retains
+identity and survives JSON roundtrip; the focused regression ran once successfully with
+the staged LDIF candidate and an external Testmon database. This does not establish the
+complete LDAP suite or live directory behavior.

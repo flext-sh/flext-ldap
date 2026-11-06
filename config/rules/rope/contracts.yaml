@@ -1,0 +1,42 @@
+rules:
+# LDAP's layer-zero config schema remains open and frozen; this catalog only
+# changes the Pydantic provider identity to the public Core models facade.
+- id: ldap-pydantic-field-to-core-models-facade
+  scope:
+    targets:
+    - distribution: flext-ldap
+      module: flext_ldap._config
+  pattern: '${field}(${arguments})'
+  goal: 'm.Field(${arguments})'
+  arguments:
+    field: name=pydantic.fields.Field
+  imports:
+    m: from flext_core import m, p
+  bindings:
+    m.Field: flext_core._models.pydantic.FlextModelsPydantic.Field
+- id: ldap-pydantic-base-model-to-core-models-facade
+  scope:
+    targets:
+    - distribution: flext-ldap
+      module: flext_ldap.config_models
+  pattern: '${base}'
+  goal: 'm.BaseModel'
+  arguments:
+    base: name=pydantic.main.BaseModel
+  imports:
+    m: from flext_core import m, p
+  bindings:
+    m.BaseModel: flext_core._models.pydantic.FlextModelsPydantic.BaseModel
+- id: ldap-pydantic-config-dict-to-core-models-facade
+  scope:
+    targets:
+    - distribution: flext-ldap
+      module: flext_ldap.config_models
+  pattern: '${config}(${arguments})'
+  goal: 'm.ConfigDict(${arguments})'
+  arguments:
+    config: name=pydantic.config.ConfigDict
+  imports:
+    m: from flext_core import m, p
+  bindings:
+    m.ConfigDict: flext_core._models.pydantic.FlextModelsPydantic.ConfigDict

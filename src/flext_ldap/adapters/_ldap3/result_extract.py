@@ -6,18 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
 
-from flext_ldap import c, m, p, t
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapLdap3ResultExtract:
     """Extraction helpers for DN, attributes, and metadata from LDAP entries."""
 
-    @staticmethod
-    def extract_dn(parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue) -> m.Ldif.DN:
+    @classmethod
+    def extract_dn(
+        cls, parsed: p.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue
+    ) -> p.Ldif.DN:
         """Extract Distinguished Name from LDAP entry.
 
         Delegates to ``u.Ldif.resolve_dn_value()`` for normalization. Returns
@@ -35,16 +40,17 @@ class FlextLdapLdap3ResultExtract:
             entry_dn = parsed.entry_dn
             if entry_dn is None:
                 return m.Ldif.DN.empty()
-            dn_with_value: m.Ldif.DN = m.Ldif.DN.empty().model_copy(
+            dn_with_value: p.Ldif.DN = m.Ldif.DN.empty().model_copy(
                 update={"value": entry_dn},
             )
             return dn_with_value
         return m.Ldif.DN.empty()
 
-    @staticmethod
+    @classmethod
     def extract_attributes(
-        parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.Attributes:
+        cls,
+        parsed: p.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
+    ) -> p.Ldif.Attributes:
         """Extract LDAP attributes as ``m.Ldif.Attributes`` Pydantic model.
 
         Returns:
@@ -57,7 +63,7 @@ class FlextLdapLdap3ResultExtract:
         if isinstance(parsed, m.Ldif.Entry):
             return parsed.attributes if parsed.attributes is not None else empty
         if isinstance(parsed, p.Ldif.Ldap3Entry):
-            attrs_dict = FlextLdapLdap3ResultExtract.extract_attrs_dict(
+            attrs_dict = cls.extract_attrs_dict(
                 parsed.entry_attributes_as_dict,
             )
             model_attrs: t.MutableStrSequenceMapping = {
@@ -70,10 +76,11 @@ class FlextLdapLdap3ResultExtract:
             )
         return empty
 
-    @staticmethod
+    @classmethod
     def extract_attrs_dict(
+        cls,
         attrs: p.Ldap.HasAttributesProperty
-        | t.MappingKV[str, t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence]
+        | Mapping[str, t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str]]
         | p.Ldap.HasItemsMethod
         | m.Ldif.Attributes
         | m.BaseModel
@@ -86,24 +93,27 @@ class FlextLdapLdap3ResultExtract:
 
         """
         if isinstance(attrs, p.Ldap.HasAttributesProperty):
-            return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs.attributes)
+            return cls._normalize_attr_values(attrs.attributes)
         if isinstance(attrs, m.BaseModel):
-            model_attrs: t.MappingKV[str, t.Ldap.Ldap3EntryValue] | None = getattr(
+            model_attrs: Mapping[str, t.Ldap.Ldap3EntryValue] | None = getattr(
                 attrs,
                 "attributes",
                 None,
             )
             if model_attrs is not None:
-                return FlextLdapLdap3ResultExtract._normalize_attr_values(model_attrs)
-            return {}
+                return cls._normalize_attr_values(model_attrs)
+            empty_attrs: t.Ldap.OperationAttributes = {}
+            return empty_attrs
         if isinstance(attrs, Mapping):
-            return FlextLdapLdap3ResultExtract._normalize_attr_values(attrs)
-        return {}
+            return cls._normalize_attr_values(attrs)
+        no_attrs: t.Ldap.OperationAttributes = {}
+        return no_attrs
 
-    @staticmethod
+    @classmethod
     def extract_metadata(
-        parsed: m.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
-    ) -> m.Ldif.ServerMetadata | None:
+        cls,
+        parsed: p.Ldif.Entry | p.Ldif.Ldap3Entry | t.JsonValue,
+    ) -> p.Ldif.ServerMetadata | None:
         """Extract server metadata from LDAP entry, returning ``None`` when absent.
 
         Returns:
@@ -117,7 +127,7 @@ class FlextLdapLdap3ResultExtract:
                 result = parsed.metadata
             case _:
                 metadata_attr: (
-                    m.Ldif.ServerMetadata | t.MappingKV[str, t.Scalar | None] | None
+                    m.Ldif.ServerMetadata | Mapping[str, t.Scalar | None] | None
                 ) = getattr(parsed, "metadata", None)
                 match metadata_attr:
                     case None:
@@ -125,7 +135,7 @@ class FlextLdapLdap3ResultExtract:
                     case m.Ldif.ServerMetadata():
                         result = metadata_attr
                     case Mapping():
-                        normalized = FlextLdapLdap3ResultExtract._normalize_metadata(
+                        normalized = cls._normalize_metadata(
                             metadata_attr,
                         )
                         if normalized and isinstance(
@@ -141,22 +151,24 @@ class FlextLdapLdap3ResultExtract:
                             result = None
         return result
 
-    @staticmethod
+    @classmethod
     def _normalize_attr_values(
-        attrs_dict: t.MappingKV[
+        cls,
+        attrs_dict: Mapping[
             str,
-            t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
+            t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str],
         ]
         | None,
     ) -> t.Ldap.OperationAttributes:
-        """Normalize attribute values to ``t.StrSequence`` format.
+        """Normalize attribute values to ``Sequence[str]`` format.
 
         Returns:
             The resulting ``t.Ldap.OperationAttributes``.
 
         """
         if attrs_dict is None:
-            return {}
+            no_input: t.Ldap.OperationAttributes = {}
+            return no_input
         result: t.MutableStrSequenceMapping = {}
         for k, v in attrs_dict.items():
             if isinstance(v, str):
@@ -166,23 +178,23 @@ class FlextLdapLdap3ResultExtract:
             elif hasattr(v, "__len__") and hasattr(v, "__getitem__"):
                 result[k] = FlextLdapLdap3Wrappers.value_to_str_list(v)
             else:
-                empty_values: t.MutableSequenceOf[str] = []
+                empty_values: MutableSequence[str] = []
                 result[k] = empty_values
         return result
 
     @staticmethod
     def _normalize_metadata(
-        metadata: t.MappingKV[str, t.Scalar | None] | None,
-    ) -> t.MappingKV[str, t.Scalar | t.ScalarList] | None:
+        metadata: Mapping[str, t.Scalar | None] | None,
+    ) -> Mapping[str, t.Scalar | Sequence[t.Scalar]] | None:
         """Filter metadata to ``ServerMetadata``-compatible primitive values.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.Scalar | t.ScalarList] | None``.
+            The resulting ``Mapping[str, t.Scalar | Sequence[t.Scalar]] | None``.
 
         """
         if not metadata:
             return None
-        metadata_dict: t.MutableMappingKV[str, t.Scalar | t.ScalarList] = {}
+        metadata_dict: MutableMapping[str, t.Scalar | Sequence[t.Scalar]] = {}
         for raw_key, raw_value in metadata.items():
             if isinstance(raw_value, c.PRIMITIVES_TYPES):
                 metadata_dict[raw_key] = raw_value

@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from flext_ldif import r
 
-from flext_ldap import c, p, t
 from flext_ldap._utilities import FlextLdapUtilitiesDetection
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):

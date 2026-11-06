@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from flext_core import FlextService
 from flext_ldif import FlextLdif
 
@@ -19,20 +21,19 @@ from flext_ldap import FlextLdapSettings, c, m, p, t
 
 
 class FlextLdapService[
-    TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload],
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.BaseModel = t.JsonPayload
+    | Sequence[t.JsonPayload],
 ](FlextService[TResult]):
     """Base class for all flext-ldap services.
 
-    Services default to the centralized ``m.Ldap.Response`` pipeline and may
-    specialize only when bridging adapter-level protocols.
+    Services accept validated payloads or structural model results.
     """
 
     _ldif: p.Ldif.LdifClient = m.PrivateAttr(default_factory=FlextLdif)
     _server_type: str = m.PrivateAttr(default_factory=lambda: c.Ldap.DEFAULT_TYPE)
 
     @classmethod
-    def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
+    def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         """Return runtime bootstrap options for LDAP services."""
         return m.RuntimeBootstrapOptions(settings_type=FlextLdapSettings)
 

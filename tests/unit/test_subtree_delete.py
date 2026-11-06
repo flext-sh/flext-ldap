@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import override
 
 import pytest
 
-from flext_ldap.services.operations import FlextLdapOperations
+from flext_ldap.services import FlextLdapOperations
 from tests import c, m, p, r, t, u
 
 pytestmark = pytest.mark.unit
@@ -22,15 +23,15 @@ class TestsFlextLdapSubtreeDelete:
     class SubtreeOperations(FlextLdapOperations):
         """Deterministic operations double for subtree-delete semantics."""
 
-        _subtree_entries: list[m.Ldif.Entry] = m.PrivateAttr(
-            default_factory=list[m.Ldif.Entry],
+        _subtree_entries: list[p.Ldif.Entry] = m.PrivateAttr(
+            default_factory=list[p.Ldif.Entry],
         )
         _fail_on_dn: str | None = m.PrivateAttr(default=None)
         _deleted_dns: list[str] = m.PrivateAttr(default_factory=list[str])
 
         def __init__(
             self,
-            subtree_entries: t.SequenceOf[m.Ldif.Entry],
+            subtree_entries: Sequence[p.Ldif.Entry],
             *,
             fail_on_dn: str | None = None,
         ) -> None:
@@ -44,7 +45,7 @@ class TestsFlextLdapSubtreeDelete:
             self,
             search_options: p.Ldap.SearchOptions,
             server_type: str = "rfc",
-        ) -> p.Result[m.Ldap.SearchResult]:
+        ) -> p.Result[p.Ldap.SearchResult]:
             _ = server_type
             concrete_options = (
                 search_options
@@ -59,25 +60,25 @@ class TestsFlextLdapSubtreeDelete:
                     and entry.dn.value == concrete_options.base_dn
                 ]
                 if not matched:
-                    return r[m.Ldap.SearchResult].fail(
+                    return r[p.Ldap.SearchResult].fail(
                         f"LDAP search failed: noSuchObject "
                         f"- {concrete_options.base_dn}",
                     )
             else:
                 matched = list(self._subtree_entries)
-            return r[m.Ldap.SearchResult].ok(
+            return r[p.Ldap.SearchResult].ok(
                 m.Ldap.SearchResult(entries=matched, search_options=concrete_options),
             )
 
         @override
-        def delete(self, dn: str | p.Ldif.DN) -> p.Result[m.Ldap.OperationResult]:
+        def delete(self, dn: str | p.Ldif.DN) -> p.Result[p.Ldap.OperationResult]:
             dn_value = dn if isinstance(dn, str) else dn.value
             if self._fail_on_dn is not None and dn_value == self._fail_on_dn:
-                return r[m.Ldap.OperationResult].fail(
+                return r[p.Ldap.OperationResult].fail(
                     f"simulated failure on {dn_value}",
                 )
             self._deleted_dns.append(dn_value)
-            return r[m.Ldap.OperationResult].ok(m.Ldap.OperationResult(success=True))
+            return r[p.Ldap.OperationResult].ok(m.Ldap.OperationResult(success=True))
 
         def deleted_order(self) -> list[str]:
             """Public read of the deletion order the double observed.
@@ -93,7 +94,7 @@ class TestsFlextLdapSubtreeDelete:
     LEAF_DN = "cn=leaf,ou=children,ou=flext-tests,dc=flext,dc=local"
 
     @staticmethod
-    def _entry(dn: str, *, cn: str = "value") -> m.Ldif.Entry:
+    def _entry(dn: str, *, cn: str = "value") -> p.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(
@@ -173,7 +174,7 @@ class TestsFlextLdapPlanUpsert:
     NEW_DN = "cn=new,dc=flext,dc=local"
 
     @staticmethod
-    def _entry(dn: str, *, cn: str = "value", sn: str = "surname") -> m.Ldif.Entry:
+    def _entry(dn: str, *, cn: str = "value", sn: str = "surname") -> p.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(
@@ -228,7 +229,7 @@ class TestsFlextLdapPlanUpsert:
         u.Ldap.Tests.that(plan_result.failure, eq=True)
 
     @staticmethod
-    def _modify_entry(dn: str, *, additions: t.MappingKV[str, str]) -> m.Ldif.Entry:
+    def _modify_entry(dn: str, *, additions: Mapping[str, str]) -> p.Ldif.Entry:
         attributes: t.MutableStrSequenceMapping = {
             c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.ChangeType.MODIFY.value],
             c.Ldif.ChangeOperation.ADD: list(additions),

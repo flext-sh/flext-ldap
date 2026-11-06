@@ -89,6 +89,15 @@ The universal LDAP system consists of:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap import ServerOperationsFactory
 
 # Method 1: Explicit server type
@@ -112,7 +121,7 @@ def detect_and_create():
 # Method 3: Detect from entries
 from flext_ldif import FlextLdifModels
 
-entries: t.SequenceOf[FlextLdifModels.Entry] = [...]  # Your entries
+entries: Sequence[FlextLdifModels.Entry] = [...]  # Your entries
 ops_result = factory.create_from_entries(entries)
 ```
 
@@ -195,6 +204,15 @@ if result.success:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldif import FlextLdifModels
 
 # Normalize entry for current server
@@ -213,6 +231,15 @@ normalized_result = api.normalize_entry_for_server(entry, target_server_type="ou
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 # Convert entry from OpenLDAP 1.x to OpenLDAP 2.x
 openldap1_entry: FlextLdifModels.Entry = ...  # Entry from OpenLDAP 1.x
@@ -236,6 +263,15 @@ if convert_result.success:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 # Detect server type from entry attributes
 unknown_entry: FlextLdifModels.Entry = ...  # Entry from unknown source
 
@@ -250,6 +286,15 @@ if detection_result.success:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 # Validate entry for target server
 entry: FlextLdifModels.Entry = ...
@@ -278,6 +323,15 @@ if attrs_result.success:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldif import ldif
 
@@ -319,6 +373,15 @@ def migrate_openldap1_to_openldap2():
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 
 def migrate_oid_to_oud():
     api = ldap()
@@ -354,6 +417,15 @@ def migrate_oid_to_oud():
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_ldap import ldap
 
@@ -403,6 +475,15 @@ def sync_across_servers():
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 def progressive_migration():

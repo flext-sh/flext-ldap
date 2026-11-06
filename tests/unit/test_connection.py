@@ -15,8 +15,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from flext_ldap import ldap
-from tests import c, m, u
+from tests import c, ldap, m, p, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -25,7 +24,6 @@ class TestsFlextLdapConnection:
     """Connection lifecycle contract, asserted through the public API only."""
 
     @pytest.fixture
-    @staticmethod
     def _isolated_disconnected_facade() -> Iterator[None]:
         """Guarantee each test starts and ends from a disconnected facade."""
         ldap.disconnect()
@@ -33,7 +31,7 @@ class TestsFlextLdapConnection:
         ldap.disconnect()
 
     @staticmethod
-    def _invalid_config() -> m.Ldap.ConnectionConfig:
+    def _invalid_config() -> p.Ldap.ConnectionConfig:
         """Build a typed config pointing at an unreachable host.
 
         Returns:

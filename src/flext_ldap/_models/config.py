@@ -10,10 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import m
+from typing import Annotated
+
+from flext_ldif import m, t
+
+from flext_ldap._protocols import FlextLdapProtocolsConfig
 
 
-class FlextLdapConfigModels:
+class FlextLdapModelsConfig:
     """Namespace of typed flext-ldap config models (pure Pydantic)."""
 
     class Identity(m.BaseModel):
@@ -22,7 +26,6 @@ class FlextLdapConfigModels:
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
         name: str = m.Field(description="LDAP project name.")
-        version: str = m.Field(description="LDAP project version.")
 
     class Connection(m.BaseModel):
         """LDAP connection defaults and thresholds."""
@@ -79,13 +82,13 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="forbid")
 
-        identity: FlextLdapConfigModels.Identity = m.Field(
+        identity: FlextLdapModelsConfig.Identity = m.Field(
             description="LDAP identity metadata.",
         )
-        connection: FlextLdapConfigModels.Connection = m.Field(
+        connection: FlextLdapModelsConfig.Connection = m.Field(
             description="LDAP connection defaults and thresholds.",
         )
-        validation: FlextLdapConfigModels.Validation = m.Field(
+        validation: FlextLdapModelsConfig.Validation = m.Field(
             description="LDAP validation and example defaults.",
         )
 
@@ -94,9 +97,12 @@ class FlextLdapConfigModels:
 
         model_config = m.ConfigDict(frozen=True, extra="ignore")
 
-        Ldap: FlextLdapConfigModels.Ldap = m.Field(
+        Ldap: Annotated[
+            FlextLdapProtocolsConfig.Ldap,
+            t.schema_for_model(FlextLdapModelsConfig.Ldap),
+        ] = m.Field(
             description="LDAP business-rule config namespace.",
         )
 
 
-__all__: list[str] = ["FlextLdapConfigModels"]
+__all__: list[str] = ["FlextLdapModelsConfig"]

@@ -8,14 +8,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Annotated, Self
 
 from flext_ldif import m
 
-from flext_ldap import c, t
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
-class FlextLdapFlextModelsLdap:
+class FlextLdapModelsFlextLdap:
     """Canonical namespace owner."""
 
     class FlextLdapModelsLdap:
@@ -32,6 +35,33 @@ class FlextLdapFlextModelsLdap:
             )
             use_ssl: Annotated[bool, m.Field(description="Enable SSL (LDAPS)")] = False
             use_tls: Annotated[bool, m.Field(description="Enable StartTLS")] = False
+            tls_validate: Annotated[
+                c.Ldap.TlsValidation,
+                m.Field(
+                    description=(
+                        "Peer certificate and hostname validation for LDAPS or "
+                        "StartTLS; disabling it requires the explicit NONE mode"
+                    ),
+                ),
+            ] = c.Ldap.DEFAULT_TLS_VALIDATION
+            ca_certs_file: Annotated[
+                t.FilePath | None,
+                m.Field(
+                    description=(
+                        "PEM CA bundle trusted for the server certificate; "
+                        "the system trust store applies when unset"
+                    ),
+                ),
+            ] = None
+            server_name: Annotated[
+                t.NonEmptyStr | None,
+                m.Field(
+                    description=(
+                        "Expected certificate server name, sent as SNI and "
+                        "accepted by the hostname check besides host"
+                    ),
+                ),
+            ] = None
             bind_dn: Annotated[
                 str | None,
                 m.Field(description="Bind DN for authentication"),
@@ -69,6 +99,38 @@ class FlextLdapFlextModelsLdap:
                     raise ValueError(msg)
                 return self
 
+            @m.model_validator(mode="after")
+            def validate_tls_options(self) -> Self:
+                """Reject TLS options that cannot take effect.
+
+                Returns:
+                    The resulting ``Self``.
+
+                Raises:
+                    ValueError: If TLS options are set without LDAPS or StartTLS,
+                        or a CA bundle is combined with disabled validation.
+
+                """
+                tls_enabled = self.use_ssl or self.use_tls
+                tls_options_set = (
+                    self.ca_certs_file is not None
+                    or self.server_name is not None
+                    or self.tls_validate != c.Ldap.DEFAULT_TLS_VALIDATION
+                )
+                if tls_options_set and not tls_enabled:
+                    msg = (
+                        "tls_validate, ca_certs_file and server_name require "
+                        "use_ssl or use_tls"
+                    )
+                    raise ValueError(msg)
+                if (
+                    self.tls_validate == c.Ldap.TlsValidation.NONE
+                    and self.ca_certs_file is not None
+                ):
+                    msg = "ca_certs_file contradicts tls_validate=none"
+                    raise ValueError(msg)
+                return self
+
         class NormalizedConfig(m.BaseModel):
             """Configuration for normalized SearchOptions factory."""
 
@@ -76,7 +138,7 @@ class FlextLdapFlextModelsLdap:
             filter_str: str = c.Ldap.ALL_ENTRIES_FILTER
             size_limit: t.NonNegativeInt = 0
             time_limit: t.NonNegativeInt = 0
-            attributes: t.StrSequence | None = None
+            attributes: Sequence[str] | None = None
 
         class SearchOptions(m.BaseModel):
             """Search options."""
@@ -87,7 +149,7 @@ class FlextLdapFlextModelsLdap:
             ]
             scope: str = c.Ldap.DEFAULT_SCOPE
             filter_str: str = c.Ldap.ALL_ENTRIES_FILTER
-            attributes: t.StrSequence | None = None
+            attributes: Sequence[str] | None = None
             size_limit: t.NonNegativeInt = 0
             time_limit: t.NonNegativeInt = 0
 
@@ -95,9 +157,9 @@ class FlextLdapFlextModelsLdap:
             def normalized(
                 cls,
                 base_dn: str,
-                settings: FlextLdapFlextModelsLdap.FlextLdapModelsLdap.NormalizedConfig
+                settings: FlextLdapModelsFlextLdap.FlextLdapModelsLdap.NormalizedConfig
                 | None = None,
-            ) -> FlextLdapFlextModelsLdap.FlextLdapModelsLdap.SearchOptions:
+            ) -> FlextLdapModelsFlextLdap.FlextLdapModelsLdap.SearchOptions:
                 """Create SearchOptions with normalized configuration.
 
                 Args:
@@ -109,7 +171,7 @@ class FlextLdapFlextModelsLdap:
 
                 """
                 norm_config = (
-                    FlextLdapFlextModelsLdap.FlextLdapModelsLdap.NormalizedConfig()
+                    FlextLdapModelsFlextLdap.FlextLdapModelsLdap.NormalizedConfig()
                     if settings is None
                     else settings
                 )
@@ -147,7 +209,7 @@ class FlextLdapFlextModelsLdap:
             base_dn: str
             filter_str: str
             ldap_scope: t.NonNegativeInt
-            search_attributes: t.StrSequence
+            search_attributes: Sequence[str]
             size_limit: t.NonNegativeInt
             time_limit: t.NonNegativeInt
 
@@ -234,7 +296,7 @@ class FlextLdapFlextModelsLdap:
             successful: t.NonNegativeInt = 0
             failed: t.NonNegativeInt = 0
             results: Annotated[
-                t.SequenceOf[FlextLdapFlextModelsLdap.FlextLdapModelsLdap.UpsertResult],
+                Sequence[FlextLdapModelsFlextLdap.FlextLdapModelsLdap.UpsertResult],
                 m.Field(
                     default_factory=list,
                     description="Validated per-entry upsert results",
@@ -259,29 +321,29 @@ class FlextLdapFlextModelsLdap:
             )
             server_type: str = c.Ldap.DEFAULT_TYPE
             progress_callback: t.Ldap.ProgressCallbackUnion | None = None
-            retry_on_errors: t.StrSequence = m.Field(default_factory=list[str])
+            retry_on_errors: Sequence[str] = m.Field(default_factory=list[str])
             max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
             stop_on_error: bool = False
 
         class ConversionMetadata(m.BaseModel):
             """Conversion metadata."""
 
-            source_attributes: t.StrSequence = m.Field(
+            source_attributes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Source attribute names",
             )
             source_dn: str = ""
-            removed_attributes: t.StrSequence = m.Field(
+            removed_attributes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Attributes removed during conversion",
             )
-            base64_encoded_attributes: t.StrSequence = m.Field(
+            base64_encoded_attributes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Attributes that were base64-encoded",
             )
             dn_changed: bool = False
             converted_dn: str = ""
-            attribute_changes: t.StrSequence = m.Field(
+            attribute_changes: Sequence[str] = m.Field(
                 default_factory=list[str],
                 description="Tracked attribute change descriptions",
             )
@@ -312,10 +374,14 @@ class FlextLdapFlextModelsLdap:
             """
 
             entries: Annotated[
-                t.SequenceOf[m.Ldif.Entry],
+                Sequence[
+                    Annotated[
+                        p.Ldif.Entry, m.ValidateAs(m.Ldif.Entry, lambda entry: entry)
+                    ]
+                ],
                 m.Field(default_factory=list),
             ]
-            search_options: FlextLdapFlextModelsLdap.FlextLdapModelsLdap.SearchOptions
+            search_options: FlextLdapModelsFlextLdap.FlextLdapModelsLdap.SearchOptions
 
         class LdapOperationResult(m.BaseModel):
             """LDAP operation result."""
@@ -334,13 +400,13 @@ class FlextLdapFlextModelsLdap:
             """Multi-phase sync result."""
 
             model_config = m.ConfigDict(arbitrary_types_allowed=True)
-            phase_results: t.MappingKV[
+            phase_results: Mapping[
                 str,
-                FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult,
+                FlextLdapModelsFlextLdap.FlextLdapModelsLdap.PhaseSyncResult,
             ] = m.Field(
                 default_factory=dict[
                     str,
-                    "FlextLdapFlextModelsLdap.FlextLdapModelsLdap.PhaseSyncResult",
+                    "FlextLdapModelsFlextLdap.FlextLdapModelsLdap.PhaseSyncResult",
                 ],
                 description="Per-phase sync results keyed by phase name",
             )
@@ -364,4 +430,4 @@ class FlextLdapFlextModelsLdap:
         )
 
 
-__all__: list[str] = ["FlextLdapFlextModelsLdap"]
+__all__: list[str] = ["FlextLdapModelsFlextLdap"]

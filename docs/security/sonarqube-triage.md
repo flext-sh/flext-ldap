@@ -62,7 +62,7 @@ padrão.
       150
 >>>   151          def handle_existing_entry(
       152              self, entry: p.Ldif.Entry
-      153          ) -> p.Result[m.Ldap.LdapOperationResult]:
+      153          ) -> p.Result[p.Ldap.LdapOperationResult]:
       154              """Handle an upsert when the entry already exists in LDAP.
       155
 ```
@@ -82,7 +82,7 @@ padrão.
       264
 >>>   265          def handle_schema_modify(
       266              self, entry: p.Ldif.Entry
-      267          ) -> p.Result[m.Ldap.LdapOperationResult]:
+      267          ) -> p.Result[p.Ldap.LdapOperationResult]:
       268              """Apply a schema modification entry (supports multiple add operations).
       269
 ```
@@ -96,13 +96,13 @@ padrão.
 > Define a constant instead of duplicating this literal "Unknown error" 3 times.
 
 ```text
-      575          dn_model: m.Ldif.DN = dn_build.unwrap()
+      575          dn_model: p.Ldif.DN = dn_build.unwrap()
       576          result = self._ensure_adapter().delete(dn_model)
-      577          folded: p.Result[m.Ldap.OperationResult] = result.fold(
-      578              on_failure=lambda e: r[m.Ldap.OperationResult].fail(
+      577          folded: p.Result[p.Ldap.OperationResult] = result.fold(
+      578              on_failure=lambda e: r[p.Ldap.OperationResult].fail(
 >>>   579                  u.to_str(e, default="Unknown error")
       580              ),
-      581              on_success=r[m.Ldap.OperationResult].ok,
+      581              on_success=r[p.Ldap.OperationResult].ok,
       582          )
       583          return folded
 ```
@@ -187,10 +187,10 @@ padrão.
 
 ```text
        73
-       74      @pytest.mark.parametrize("port", [0, -1, 65536, 70000, 999999])
+       74      @c.Tests.MARK.parametrize("port", [0, -1, 65536, 70000, 999999])
        75      def test_out_of_range_port_is_rejected(self, port: int) -> None:
        76          """Verify out of range port is rejected."""
->>>    77          with pytest.raises(c.ValidationError):
+>>>    77          with u.Tests.raises(c.ValidationError):
        78              LdapTestSettings(Ldap=_LdapSettings(port=port))
        79
        80      # ── Host values ────────────────────────────────────────────────────
@@ -211,7 +211,7 @@ padrão.
       144              c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF, encoding="utf-8"
       145          )
       146          # Act / Assert: an unsupported arity is a contract violation, not ...
->>>   147          with pytest.raises(TypeError, match="single-phase"):
+>>>   147          with u.Tests.raises(TypeError, match="single-phase"):
       148              ldap.sync_phase_entries(
       149                  ldif_file,
       150                  c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
@@ -255,8 +255,8 @@ padrão.
 >>>    18          LDAPException: type[Exception] = _Ldap3LDAPException
        19
        20          type Ldap3AttributeScalar = str | bytes
-       21          type Ldap3AttributeValues = t.SequenceOf[Ldap3AttributeScalar]
-       22          type Ldap3AttributeDict = t.MappingKV[str, Ldap3AttributeValues]
+       21          type Ldap3AttributeValues = Sequence[Ldap3AttributeScalar]
+       22          type Ldap3AttributeDict = Mapping[str, Ldap3AttributeValues]
 ```
 
 **Decisão**: pendente

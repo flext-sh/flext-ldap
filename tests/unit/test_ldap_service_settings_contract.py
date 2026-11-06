@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap import FlextLdapSettings, ldap, settings
-from tests import tm
+from flext_ldap import FlextLdapSettings, settings
+from tests import ldap, tm
 
 pytestmark = pytest.mark.unit
 

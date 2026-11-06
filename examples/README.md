@@ -780,6 +780,15 @@ def basic_usage():
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from contextlib import contextmanager
 
 from flext_ldap import ldap
@@ -806,6 +815,15 @@ with ldap_connection() as api:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 # Pattern 1: Check before unwrap

@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
-from flext_ldap import c, m, p, t, u
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from flext_ldap.constants import c
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
 class FlextLdapLdap3Wrappers:
@@ -19,12 +19,12 @@ class FlextLdapLdap3Wrappers:
 
     @staticmethod
     def value_to_str_list(
-        value: t.Ldap.Ldap3EntryValue | t.JsonValue | t.StrSequence,
-    ) -> t.MutableSequenceOf[str]:
+        value: t.Ldap.Ldap3EntryValue | t.JsonValue | Sequence[str],
+    ) -> MutableSequence[str]:
         """Convert an ldap3 attribute payload through the canonical utility.
 
         Returns:
-            The resulting ``t.MutableSequenceOf[str]``.
+            The resulting ``MutableSequence[str]``.
 
         """
         return list(u.Ldap.ldap3_value_to_strings(value))
@@ -50,8 +50,8 @@ class FlextLdapLdap3Wrappers:
     def add(
         connection: p.Ldap.Ldap3Connection,
         dn: str,
-        object_class: t.StrSequence | str | None,
-        attributes: t.MappingKV[str, t.StrSequence],
+        object_class: Sequence[str] | str | None,
+        attributes: Mapping[str, Sequence[str]],
     ) -> bool:
         """Type-safe wrapper for untyped ldap3 Connection.add().
 
@@ -119,14 +119,14 @@ class FlextLdapLdap3Wrappers:
         return modify_fn(dn, changes)
 
     @staticmethod
-    def search(connection: p.Ldap.Ldap3Connection, params: m.Ldap.SearchParams) -> bool:
+    def search(connection: p.Ldap.Ldap3Connection, params: p.Ldap.SearchParams) -> bool:
         """Safely invoke ldap3 search on dynamic connection objects.
 
         Returns:
             The resulting ``bool``.
 
         """
-        scope_map: t.MappingKV[int, c.Ldap.Ldap3SearchScope] = {
+        scope_map: Mapping[int, c.Ldap.Ldap3SearchScope] = {
             c.Ldap.SearchScopeValue.BASE: c.Ldap.Ldap3SearchScope.BASE,
             c.Ldap.SearchScopeValue.LEVEL: c.Ldap.Ldap3SearchScope.LEVEL,
             c.Ldap.SearchScopeValue.SUBTREE: c.Ldap.Ldap3SearchScope.SUBTREE,

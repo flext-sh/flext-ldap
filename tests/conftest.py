@@ -34,7 +34,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 class WorkerInputConfig(Protocol):
     """Provide the test double for worker input config."""
 
-    workerinput: t.StrMapping
+    workerinput: Mapping[str, str]
 
 
 def _has_workerinput(settings: pytest.Config) -> TypeGuard[WorkerInputConfig]:
@@ -90,11 +90,11 @@ def worker_id(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture(scope="session")
-def ldap_container(worker_id: str) -> t.MappingKV[str, t.Scalar]:
+def ldap_container(worker_id: str) -> Mapping[str, t.Scalar]:
     """Provide ldap container.
 
     Returns:
-        The resulting ``t.MappingKV[str, t.Scalar]``.
+        The resulting ``Mapping[str, t.Scalar]``.
 
     """
     if not _docker_compose_available():

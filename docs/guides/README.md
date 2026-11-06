@@ -13,6 +13,7 @@ sourced from code and docstrings.
 - [Codemod rules](codemod-rules.md)
 - [Configuration](configuration.md)
 - [Development](development.md)
+- [Engine](engine.md)
 - [Getting started](getting-started.md)
 - [Integration](integration.md)
 - [Make commands](make-commands.md)

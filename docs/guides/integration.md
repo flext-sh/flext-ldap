@@ -92,6 +92,15 @@ FLEXT-LDAP builds on established FLEXT foundation patterns:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 # FLEXT-Core integration
 from flext_cli import u
 
@@ -108,7 +117,7 @@ class UserService:
 
     def process_user_authentication(
         self, username: str, password: str
-    ) -> p.Result[m.Dict]:
+    ) -> p.Result[p.Dict]:
         """Process authentication using FLEXT + LDAP patterns."""
         self.logger.info("Processing user authentication", extra={"username": username})
 
@@ -117,12 +126,12 @@ class UserService:
             self.logger.error(
                 "Authentication failed", extra={"error": auth_result.error}
             )
-            return r[m.Dict].fail(f"Authentication failed: {auth_result.error}")
+            return r[p.Dict].fail(f"Authentication failed: {auth_result.error}")
 
         user = auth_result.unwrap()
         self.logger.info("User authenticated successfully", extra={"uid": user.uid})
 
-        return r[m.Dict].ok({
+        return r[p.Dict].ok({
             "uid": user.uid,
             "cn": user.cn,
             "email": user.mail,
@@ -134,6 +143,15 @@ class UserService:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 # Environment-based configuration following FLEXT patterns
 from Flext_ldap import FlextLdapSettings
@@ -180,6 +198,15 @@ ldap_config = settings.get_ldap_config()
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -287,6 +314,15 @@ def create_user(
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import User
 
@@ -361,6 +397,15 @@ AUTHENTICATION_BACKENDS = [
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -466,6 +511,15 @@ class Command(BaseCommand):
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from functools import wraps
 
@@ -768,6 +822,15 @@ Process LDIF files with ldif integration:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_ldap import FlextLdapEntryAdapter, OpenLDAP2Operations
 
 
@@ -811,6 +874,15 @@ Export LDAP entries to LDIF format:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import ldap3
 
@@ -860,6 +932,15 @@ Use ldif servers system for automatic server detection:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import ldap3
 
@@ -937,6 +1018,15 @@ Complete example combining ldif with server operations:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 import ldap3
 
@@ -1081,6 +1171,15 @@ run(main())
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import time
 
 from prometheus_client import Counter, Histogram, start_http_server
@@ -1131,6 +1230,15 @@ start_http_server(8001)
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from fastapi import FastAPI
 

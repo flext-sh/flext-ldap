@@ -14,6 +14,8 @@ from flext_ldif import p as flext_ldif_p
 
 from flext_ldap._protocols import (
     FlextLdapProtocolsClient,
+    FlextLdapProtocolsConfig,
+    FlextLdapProtocolsLdap,
     FlextLdapProtocolsSearch,
     FlextLdapProtocolsService,
     FlextLdapProtocolsSettings,
@@ -42,6 +44,8 @@ class FlextLdapProtocols(flext_ldif_p):
 
     class Ldap(
         FlextLdapProtocolsClient,
+        FlextLdapProtocolsConfig,
+        FlextLdapProtocolsLdap,
         FlextLdapProtocolsSearch,
         FlextLdapProtocolsService,
         FlextLdapProtocolsSettings,

@@ -15,8 +15,7 @@ from enum import StrEnum, unique
 
 import pytest
 
-from flext_ldap.adapters.host import FlextLdapAdapterHost
-from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
+from flext_ldap.adapters import FlextLdapAdapterHost, FlextLdapLdap3Adapter
 from tests import c, m, tm, u
 
 pytestmark = pytest.mark.unit
@@ -41,7 +40,6 @@ class TestsFlextLdapLdap3Adapter:
         SEARCH = "search"
 
     @pytest.fixture
-    @staticmethod
     def adapter() -> FlextLdapLdap3Adapter:
         """Return a freshly constructed, never-connected adapter."""
         return FlextLdapLdap3Adapter()

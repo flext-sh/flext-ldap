@@ -11,16 +11,19 @@ from __future__ import annotations
 
 import math
 import os
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from pathlib import Path
 from tempfile import gettempdir
 from types import MappingProxyType
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from flext_tests import FlextTestsConstants
 
 from flext_ldap import FlextLdapConstants, c
-from tests import t
+
+if TYPE_CHECKING:
+    from tests import c, t
 
 
 def _docker_admin_password() -> str:
@@ -160,20 +163,20 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 (False, True),
                 (True, True),
             )
-            CONFIG_VALID_PORTS: Final[t.VariadicTuple[int]] = (
+            CONFIG_VALID_PORTS: Final[tuple[int, ...]] = (
                 CONFIG_PORT_MIN,
                 FlextLdapConstants.Ldap.PORT,
                 CONFIG_LDAPS_PORT,
                 CONFIG_PORT_MAX,
             )
-            CONFIG_HOST_CASES: Final[t.StrSequence] = (
+            CONFIG_HOST_CASES: Final[Sequence[str]] = (
                 FlextLdapConstants.LOCALHOST,
                 CONFIG_EXAMPLE_HOST,
                 "192.168.1.1",
                 "",
             )
             CALLBACK_GUARD_EXPECTED: Final[
-                t.MappingKV[CallbackGuardCase, tuple[bool, bool]]
+                Mapping[CallbackGuardCase, tuple[bool, bool]]
             ] = MappingProxyType({
                 CallbackGuardCase.NONE: (False, False),
                 CallbackGuardCase.MULTI: (True, False),
@@ -188,6 +191,25 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             FIELD_SCOPE: Final[FieldName] = FieldName.SCOPE
             FIELD_PROPERTIES: Final[FieldName] = FieldName.PROPERTIES
             FIELD_TYPE: Final[FieldName] = FieldName.TYPE
+
+            TLS_URL_VAR: Final[str] = "FLEXT_LDAP_TEST_LDAPS_URL"
+            "LDAPS endpoint whose certificate names TLS_SERVER_NAME_VAR only."
+            TLS_SERVER_NAME_VAR: Final[str] = "FLEXT_LDAP_TEST_TLS_SERVER_NAME"
+            TLS_CA_FILE_VAR: Final[str] = "FLEXT_LDAP_TEST_TLS_CA_FILE"
+            TLS_WRONG_CA_FILE_VAR: Final[str] = "FLEXT_LDAP_TEST_TLS_WRONG_CA_FILE"
+            TLS_REQUIRED_VARS: Final[Sequence[str]] = (
+                "FLEXT_LDAP_BIND_DN",
+                "FLEXT_LDAP_BIND_PASSWORD",
+                TLS_SERVER_NAME_VAR,
+                TLS_CA_FILE_VAR,
+                TLS_WRONG_CA_FILE_VAR,
+            )
+            TLS_CA_FILENAME: Final[str] = "ca.pem"
+            TLS_SERVER_NAME: Final[str] = "ldap.flext.test"
+            TLS_CERTIFICATE_ERROR: Final[str] = "certificate verify failed"
+            TLS_HOSTNAME_ERROR: Final[str] = "doesn't match"
+            TLS_OPTIONS_REQUIRE_TLS_ERROR: Final[str] = "require use_ssl or use_tls"
+            TLS_CA_CONTRADICTS_NONE_ERROR: Final[str] = "contradicts tls_validate"
 
             DOCKER_CONTAINER_NAME: Final[str] = "flext-openldap-test"
             DOCKER_COMPOSE_FILE_REL: Final[str] = "docker/docker-compose.openldap.yml"
@@ -204,7 +226,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             DOCKER_STARTUP_TIMEOUT: Final[int] = 8
             DOCKER_BIND_READY_TIMEOUT: Final[int] = 8
             DOCKER_DEFAULT_WORKER_ID: Final[str] = "master"
-            DOCKER_OU_NAMES: Final[t.StrSequence] = ("people", "groups", "services")
+            DOCKER_OU_NAMES: Final[Sequence[str]] = ("people", "groups", "services")
 
             ERROR_INFRASTRUCTURE_PATTERNS: Final[frozenset[str]] = frozenset({
                 "ldapsessionterminatedbyservererror",
@@ -233,8 +255,8 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             BIND_ADMIN_PASSWORD: Final[str] = _bind_admin_password()
 
             DETECTION_EXECUTE_SCENARIOS: Final[
-                t.SequenceOf[
-                    tuple[t.MappingKV[str, bool | float | str | None] | None, bool, str]
+                Sequence[
+                    tuple[Mapping[str, bool | float | str | None] | None, bool, str]
                 ]
             ] = (
                 # Substrings match the centralized flext-core error format —
@@ -244,7 +266,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 ({"connection": "invalid"}, True, "ldap3.Connection"),
             )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
-                t.SequenceOf[tuple[t.MappingKV[str, t.StrSequence], str, str | None]]
+                Sequence[tuple[Mapping[str, Sequence[str]], str, str | None]]
             ] = (
                 (
                     MappingProxyType({
@@ -262,7 +284,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 (MappingProxyType({"vendorName": ()}), "vendorName", None),
             )
             DETECTION_FROM_ATTRIBUTES_SCENARIOS: Final[
-                t.SequenceOf[tuple[str | None, str | None, t.StrSequence, str]]
+                Sequence[tuple[str | None, str | None, Sequence[str], str]]
             ] = (
                 ("Oracle Corporation", "12.2.1.4.0", (), "oid"),
                 ("Oracle Unified Directory", "12.2.1.4.0", (), "oud"),
@@ -299,28 +321,28 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             STRING_EMPTY: Final[str] = ""
             STRING_DEFAULT_CUSTOM: Final[str] = "default"
 
-            LIST_ABC: Final[t.StrSequence] = ("a", "b", "c")
-            LIST_ABC_UPPER: Final[t.StrSequence] = ("A", "B", "C")
+            LIST_ABC: Final[Sequence[str]] = ("a", "b", "c")
+            LIST_ABC_UPPER: Final[Sequence[str]] = ("A", "B", "C")
             LIST_SINGLE: Final[str] = "single"
 
-            FILTER_TRUTHY_INPUT: Final[t.StrMapping] = MappingProxyType({
+            FILTER_TRUTHY_INPUT: Final[Mapping[str, str]] = MappingProxyType({
                 "a": "value",
                 "b": "",
                 "c": "none_str",
                 "d": "value2",
             })
-            FILTER_TRUTHY_EXPECTED_KEYS: Final[t.StrSequence] = ("a", "c", "d")
+            FILTER_TRUTHY_EXPECTED_KEYS: Final[Sequence[str]] = ("a", "c", "d")
 
-            NORM_JOIN_INPUT: Final[t.StrSequence] = ("A", "B", "C")
+            NORM_JOIN_INPUT: Final[Sequence[str]] = ("A", "B", "C")
             NORM_JOIN_EXPECTED: Final[str] = "a b c"
             CONSTANT_INVALID_STATUS: Final[str] = "invalid"
-            ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[t.MappingKV[str, t.StrSequence]] = (
+            ENTRY_ADAPTER_SAMPLE_ATTRIBUTES: Final[Mapping[str, Sequence[str]]] = (
                 MappingProxyType({"cn": ("user",), "sn": ("Doe",)})
             )
             # Multi-valued attribute payload for the ldap3 add wrapper: an
             # objectClass chain whose classes beyond the first MUST reach
             # the wire verbatim (no first-value collapse).
-            ADD_WRAPPER_OBJECT_CLASSES: Final[t.StrSequence] = (
+            ADD_WRAPPER_OBJECT_CLASSES: Final[Sequence[str]] = (
                 "top",
                 "inetOrgPerson",
                 "person",
@@ -332,14 +354,14 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             LDAP3_ADAPTER_DEFAULT_TIMEOUT: Final[int] = 5
             LDAP3_ADAPTER_NOT_CONNECTED_ERROR: Final[str] = "Not connected"
             LDAP3_SERVER_SCENARIOS: Final[
-                t.MappingKV[Ldap3ServerCase, tuple[int, bool, bool]]
+                Mapping[Ldap3ServerCase, tuple[int, bool, bool]]
             ] = MappingProxyType({
                 Ldap3ServerCase.PLAIN: (FlextLdapConstants.Ldap.PORT, False, False),
                 Ldap3ServerCase.SSL: (CONFIG_LDAPS_PORT, True, False),
                 Ldap3ServerCase.TLS: (FlextLdapConstants.Ldap.PORT, False, True),
             })
             ATTR_TO_STR_LIST_SCENARIOS: Final[
-                t.MappingKV[AttrToStrListCase, t.MappingKV[str, t.StrSequence]]
+                Mapping[AttrToStrListCase, Mapping[str, Sequence[str]]]
             ] = MappingProxyType({
                 AttrToStrListCase.EMPTY: MappingProxyType({}),
                 AttrToStrListCase.BYTES: MappingProxyType({"key": ("hello",)}),
@@ -350,11 +372,11 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 AttrToStrListCase.INT: MappingProxyType({"num": ("42",)}),
             })
             LDAP3_VALUE_TO_STRINGS_SCENARIOS: Final[
-                t.MappingKV[
+                Mapping[
                     LdapValueCase,
                     tuple[
-                        bytes | int | float | str | t.SequenceOf[bytes | str],
-                        t.StrSequence,
+                        bytes | int | float | str | Sequence[bytes | str],
+                        Sequence[str],
                     ],
                 ]
             ] = MappingProxyType({
@@ -371,27 +393,27 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             MODELS_CUSTOM_TIMEOUT: Final[int] = 60
             MODELS_INVALID_DN_FORMAT: Final[str] = "invalid-dn-format"
             MODELS_ALLOWED_SECURITY_COMBOS: Final[
-                t.MappingKV[ConnectionSecurityCase, tuple[bool, bool]]
+                Mapping[ConnectionSecurityCase, tuple[bool, bool]]
             ] = MappingProxyType({
                 ConnectionSecurityCase.SSL_ONLY: (True, False),
                 ConnectionSecurityCase.TLS_ONLY: (False, True),
             })
-            MODELS_INVALID_PORTS: Final[t.VariadicTuple[int]] = (0, 65536)
+            MODELS_INVALID_PORTS: Final[tuple[int, ...]] = (0, 65536)
 
             SEARCH_SCOPE_BASE: Final[str] = "BASE"
             SEARCH_SCOPE_SUBTREE_LOWER: Final[str] = "subtree"
             SEARCH_FILTER_CN: Final[str] = "(cn=*)"
             SEARCH_FILTER_UID: Final[str] = "(uid=*)"
-            SEARCH_ATTRIBUTES: Final[t.StrSequence] = ("cn", "mail")
+            SEARCH_ATTRIBUTES: Final[Sequence[str]] = ("cn", "mail")
             SEARCH_SIZE_LIMIT_CUSTOM: Final[int] = 100
             SEARCH_TIME_LIMIT_CUSTOM: Final[int] = 30
             SEARCH_NORMALIZED_SIZE_LIMIT: Final[int] = 50
             SEARCH_ENTRY_ADDED_MESSAGE: Final[str] = "Entry added successfully"
             SEARCH_DEFAULT_LIMIT_ZERO: Final[int] = 0
-            SEARCH_OBJECTCLASS_PERSON_TOP: Final[t.MappingKV[str, t.StrSequence]] = (
+            SEARCH_OBJECTCLASS_PERSON_TOP: Final[Mapping[str, Sequence[str]]] = (
                 MappingProxyType({"objectClass": ("person", "top")})
             )
-            SEARCH_CATEGORY_EXPECTED: Final[t.MappingKV[SearchCategoryCase, str]] = (
+            SEARCH_CATEGORY_EXPECTED: Final[Mapping[SearchCategoryCase, str]] = (
                 MappingProxyType({
                     SearchCategoryCase.EMPTY: FlextLdapConstants.Ldap.UNKNOWN_CATEGORY,
                     SearchCategoryCase.PERSON: "person",
@@ -408,12 +430,12 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             SYNC_UPSERT_BATCH_SUCCESSFUL: Final[int] = 90
             SYNC_UPSERT_BATCH_FAILED: Final[int] = 10
 
-            SYNC_METADATA_SOURCE_ATTRIBUTES: Final[t.StrSequence] = (
+            SYNC_METADATA_SOURCE_ATTRIBUTES: Final[Sequence[str]] = (
                 "cn",
                 "mail",
                 "telephoneNumber",
             )
-            SYNC_METADATA_REMOVED_ATTRIBUTES: Final[t.StrSequence] = ("userPassword",)
+            SYNC_METADATA_REMOVED_ATTRIBUTES: Final[Sequence[str]] = ("userPassword",)
 
             SYNC_PHASE_TOTAL_ENTRIES: Final[int] = 100
             SYNC_PHASE_SYNCED: Final[int] = 90
@@ -443,7 +465,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 Path(gettempdir()) / "flext-ldap-sync-missing.ldif",
             )
             SYNC_FACADE_PHASE_NAME_USERS: Final[PhaseName] = PhaseName.USERS
-            SYNC_FACADE_MISSING_FILE_PHASES: Final[t.VariadicTuple[PhaseName]] = (
+            SYNC_FACADE_MISSING_FILE_PHASES: Final[tuple[PhaseName, ...]] = (
                 PhaseName.USERS,
                 PhaseName.GROUPS,
             )
@@ -506,7 +528,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 SUBTREE = "subtree"
                 SUBORDINATE = "subordinate"
 
-            ENTRY_DN_SCENARIOS: Final[t.MappingKV[EntryOperationCase, str]] = (
+            ENTRY_DN_SCENARIOS: Final[Mapping[EntryOperationCase, str]] = (
                 MappingProxyType({
                     EntryOperationCase.VALID_DN: "cn=test,ou=people,dc=example,dc=com",
                     EntryOperationCase.EMPTY_DN: "",
@@ -517,22 +539,22 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 })
             )
 
-            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[
-                t.MappingKV[SearchFilterCase, str]
-            ] = MappingProxyType({
-                SearchFilterCase.PRESENT: "(cn=*)",
-                SearchFilterCase.EQUALITY: "(uid=john)",
-                SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
-                SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
-                SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
-                SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
-                SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
-                SearchFilterCase.COMPLEX_NESTED: (
-                    "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
-                ),
-            })
+            SEARCH_FILTER_SCENARIOS_ADVANCED: Final[Mapping[SearchFilterCase, str]] = (
+                MappingProxyType({
+                    SearchFilterCase.PRESENT: "(cn=*)",
+                    SearchFilterCase.EQUALITY: "(uid=john)",
+                    SearchFilterCase.SUBSTRING: "(mail=*@example.com)",
+                    SearchFilterCase.GREATER_EQUAL: "(uidNumber>=1000)",
+                    SearchFilterCase.LESS_EQUAL: "(uidNumber<=2000)",
+                    SearchFilterCase.OR_COMPOUND: "(|(cn=John)(cn=Jane))",
+                    SearchFilterCase.AND_COMPOUND: "(&(objectClass=person)(cn=John))",
+                    SearchFilterCase.COMPLEX_NESTED: (
+                        "(&(|(cn=John)(cn=Jane))(&(mail=*@example.com)(objectClass=person)))"
+                    ),
+                })
+            )
 
-            SEARCH_SIZE_SCENARIOS: Final[t.MappingKV[SearchSizeCase, int]] = (
+            SEARCH_SIZE_SCENARIOS: Final[Mapping[SearchSizeCase, int]] = (
                 MappingProxyType({
                     SearchSizeCase.SIZE_ZERO: 0,
                     SearchSizeCase.SIZE_ONE: 1,
@@ -542,7 +564,7 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
                 })
             )
 
-            SEARCH_SCOPE_SCENARIOS: Final[t.MappingKV[SearchScopeCase, str]] = (
+            SEARCH_SCOPE_SCENARIOS: Final[Mapping[SearchScopeCase, str]] = (
                 MappingProxyType({
                     SearchScopeCase.BASE: "BASE",
                     SearchScopeCase.ONE_LEVEL: "LEVEL(1)",

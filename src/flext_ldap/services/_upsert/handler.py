@@ -1,0 +1,373 @@
+"""Upsert state machine for LDAP add-or-modify flows.
+
+Split from ``FlextLdapOperations`` so the operations model carries no
+self-referencing field annotation (deferred-self-reference gate); the handler
+delegates every LDAP call back to the operations service instance it is
+constructed with.
+
+Business Rules:
+    - Schema modifications (changetype=modify) use MODIFY_ADD operations
+    - Regular entries are read before ADD, comparison or MODIFY
+    - Idempotent: SKIPPED if entry already matches desired state
+
+Audit Implications:
+    - Returns operation type (ADDED, MODIFIED, SKIPPED) for tracking
+    - All operations return r for consistent error handling
+    - Error messages preserve original LDAP error context
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import Sequence
+
+from flext_ldif import r
+
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
+
+
+class FlextLdapServicesUpsertHandler:
+    """Handle add-or-modify flows for upsert calls."""
+
+    def __init__(self, operations: p.Ldap.LdapOperations) -> None:
+        """Initialize upsert handler with operations service.
+
+        Business Rules:
+            - Operations service is REQUIRED (no default, fail-fast pattern)
+            - Handler stores reference for delegation to parent service
+            - No connection validation at init (validated during execute)
+
+        Architecture:
+            - Encapsulates the upsert state machine
+            - Delegates all LDAP operations to the injected operations service
+            - Enables testability through dependency injection
+
+        Args:
+            operations: LDAP operations service (``p.Ldap.LdapOperations``)
+                for LDAP operations. Must have active connection for
+                execute() to succeed.
+
+        """
+        super().__init__()
+        self._ops = operations
+
+    def execute(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.LdapOperationResult]:
+        """Execute an upsert operation for the provided entry.
+
+        Business Rules:
+            - Checks changetype attribute to route to schema modify vs regular add
+            - Schema modifications use MODIFY_ADD for new schema elements
+            - Regular entries use the same directory read as the dry-run plan
+
+        Audit Implication:
+            Entry point for all upsert operations; returns operation type
+            for audit trail (ADDED, MODIFIED, or SKIPPED).
+
+        Returns:
+            r with LdapOperationResult indicating operation type.
+
+        """
+        if self._is_modify(entry):
+            return self.handle_schema_modify(entry)
+        return self.handle_regular_add(entry)
+
+    @staticmethod
+    def _is_modify(entry: p.Ldif.Entry) -> bool:
+        """Whether the entry is a ``changetype: modify`` payload.
+
+        The ``changetype`` attribute wins; the entry's own ``changetype``
+        field is the fallback carrier when the attribute is absent.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        attrs = u.Ldap.extract_entry_attributes(entry)
+        changetype_val: Sequence[str] = list(
+            attrs.get(c.Ldap.AttributeName.CHANGETYPE, []),
+        )
+        changetype = (
+            u.Ldap.norm_str(changetype_val[0], case="lower") if changetype_val else ""
+        )
+        if not changetype and hasattr(entry, "changetype") and entry.changetype:
+            changetype = entry.changetype.lower()
+        return changetype == c.Ldif.ChangeType.MODIFY
+
+    @staticmethod
+    def _modify_operations(
+        entry_model: p.Ldif.Entry,
+    ) -> list[tuple[str, int, Sequence[str]]]:
+        """Collect the operations and non-empty values of a modify entry.
+
+        Maps RFC 2849 operations (add, delete, replace) to LDAP modify operations.
+        Falls back to legacy attributes if change_operations has no matches.
+
+        Returns:
+            The resulting ``list[tuple[str, int, Sequence[str]]]``.
+
+        """
+        op_map: t.Mapping[c.Ldif.ChangeOperation, c.Ldap.ModifyOperation] = {
+            c.Ldif.ChangeOperation.ADD: c.Ldap.ModifyOperation.ADD,
+            c.Ldif.ChangeOperation.DELETE: c.Ldap.ModifyOperation.DELETE,
+            c.Ldif.ChangeOperation.REPLACE: c.Ldap.ModifyOperation.REPLACE,
+        }
+        operations: list[tuple[str, int, Sequence[str]]] = []
+        for change_operation in entry_model.change_operations:
+            if change_operation.operation not in op_map:
+                continue
+            ldap_op = op_map[change_operation.operation]
+            filtered_values = [
+                change_value.value
+                for change_value in change_operation.values
+                if change_value.value
+            ]
+            if filtered_values or ldap_op in {
+                c.Ldap.ModifyOperation.DELETE,
+                c.Ldap.ModifyOperation.REPLACE,
+            }:
+                operations.append((
+                    change_operation.attribute,
+                    int(ldap_op),
+                    filtered_values,
+                ))
+        if operations:
+            return operations
+        attrs = u.Ldap.extract_entry_attributes(entry_model)
+        for attr_type in list(attrs.get(c.Ldif.ChangeOperation.ADD, [])):
+            filtered_values = [item for item in attrs.get(attr_type, []) if item]
+            if filtered_values:
+                operations.append((
+                    attr_type,
+                    int(c.Ldap.ModifyOperation.ADD),
+                    filtered_values,
+                ))
+        for attr_type in list(attrs.get(c.Ldif.ChangeOperation.REPLACE, [])):
+            filtered_values = [item for item in attrs.get(attr_type, []) if item]
+            operations.append((
+                attr_type,
+                int(c.Ldap.ModifyOperation.REPLACE),
+                filtered_values,
+            ))
+        for attr_type in list(attrs.get(c.Ldif.ChangeOperation.DELETE, [])):
+            filtered_values = [item for item in attrs.get(attr_type, []) if item]
+            operations.append((
+                attr_type,
+                int(c.Ldap.ModifyOperation.DELETE),
+                filtered_values,
+            ))
+        return operations
+
+    @staticmethod
+    def _modify_additions(entry_model: p.Ldif.Entry) -> list[tuple[str, Sequence[str]]]:
+        """Collect the non-empty MODIFY_ADD values of a modify entry.
+
+        Change operations are the carrier; the legacy ``add:`` attribute
+        form is read only when no add operation carries values.
+
+        Returns:
+            The resulting ``list[tuple[str, Sequence[str]]]``.
+
+        """
+        additions: list[tuple[str, Sequence[str]]] = []
+        for change_operation in entry_model.change_operations:
+            if change_operation.operation != c.Ldif.ChangeOperation.ADD:
+                continue
+            filtered_values = [
+                change_value.value
+                for change_value in change_operation.values
+                if change_value.value
+            ]
+            if filtered_values:
+                additions.append((change_operation.attribute, filtered_values))
+        if additions:
+            return additions
+        attrs = u.Ldap.extract_entry_attributes(entry_model)
+        for attr_type in list(attrs.get(c.Ldif.ChangeOperation.ADD, [])):
+            filtered_values = [item for item in attrs.get(attr_type, []) if item]
+            if filtered_values:
+                additions.append((attr_type, filtered_values))
+        return additions
+
+    def handle_existing_entry(
+        self,
+        entry: p.Ldif.Entry,
+        existing_entry: p.Ldif.Entry,
+    ) -> p.Result[p.Ldap.LdapOperationResult]:
+        """Compare a present entry and apply the required modification.
+
+        Business Rules:
+            - Compares existing vs new entry to compute MODIFY changes
+            - If no differences, returns SKIPPED (idempotent)
+            - Applies MODIFY_REPLACE/MODIFY_DELETE changes for sync
+
+        Audit Implication:
+            Critical for idempotent upserts; computes minimal change set.
+            SKIPPED indicates no changes needed, enabling safe reruns.
+
+        Returns:
+            r with MODIFIED or SKIPPED.
+
+        """
+        if entry.dn is None or not entry.dn.value:
+            return r[p.Ldap.LdapOperationResult].fail("Upsert entry missing DN")
+        changes_result = u.Ldap.compare_entries(existing_entry, entry)
+        if changes_result.failure:
+            return r[p.Ldap.LdapOperationResult].from_failure(changes_result)
+        changes = changes_result.value
+        if not changes:
+            return r[p.Ldap.LdapOperationResult].ok(
+                m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.SKIPPED),
+            )
+        modified = self._ops.modify(entry.dn.value, changes)
+        if modified.failure:
+            return r[p.Ldap.LdapOperationResult].from_failure(modified)
+        return r[p.Ldap.LdapOperationResult].ok(
+            m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.MODIFIED),
+        )
+
+    def handle_regular_add(
+        self,
+        entry: p.Ldif.Entry,
+    ) -> p.Result[p.Ldap.LdapOperationResult]:
+        """Read a standard entry and then add or reconcile it.
+
+        Business Rules:
+            - Read with the same absence-aware boundary used by plan
+            - Add absent entries once; compare present entries before modifying
+            - Every read or write failure propagates unchanged
+
+        Audit Implication:
+            Existing entries do not trigger a rejected ADD before comparison.
+
+        Returns:
+            r with ADDED, MODIFIED or SKIPPED.
+
+        """
+        entry_for_add = u.Ldif.as_entry(entry)
+        if entry_for_add.dn is None or not entry_for_add.dn.value:
+            return r[p.Ldap.LdapOperationResult].fail("Upsert entry missing DN")
+        found = self._ops.find_entry(entry_for_add.dn.value)
+        if found.failure:
+            return r[p.Ldap.LdapOperationResult].from_failure(found)
+        if found.value.entries:
+            return self.handle_existing_entry(entry, found.value.entries[0])
+        added = self._ops.add(entry_for_add)
+        if added.failure:
+            return r[p.Ldap.LdapOperationResult].from_failure(added)
+        return r[p.Ldap.LdapOperationResult].ok(
+            m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.ADDED),
+        )
+
+    def handle_schema_modify(
+        self,
+        entry: p.Ldif.Entry,
+    ) -> p.Result[p.Ldap.LdapOperationResult]:
+        """Apply a schema modification entry (supports multiple operations).
+
+        Business Rules:
+            - Entry must have modify operations (add, replace, delete)
+            - Loops operations and maps to LDAP modify operations
+            - Preserves LDAP error context for modify failures
+            - Empty values are filtered out before modification
+
+        Audit Implication:
+            Modifications are critical; returns MODIFIED or error.
+            Preserves LDAP error context for validation failures.
+
+        Returns:
+            r with operation type MODIFIED.
+
+        """
+        entry_model = u.Ldif.as_entry(entry)
+        if entry_model.dn is None or not entry_model.dn.value:
+            return r[p.Ldap.LdapOperationResult].fail("Schema modify entry missing DN")
+        dn_str = entry_model.dn.value
+        operations = self._modify_operations(entry_model)
+        if not operations:
+            return r[p.Ldap.LdapOperationResult].fail(
+                c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS,
+            )
+        changes: t.Ldap.OperationChanges = {}
+        for attr_type, mod_op, filtered in operations:
+            changes.setdefault(attr_type, []).append((
+                mod_op,
+                filtered,
+            ))
+        modified = self._ops.modify(dn_str, changes)
+        if modified.failure:
+            return r[p.Ldap.LdapOperationResult].from_failure(modified)
+        return r[p.Ldap.LdapOperationResult].ok(
+            m.Ldap.LdapOperationResult(operation=c.Ldap.UpsertOperation.MODIFIED),
+        )
+
+    def plan(self, entries: Sequence[p.Ldif.Entry]) -> p.Result[p.Ldap.UpsertPlan]:
+        """Classify entries against the directory without writing anything.
+
+        Business Rules:
+            - Routes each entry exactly like :meth:`execute`: a
+              ``changetype: modify`` entry is planned as ``modifies`` when it
+              carries modify operations (the write path issues modify without
+              searching) and fails like the write path when it carries none
+            - Any other entry is read with ``find_entry`` and compared with
+              ``u.Ldap.compare_entries``: absent counts as ``adds``,
+              present-with-changes as ``modifies``, present-and-identical as
+              ``unchanged``
+            - Zero writes: no add/modify call is ever issued
+            - First read/comparison failure aborts the plan with a typed
+              failure (the owner of upsert semantics owns "what would change")
+
+        Audit Implication:
+            Enables dry-run migration reports: the plan is derived from the
+            live directory, so reruns are deterministic between writes.
+
+        Returns:
+            r with UpsertPlan carrying add/modify/unchanged counts.
+
+        """
+        adds = 0
+        modifies = 0
+        unchanged = 0
+        for entry in entries:
+            if entry.dn is None or not entry.dn.value:
+                return r[p.Ldap.UpsertPlan].fail("Plan entry missing DN")
+            if self._is_modify(entry):
+                if not self._modify_operations(u.Ldif.as_entry(entry)):
+                    return r[p.Ldap.UpsertPlan].fail(
+                        c.Ldap.ErrorMessage.MODIFY_ENTRY_WITHOUT_ADDITIONS,
+                    )
+                modifies += 1
+                continue
+            found = self._ops.find_entry(entry.dn.value)
+            if found.failure:
+                return r[p.Ldap.UpsertPlan].fail_op(
+                    "Plan search for existing entry",
+                    found.error,
+                )
+            existing_entries: Sequence[p.Ldif.Entry] = list(found.value.entries)
+            if not existing_entries:
+                adds += 1
+                continue
+            changes_result = u.Ldap.compare_entries(existing_entries[0], entry)
+            if changes_result.failure:
+                return r[p.Ldap.UpsertPlan].fail_op(
+                    "Plan entry comparison",
+                    changes_result.error,
+                )
+            empty_changes: t.Ldap.OperationChanges = {}
+            changes = changes_result.unwrap_or(empty_changes)
+            if changes:
+                modifies += 1
+            else:
+                unchanged += 1
+        return r[p.Ldap.UpsertPlan].ok(
+            m.Ldap.UpsertPlan(adds=adds, modifies=modifies, unchanged=unchanged),
+        )
+
+
+__all__: list[str] = ["FlextLdapServicesUpsertHandler"]

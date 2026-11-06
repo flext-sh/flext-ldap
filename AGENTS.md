@@ -21,7 +21,8 @@ Enterprise LDAP operations library. Base for the LDAP Singer connectors
 
 ```text
 src/flext_ldap/
-├── api.py            # FlextLdap facade, composed from FlextLdapConnection + FlextLdapSync + FlextLdapApiRuntime
+├── api.py            # FlextLdap facade, composed from FlextLdapConnection
+│                     # + FlextLdapSync + FlextLdapApiRuntime
 ├── base.py
 ├── adapters/         # LDAP adapter implementations
 ├── services/         # connection / runtime / synchronization services

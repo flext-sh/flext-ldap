@@ -7,8 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-from collections.abc import Callable
+from collections.abc import Mapping
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from flext_tests import FlextTestsUtilities
 from flext_tests.docker import FlextTestsDocker
@@ -24,59 +25,17 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
         """Provide the test double for ldap."""
 
         class Tests(FlextTestsUtilities.Tests):
-            """Direct test utility surface for flext-ldap."""
+            """Direct test utility surface for flext-ldap.
 
-            @staticmethod
-            def that[SubjectT](
-                value: SubjectT,
-                *,
-                where: Callable[[SubjectT], bool] | None = None,
-                **kwargs: t.Tests.MatcherOption,
-            ) -> None:
-                """Provide that."""
-                tm.that(value, where=where, **kwargs)
+            Assertion matchers (``that``/``fail``/``ok``/``check``) are inherited
+            from the composed ``FlextTestsUtilities.Tests`` root; no local
+            re-publication is needed.
 
-            @staticmethod
-            def fail[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult],
-                **kwargs: p.AttributeProbe,
-            ) -> str:
-                """Provide fail.
-
-                Returns:
-                    The resulting ``str``.
-
-                """
-                failure_message: str = tm.fail(result, **kwargs)
-                return failure_message
-
-            @staticmethod
-            def ok[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult],
-            ) -> TResult:
-                """Provide ok.
-
-                Returns:
-                    The resulting ``TResult``.
-
-                """
-                return tm.ok(result)
-
-            @staticmethod
-            def check[TResult: t.Tests.TestResultValue](
-                result: p.Result[TResult],
-            ) -> m.Tests.Chain[TResult]:
-                """Provide check.
-
-                Returns:
-                    The resulting ``m.Tests.Chain[TResult]``.
-
-                """
-                return tm.check(result)
+            """
 
             @staticmethod
             def create_ldap3_server(
-                ldap_container: t.MappingKV[str, t.Scalar],
+                ldap_container: Mapping[str, t.Scalar],
             ) -> p.Ldif.Ldap3Server:
                 """Create an ldap3 server from container metadata.
 
@@ -93,7 +52,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def create_ldap3_connection(
                 server: p.Ldif.Ldap3Server,
-                ldap_container: t.MappingKV[str, t.Scalar],
+                ldap_container: Mapping[str, t.Scalar],
             ) -> p.Ldap.Ldap3Connection:
                 """Create an ldap3 connection from container metadata.
 
@@ -110,8 +69,8 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
 
             @staticmethod
             def create_connection_config(
-                ldap_container: t.MappingKV[str, t.Scalar],
-            ) -> m.Ldap.ConnectionConfig:
+                ldap_container: Mapping[str, t.Scalar],
+            ) -> p.Ldap.ConnectionConfig:
                 """Build a typed connection settings from container metadata.
 
                 Returns:
@@ -145,6 +104,35 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     use_ssl=bool(ldap_container["use_ssl"]),
                     bind_dn=str(ldap_container["bind_dn"]),
                     bind_password=str(ldap_container["password"]),
+                )
+
+            @staticmethod
+            def create_tls_connection_config(
+                *,
+                ca_file_var: str,
+                server_name_var: str | None,
+            ) -> p.Ldap.ConnectionConfig:
+                """Build an LDAPS config from the local test environment.
+
+                The endpoint comes from ``c.Ldap.Tests.TLS_URL_VAR``; the CA bundle
+                and the expected certificate name come from the named variables.
+                Missing variables propagate unchanged.
+
+                Returns:
+                    The resulting ``m.Ldap.ConnectionConfig``.
+
+                """
+                endpoint = urlsplit(os.environ[c.Ldap.Tests.TLS_URL_VAR])
+                return m.Ldap.ConnectionConfig(
+                    host=tm.not_none(endpoint.hostname),
+                    port=tm.not_none(endpoint.port),
+                    use_ssl=True,
+                    ca_certs_file=Path(os.environ[ca_file_var]),
+                    server_name=(
+                        None if server_name_var is None else os.environ[server_name_var]
+                    ),
+                    bind_dn=os.environ["FLEXT_LDAP_BIND_DN"],
+                    bind_password=os.environ["FLEXT_LDAP_BIND_PASSWORD"],
                 )
 
             @staticmethod

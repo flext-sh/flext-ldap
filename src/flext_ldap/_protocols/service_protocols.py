@@ -10,12 +10,11 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_ldif import FlextLdifProtocols
 
-from flext_ldap._protocols.search_protocols import FlextLdapProtocolsSearch
-
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_ldap import m, t
+    from flext_ldap import p, t
+    from flext_ldap._protocols import FlextLdapProtocolsLdap
 
 
 class FlextLdapProtocolsService:
@@ -42,7 +41,7 @@ class FlextLdapProtocolsService:
 
         @staticmethod
         def connect(
-            connection_config: FlextLdapProtocolsSearch.ConnectionConfig,
+            connection_config: FlextLdapProtocolsLdap.ConnectionConfig,
             *,
             auto_retry: bool = False,
             max_retries: int = 3,
@@ -74,9 +73,7 @@ class FlextLdapProtocolsService:
             ...
 
         @staticmethod
-        def execute() -> FlextLdifProtocols.Result[
-            FlextLdapProtocolsSearch.SearchResult
-        ]:
+        def execute() -> FlextLdifProtocols.Result[FlextLdapProtocolsLdap.SearchResult]:
             """Run the connection service health check/default operation."""
             ...
 
@@ -111,7 +108,7 @@ class FlextLdapProtocolsService:
         def find_entry(
             self,
             dn: str,
-        ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.SearchResult]:
             """Read one entry by DN; an absent entry is an empty result.
 
             Args:
@@ -126,7 +123,7 @@ class FlextLdapProtocolsService:
         def add(
             self,
             entry: FlextLdifProtocols.Ldif.Entry,
-        ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.OperationResult]:
             """Add an LDAP entry, returning the operation result.
 
             Args:
@@ -142,7 +139,7 @@ class FlextLdapProtocolsService:
             self,
             dn: str,
             changes: t.Ldap.OperationChanges,
-        ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.OperationResult]:
             """Modify an LDAP entry with the provided change set.
 
             Args:
@@ -158,7 +155,7 @@ class FlextLdapProtocolsService:
         def delete(
             self,
             dn: str,
-        ) -> FlextLdifProtocols.Result[m.Ldap.OperationResult]:
+        ) -> FlextLdifProtocols.Result[p.Ldap.OperationResult]:
             """Delete an LDAP entry identified by DN.
 
             Args:
@@ -172,8 +169,8 @@ class FlextLdapProtocolsService:
 
         def search(
             self,
-            search_options: FlextLdapProtocolsSearch.SearchOptions,
-        ) -> FlextLdifProtocols.Result[m.Ldap.SearchResult]:
+            search_options: FlextLdapProtocolsLdap.SearchOptions,
+        ) -> FlextLdifProtocols.Result[p.Ldap.SearchResult]:
             """Perform an LDAP search, returning the search result.
 
             Args:
@@ -183,6 +180,39 @@ class FlextLdapProtocolsService:
                 Result containing SearchResult with Entry models.
 
             """
+            ...
+
+    @runtime_checkable
+    class Ldap3Tls(Protocol):
+        """Structural contract for the TLS policy carried by an ldap3 server."""
+
+        @property
+        def validate(self) -> int:
+            """The stdlib peer verification mode (``ssl.VerifyMode`` value)."""
+            ...
+
+        @property
+        def ca_certs_file(self) -> str | None:
+            """The trusted CA bundle path, or ``None`` for the system store."""
+            ...
+
+        @property
+        def sni(self) -> str | None:
+            """The server name sent through Server Name Indication."""
+            ...
+
+        @property
+        def valid_names(self) -> list[str] | None:
+            """Additional certificate names accepted by the hostname check."""
+            ...
+
+    @runtime_checkable
+    class Ldap3TlsServer(FlextLdifProtocols.Ldif.Ldap3Server, Protocol):
+        """ldap3 server contract exposing its TLS policy."""
+
+        @property
+        def tls(self) -> FlextLdapProtocolsService.Ldap3Tls | None:
+            """The TLS policy, present whenever LDAPS or StartTLS is enabled."""
             ...
 
     @runtime_checkable

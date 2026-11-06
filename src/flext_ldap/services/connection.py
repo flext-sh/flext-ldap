@@ -13,12 +13,18 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_ldap import c, m, p, r, t, u
-from flext_ldap.adapters.host import FlextLdapAdapterHost
-from flext_ldap.services.detection import FlextLdapServerDetector
+from flext_ldif import r
+
+from flext_ldap.adapters import FlextLdapAdapterHost
+from flext_ldap.constants import c
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.services import FlextLdapServerDetector
+from flext_ldap.typings import t
+from flext_ldap.utilities import u
 
 
-class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
+class FlextLdapConnection(FlextLdapAdapterHost[p.Ldap.SearchResult]):
     """Manage the LDAP connection lifecycle as an MRO mixin.
 
     Wraps ``FlextLdapLdap3Adapter`` to create/bind connections, optionally
@@ -101,16 +107,16 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
         self._server_type = c.Ldap.DEFAULT_TYPE
 
     @override
-    def execute(self, **kwargs: t.Scalar) -> p.Result[m.Ldap.Response]:
+    def execute(self, **kwargs: t.Scalar) -> p.Result[p.Ldap.SearchResult]:
         """Execute service health check.
 
         Returns:
-            The resulting ``p.Result[m.Ldap.Response]``.
+            The resulting ``p.Result[p.Ldap.SearchResult]``.
 
         """
         _ = kwargs
         if self.is_connected:
-            return r[m.Ldap.Response].ok(
+            return r[p.Ldap.SearchResult].ok(
                 m.Ldap.SearchResult(
                     entries=[],
                     search_options=m.Ldap.SearchOptions(
@@ -119,7 +125,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[m.Ldap.Response]):
                     ),
                 ),
             )
-        return r[m.Ldap.Response].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
+        return r[p.Ldap.SearchResult].fail(str(c.Ldap.ErrorMessage.NOT_CONNECTED))
 
     def _detect_server_type(self) -> None:
         """Detect LDAP server type after successful connection.

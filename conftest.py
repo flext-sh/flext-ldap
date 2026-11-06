@@ -12,18 +12,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from flext_tests import install_local_packages
 
 
-class FlextLdapPytestBootstrap:
-    """Bind this checkout's local tiers through the shared bootstrap owner."""
-
-    @staticmethod
-    def main() -> None:
-        """Install this checkout's local tier packages before collection."""
-        install_local_packages(Path(__file__).resolve().parent)
-
-
-FlextLdapPytestBootstrap.main()
-
-__all__: list[str] = ["FlextLdapPytestBootstrap"]
+@pytest.hookimpl(tryfirst=True)
+def pytest_configure(config: pytest.Config) -> None:
+    """Register the local packages before collection imports any test module."""
+    del config
+    install_local_packages(Path(__file__).resolve().parent)

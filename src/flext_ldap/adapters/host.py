@@ -10,13 +10,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap import m, s, t
-from flext_ldap.adapters.ldap3 import FlextLdapLdap3Adapter
+from collections.abc import Sequence
+
+from flext_ldap.adapters import FlextLdapLdap3Adapter
+from flext_ldap.base import s
+from flext_ldap.models import m
+from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapAdapterHost[
-    TResult: t.JsonPayload | t.SequenceOf[t.JsonPayload] = t.JsonPayload
-    | t.SequenceOf[t.JsonPayload],
+    TResult: t.JsonPayload | Sequence[t.JsonPayload] | p.BaseModel = t.JsonPayload
+    | Sequence[t.JsonPayload],
 ](s[TResult]):
     """Own the shared ldap3 adapter behind the ``p.Ldap.LdapAdapter`` contract.
 
