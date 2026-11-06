@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import Annotated, ClassVar, Literal
 
 from flext_core import m, t
 from flext_ldif import FlextLdifSettings
@@ -38,6 +38,33 @@ class FlextLdapSettings(FlextLdifSettings):
         ] = 389
         use_ssl: Annotated[bool, m.Field(description="Enable LDAPS")] = False
         use_tls: Annotated[bool, m.Field(description="Enable STARTTLS")] = False
+        tls_validate: Annotated[
+            Literal["required", "none"],
+            m.Field(
+                description=(
+                    "Peer certificate and hostname validation for LDAPS or "
+                    "StartTLS; disabling it requires the explicit NONE mode"
+                ),
+            ),
+        ] = "required"
+        ca_certs_file: Annotated[
+            t.FilePath | None,
+            m.Field(
+                description=(
+                    "PEM CA bundle trusted for the server certificate; "
+                    "the system trust store applies when unset"
+                ),
+            ),
+        ] = None
+        server_name: Annotated[
+            t.NonEmptyStr | None,
+            m.Field(
+                description=(
+                    "Expected certificate server name, sent as SNI and "
+                    "accepted by the hostname check besides host"
+                ),
+            ),
+        ] = None
         bind_dn: Annotated[str, m.Field(description="LDAP bind distinguished name")] = (
             ""
         )
