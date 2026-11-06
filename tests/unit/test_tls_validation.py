@@ -2,6 +2,8 @@
 
 The connection configuration owns ``tls_validate``, ``ca_certs_file`` and
 ``server_name``; the server builder derives the ldap3 TLS policy from them.
+The LDAP settings carry the same options and the connection configuration
+built from them stays their single validator.
 Everything here is construction only: no network call happens.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -14,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c, m, u
+from tests import TestsFlextLdapSettings, c, m, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -126,3 +128,67 @@ class TestsFlextLdapTlsValidation:
                 use_ssl=True,
                 ca_certs_file=tmp_path / c.Ldap.Tests.TLS_CA_FILENAME,
             )
+
+    @staticmethod
+    def test_settings_tls_vocabulary_matches_validation_modes() -> None:
+        """The settings TLS vocabulary and default mirror the validation modes."""
+        ldap_settings = TestsFlextLdapSettings.LdapSettings
+        schema = ldap_settings.model_json_schema()["properties"]["tls_validate"]
+
+        u.Ldap.Tests.that(
+            list(schema["enum"]),
+            eq=[mode.value for mode in c.Ldap.TlsValidation],
+        )
+        u.Ldap.Tests.that(
+            ldap_settings().tls_validate,
+            eq=c.Ldap.DEFAULT_TLS_VALIDATION.value,
+        )
+
+    @staticmethod
+    def test_settings_tls_options_reach_connection_config(ca_file: Path) -> None:
+        """Settings TLS options survive the build of the connection config."""
+        cfg = TestsFlextLdapSettings(
+            Ldap=TestsFlextLdapSettings.LdapSettings(
+                use_ssl=True,
+                ca_certs_file=ca_file,
+                server_name=c.Ldap.Tests.TLS_SERVER_NAME,
+            ),
+        )
+
+        config = m.Ldap.ConnectionConfig.model_validate(cfg.Ldap.model_dump())
+
+        u.Ldap.Tests.that(config.tls_validate, eq=c.Ldap.DEFAULT_TLS_VALIDATION)
+        u.Ldap.Tests.that(config.ca_certs_file, eq=ca_file)
+        u.Ldap.Tests.that(config.server_name, eq=c.Ldap.Tests.TLS_SERVER_NAME)
+
+    @staticmethod
+    def test_settings_disabled_validation_reaches_connection_config() -> None:
+        """An explicit NONE mode in settings reaches the connection config."""
+        cfg = TestsFlextLdapSettings(
+            Ldap=TestsFlextLdapSettings.LdapSettings(
+                use_tls=True,
+                tls_validate=c.Ldap.TlsValidation.NONE.value,
+                server_name=c.Ldap.Tests.TLS_SERVER_NAME,
+            ),
+        )
+
+        config = m.Ldap.ConnectionConfig.model_validate(cfg.Ldap.model_dump())
+
+        u.Ldap.Tests.that(config.tls_validate, eq=c.Ldap.TlsValidation.NONE)
+        u.Ldap.Tests.that(config.ca_certs_file, none=True)
+        u.Ldap.Tests.that(config.server_name, eq=c.Ldap.Tests.TLS_SERVER_NAME)
+
+    @staticmethod
+    def test_settings_tls_options_without_tls_are_rejected() -> None:
+        """Connection config rejects settings TLS options without LDAPS/StartTLS."""
+        cfg = TestsFlextLdapSettings(
+            Ldap=TestsFlextLdapSettings.LdapSettings(
+                server_name=c.Ldap.Tests.TLS_SERVER_NAME,
+            ),
+        )
+
+        with u.Tests.raises(
+            c.ValidationError,
+            match=c.Ldap.Tests.TLS_OPTIONS_REQUIRE_TLS_ERROR,
+        ):
+            m.Ldap.ConnectionConfig.model_validate(cfg.Ldap.model_dump())
