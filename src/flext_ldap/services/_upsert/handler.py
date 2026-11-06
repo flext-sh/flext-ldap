@@ -21,7 +21,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 from flext_ldif import r
 
@@ -112,7 +112,7 @@ class FlextLdapServicesUpsertHandler:
             The resulting ``list[tuple[str, int, Sequence[str]]]``.
 
         """
-        op_map: t.Mapping[c.Ldif.ChangeOperation, c.Ldap.ModifyOperation] = {
+        op_map: Mapping[c.Ldif.ChangeOperation, c.Ldap.ModifyOperation] = {
             c.Ldif.ChangeOperation.ADD: c.Ldap.ModifyOperation.ADD,
             c.Ldif.ChangeOperation.DELETE: c.Ldap.ModifyOperation.DELETE,
             c.Ldif.ChangeOperation.REPLACE: c.Ldap.ModifyOperation.REPLACE,

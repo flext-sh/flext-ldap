@@ -603,13 +603,19 @@ known-first-party = ["flext_ldap"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
+"**/_protocols/**" = ["invalid-function-name"]
 "**/_protocols/pydantic.py" = ["too-many-arguments"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.pylint]
-allow-dunder-method-names = ["__base__", "__bases__"]
+allow-dunder-method-names = [
+  "__base__",
+  "__bases__",
+  "__get_pydantic_core_schema__",
+  "__get_pydantic_json_schema__",
+]
 
 [tool.tomlsort]
 all = true
