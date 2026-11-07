@@ -28,16 +28,6 @@
       {
         "hooks": [
           {
-            "command": "python3 ~/flext/flext-ldap/.codex/aihub-hooks/codex-sessionstart.py",
-            "statusMessage": "Applying synchronized governance",
-            "type": "command"
-          }
-        ],
-        "matcher": "startup|resume|clear|compact"
-      },
-      {
-        "hooks": [
-          {
             "command": "bd codex-hook SessionStart",
             "statusMessage": "Loading Beads context",
             "type": "command"
@@ -46,27 +36,7 @@
         "matcher": "startup|resume|clear"
       }
     ],
-    "SubagentStart": [
-      {
-        "hooks": [
-          {
-            "command": "python3 ~/flext/flext-ldap/.codex/aihub-hooks/codex-subagentstart.py",
-            "statusMessage": "Applying synchronized governance",
-            "type": "command"
-          }
-        ]
-      }
-    ],
     "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "command": "python3 ~/flext/flext-ldap/.codex/aihub-hooks/codex-userpromptsubmit.py",
-            "statusMessage": "Applying synchronized governance",
-            "type": "command"
-          }
-        ]
-      },
       {
         "hooks": [
           {
