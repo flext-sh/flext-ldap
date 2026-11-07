@@ -50,7 +50,7 @@ than legacy server-specific stacks.
 
 ### Architecture Layers
 
-```
+```text
 API Facade → Service Layer → Adapter Layer → Protocol + Models
    ldap     Connection/Ops     Ldap3Adapter       ldap3 / flext-ldif
 ```

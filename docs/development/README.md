@@ -259,7 +259,7 @@ class Config(m.BaseModel):
 
 Follow Conventional Commits:
 
-```
+```text
 feat: add new LDAP operation
 fix: resolve connection timeout issue
 refactor: simplify authentication logic

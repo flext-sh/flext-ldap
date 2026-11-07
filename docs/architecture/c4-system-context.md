@@ -190,7 +190,7 @@ FLEXT-LDAP provides universal support for major LDAP server implementations:
 
 #### **User Management Flow**
 
-```
+```text
 Application Developer → FLEXT-LDAP → LDAP Server
     ↓              ↓              ↓
 User CRUD      Entry Operations  Directory Storage
@@ -200,7 +200,7 @@ Authorization  ACL Checking     Permission Evaluation
 
 #### **Data Integration Flow**
 
-```
+```text
 DevOps Engineer → FLEXT-Meltano → FLEXT-LDAP → LDAP Server
        ↓               ↓              ↓              ↓
 Infrastructure    Data Pipeline   LDAP Operations  Directory Data
@@ -210,7 +210,7 @@ Scaling         Error Handling   Connection Mgmt  Data Export
 
 #### **Migration Flow**
 
-```
+```text
 System Admin → FLEXT Migration → FLEXT-LDAP → Source LDAP → Target LDAP
      ↓              ↓              ↓              ↓              ↓
 Migration Planning Bulk Operations Entry Conversion Schema Mapping Data Transfer
@@ -297,4 +297,4 @@ Progress Tracking Error Handling  Validation      ACL Migration User Provisionin
 ---
 
 **C4 Model - Level 1: System Context**
-_Understanding FLEXT-LDAP's role in the enterprise ecosystem_
+*Understanding FLEXT-LDAP's role in the enterprise ecosystem*

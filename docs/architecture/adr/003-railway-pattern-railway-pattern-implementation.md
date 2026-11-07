@@ -73,4 +73,4 @@
 
 ---
 
-**ADR 003-railway-pattern: Railway Pattern Implementation** _Accepted on 2026-04-14_
+**ADR 003-railway-pattern: Railway Pattern Implementation** *Accepted on 2026-04-14*

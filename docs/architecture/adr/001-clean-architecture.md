@@ -79,7 +79,7 @@ with tight coupling between components. This led to:
 **Chosen Solution** Adopt Clean Architecture (as described by Robert C. Martin) with the
 following structure:
 
-```
+```text
 src/flext_ldap/
 ├── api.py                    # Application Layer - unified LDAP API
 ├── clients.py                # Application Layer - connection management

@@ -73,4 +73,4 @@
 
 ---
 
-**ADR 001-clean-architecture: Clean Architecture Adoption** _Accepted on 2026-04-14_
+**ADR 001-clean-architecture: Clean Architecture Adoption** *Accepted on 2026-04-14*

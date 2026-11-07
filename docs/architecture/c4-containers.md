@@ -70,4 +70,4 @@ server implementations.
 ---
 
 **C4 Model - Level 2: Container Architecture**
-_Technology choices and high-level system structure_
+*Technology choices and high-level system structure*

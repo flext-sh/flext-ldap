@@ -20,7 +20,7 @@ services or adapters for testing and alternative runtimes.
 
 ## Layered View
 
-```
+```text
  ldap facade (api.py)
   ├── Connection (services/connection.py)
   ├── Operations (services/operations.py)

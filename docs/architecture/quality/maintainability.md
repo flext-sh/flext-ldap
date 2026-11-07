@@ -13,4 +13,4 @@ flext-ldap.
 
 ---
 
-**Code Quality and Evolution** _Maintainability characteristics and requirements_
+**Code Quality and Evolution** *Maintainability characteristics and requirements*

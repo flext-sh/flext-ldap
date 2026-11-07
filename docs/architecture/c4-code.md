@@ -12,4 +12,4 @@ This diagram shows the package structure and implementation details.
 
 ---
 
-**C4 Model - Level 4: Code Architecture** _Package structure and implementation details_
+**C4 Model - Level 4: Code Architecture** *Package structure and implementation details*

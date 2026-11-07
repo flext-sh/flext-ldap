@@ -73,4 +73,4 @@
 
 ---
 
-**ADR 004-server-operations: Server-Specific Operations** _Accepted on 2026-04-14_
+**ADR 004-server-operations: Server-Specific Operations** *Accepted on 2026-04-14*

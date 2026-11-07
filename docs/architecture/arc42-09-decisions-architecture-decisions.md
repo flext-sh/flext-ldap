@@ -11,4 +11,4 @@
 ---
 
 **Arc42 Section 09-decisions: Architecture Decisions**
-_Part of the comprehensive Arc42 architecture documentation_
+*Part of the comprehensive Arc42 architecture documentation*

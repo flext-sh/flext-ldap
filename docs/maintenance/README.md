@@ -139,7 +139,7 @@ The Documentation Maintenance System consists of multiple integrated components:
 
 ## 🏗️ Architecture
 
-```
+```text
 Documentation Maintenance System
 ├── Audit & Analysis
 │   ├── Content Quality Audit

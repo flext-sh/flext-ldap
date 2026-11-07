@@ -13,4 +13,4 @@ system.
 
 ---
 
-**Storage Architecture** _Data persistence and management strategies_
+**Storage Architecture** *Data persistence and management strategies*
