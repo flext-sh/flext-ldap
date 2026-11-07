@@ -63,7 +63,7 @@ documentation files.
 
 ### Architecture
 
-```
+```text
 Documentation Maintenance System
 ├── Audit System (audit.py)
 │   ├── Content quality analysis
@@ -534,7 +534,7 @@ python maintenance/maintain.py --comprehensive
 ---
 
 **Documentation Maintenance System User Guide**
-_Automated Quality Assurance for Technical Documentation_
+*Automated Quality Assurance for Technical Documentation*
 
 **Key Benefits:**
 

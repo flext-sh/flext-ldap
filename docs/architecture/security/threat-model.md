@@ -12,4 +12,4 @@ This document describes the threat model and security controls for flext-ldap.
 
 ---
 
-**Threat Model** _Security threats and mitigation strategies_
+**Threat Model** *Security threats and mitigation strategies*

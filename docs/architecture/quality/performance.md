@@ -12,4 +12,4 @@ This document describes the performance characteristics and requirements for fle
 
 ---
 
-**Performance Characteristics** _Performance characteristics and requirements_
+**Performance Characteristics** *Performance characteristics and requirements*

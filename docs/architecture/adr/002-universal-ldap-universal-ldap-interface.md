@@ -73,4 +73,4 @@
 
 ---
 
-**ADR 002-universal-ldap: Universal LDAP Interface** _Accepted on 2026-04-14_
+**ADR 002-universal-ldap: Universal LDAP Interface** *Accepted on 2026-04-14*

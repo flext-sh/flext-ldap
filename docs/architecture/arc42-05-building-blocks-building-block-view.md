@@ -11,4 +11,4 @@
 ---
 
 **Arc42 Section 05-building-blocks: Building Block View**
-_Part of the comprehensive Arc42 architecture documentation_
+*Part of the comprehensive Arc42 architecture documentation*

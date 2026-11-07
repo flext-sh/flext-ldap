@@ -159,7 +159,7 @@ sudo -u docsuser python maintenance/audit.py
 
 **Symptom:**
 
-```
+```text
 yaml.YAMLError: mapping values are not allowed here
 ```
 

@@ -52,7 +52,7 @@ failure explicit.
 
 ## Collaboration Pattern
 
-```
+```text
 ldap → Connection → (optional) ServerDetector
           → Operations (search/CRUD/upsert)
           → SyncService (uses Operations under the hood)

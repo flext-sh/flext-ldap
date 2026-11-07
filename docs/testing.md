@@ -18,13 +18,13 @@
 
 ## Testing Overview
 
-| Metric                     | Recorded value                                                                                 |
-| -------------------------- | ---------------------------------------------------------------------------------------------- |
-| Unit tests                 | 245 passed                                                                                     |
-| Unit-test command          | `make test`                                                                                    |
-| `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed)                                                      |
-| Integration tests          | 1 smoke test (`tests/integration/test_smoke.py`)                                               |
-| Current failures           | 0 unit failures                                                                                |
+| Metric                     | Recorded value                                                               |
+| -------------------------- | ---------------------------------------------------------------------------- |
+| Unit tests                 | 245 passed                                                                   |
+| Unit-test command          | `make test`                                                                  |
+| `flext_ldap` unit coverage | **74.64%** (1,743 statements, 442 missed)                                    |
+| Integration tests          | 1 smoke test (`tests/integration/test_smoke.py`)                             |
+| Current failures           | 0 unit failures                                                              |
 | Skipped tests              | Connectivity prerequisites are checked before service-dependent fixtures run |
 
 > These figures are a historical report, not validation of the current checkout. Run
