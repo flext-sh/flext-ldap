@@ -95,7 +95,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             return r[int].ok(int(ldap3_value))
         return r[int].fail(f"Invalid LDAP scope: {scope}")
 
-    def add(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.OperationResult]:
+    def add(self, entry: m.Ldif.Entry) -> p.Result[p.Ldap.OperationResult]:
         """Add LDAP entry via railway: connection → attrs conversion → execute_add.
 
         Returns:
@@ -119,7 +119,7 @@ class FlextLdapLdap3Adapter(s[bool]):
             ),
         )
 
-    def connect(self, settings: p.Ldap.ConnectionConfig) -> p.Result[bool]:
+    def connect(self, settings: m.Ldap.ConnectionConfig) -> p.Result[bool]:
         """Establish ldap3 server+connection, run STARTTLS, verify bind.
 
         Returns:
@@ -203,7 +203,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def search(
         self,
-        search_options: p.Ldap.SearchOptions,
+        search_options: m.Ldap.SearchOptions,
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
     ) -> p.Result[p.Ldap.SearchResult]:
         """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``.
@@ -254,7 +254,7 @@ class FlextLdapLdap3Adapter(s[bool]):
 
     def _create_connection(
         self,
-        settings: p.Ldap.ConnectionConfig,
+        settings: m.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
         """Create and store the ldap3 server and connection pair.
 

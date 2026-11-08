@@ -15,7 +15,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from tests import c, ldap, m, p, u
+from tests import c, ldap, m, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -32,7 +32,7 @@ class TestsFlextLdapConnection:
         ldap.disconnect()
 
     @staticmethod
-    def _invalid_config() -> p.Ldap.ConnectionConfig:
+    def _invalid_config() -> m.Ldap.ConnectionConfig:
         """Build a typed config pointing at an unreachable host.
 
         Returns:

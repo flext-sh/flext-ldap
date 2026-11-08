@@ -49,7 +49,7 @@ class TestsFlextLdapOperations:
             return self._queued_results.pop(0)
 
     @staticmethod
-    def _entry(dn: str) -> p.Ldif.Entry:
+    def _entry(dn: str) -> m.Ldif.Entry:
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes(attributes={}, attribute_metadata={}),

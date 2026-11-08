@@ -20,7 +20,7 @@ from tests import c, ldap, m, p, t, tm, u
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
 
 
-def _ou_entry(dn: str, ou: str) -> p.Ldif.Entry:
+def _ou_entry(dn: str, ou: str) -> m.Ldif.Entry:
     """Build an organizationalUnit entry for the real directory.
 
     Returns:
@@ -41,7 +41,7 @@ def _ou_entry(dn: str, ou: str) -> p.Ldif.Entry:
     )
 
 
-def _user_entry(dn: str, identifier: str, *, cn: str) -> p.Ldif.Entry:
+def _user_entry(dn: str, identifier: str, *, cn: str) -> m.Ldif.Entry:
     """Build an inetOrgPerson entry for the real directory.
 
     Returns:

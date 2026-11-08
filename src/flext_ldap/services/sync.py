@@ -151,7 +151,7 @@ class FlextLdapSync(FlextLdapOperations):
         """
         sync_config = settings or m.Ldap.SyncPhaseConfig()
         start_time = u.now()
-        phase_results: MutableMapping[str, p.Ldap.PhaseSyncResult] = {}
+        phase_results: MutableMapping[str, m.Ldap.PhaseSyncResult] = {}
         overall_success = True
         for phase_name, phase_file in phase_files.items():
             if not phase_file.exists():

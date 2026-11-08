@@ -34,7 +34,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[p.Ldap.SearchResult]):
 
     def connect(
         self,
-        connection_config: p.Ldap.ConnectionConfig,
+        connection_config: m.Ldap.ConnectionConfig,
         *,
         auto_retry: bool = False,
         max_retries: int = c.Ldap.DEFAULT_MAX_RETRIES,
@@ -58,11 +58,7 @@ class FlextLdapConnection(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         """
         _ = kwargs
         adapter = self._ensure_adapter()
-        concrete_config = (
-            connection_config
-            if isinstance(connection_config, m.Ldap.ConnectionConfig)
-            else m.Ldap.ConnectionConfig.model_validate(connection_config)
-        )
+        concrete_config = connection_config
 
         def connect_once() -> p.Result[bool]:
             """Attempt a single adapter connection without retry.

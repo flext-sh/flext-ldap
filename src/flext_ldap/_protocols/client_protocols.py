@@ -16,7 +16,8 @@ from flext_ldap._protocols import FlextLdapProtocolsService
 if TYPE_CHECKING:
     import types
 
-    from flext_ldap import p, t
+    from flext_ldap import m, p, t
+    from flext_ldap._protocols.ldap import FlextLdapProtocolsLdap
 
 
 class FlextLdapProtocolsClient:
@@ -39,7 +40,7 @@ class FlextLdapProtocolsClient:
         def add(
             self,
             entry: p.Ldif.Entry,
-        ) -> p.Result[p.Ldap.OperationResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.OperationResult]:
             """Add LDAP entry.
 
             Args:
@@ -59,7 +60,7 @@ class FlextLdapProtocolsClient:
             retry_on_errors: Sequence[str] | None = None,
             max_retries: int = 1,
             stop_on_error: bool = False,
-        ) -> p.Result[p.Ldap.LdapBatchStats]:
+        ) -> p.Result[FlextLdapProtocolsLdap.LdapBatchStats]:
             """Upsert multiple entries and report canonical batch statistics.
 
             Args:
@@ -79,7 +80,7 @@ class FlextLdapProtocolsClient:
         def delete_subtree(
             self,
             dn: str | p.Ldif.DN,
-        ) -> p.Result[p.Ldap.SubtreeDeleteResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.SubtreeDeleteResult]:
             """Delete an entry and its descendants, deepest-first.
 
             Args:
@@ -95,7 +96,7 @@ class FlextLdapProtocolsClient:
         def plan_upsert(
             self,
             entries: Sequence[p.Ldif.Entry],
-        ) -> p.Result[p.Ldap.UpsertPlan]:
+        ) -> p.Result[FlextLdapProtocolsLdap.UpsertPlan]:
             """Classify entries for upsert without writing (dry plan).
 
             Args:
@@ -112,7 +113,7 @@ class FlextLdapProtocolsClient:
             dn: str,
             *,
             attributes: Sequence[str] | None = None,
-        ) -> p.Result[p.Ldap.SearchResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.SearchResult]:
             """Read one entry by DN; an absent entry is an empty result.
 
             Args:
@@ -127,7 +128,7 @@ class FlextLdapProtocolsClient:
 
         def connect(
             self,
-            connection_config: p.Ldap.ConnectionConfig,
+            connection_config: m.Ldap.ConnectionConfig,
             *,
             auto_retry: bool = False,
             max_retries: int = 1,
@@ -174,7 +175,7 @@ class FlextLdapProtocolsClient:
         def delete(
             self,
             dn: str | p.Ldif.DN,
-        ) -> p.Result[p.Ldap.OperationResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.OperationResult]:
             """Delete LDAP entry.
 
             Args:
@@ -189,7 +190,7 @@ class FlextLdapProtocolsClient:
         def execute(
             self,
             **kwargs: t.Scalar,
-        ) -> p.Result[p.Ldap.SearchResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.SearchResult]:
             """Execute health check or default operation.
 
             Args:
@@ -206,7 +207,7 @@ class FlextLdapProtocolsClient:
             self,
             dn: str | p.Ldif.DN,
             changes: t.Ldap.LdapModifyChanges,
-        ) -> p.Result[p.Ldap.OperationResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.OperationResult]:
             """Modify LDAP entry.
 
             Args:
@@ -221,9 +222,9 @@ class FlextLdapProtocolsClient:
 
         def search(
             self,
-            search_options: p.Ldap.SearchOptions,
+            search_options: FlextLdapProtocolsLdap.SearchOptions,
             server_type: str = "rfc",
-        ) -> p.Result[p.Ldap.SearchResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.SearchResult]:
             """Perform LDAP search operation.
 
             Args:
@@ -257,7 +258,7 @@ class FlextLdapProtocolsClient:
 
         def connect(
             self,
-            settings: p.Ldap.ConnectionConfig,
+            settings: m.Ldap.ConnectionConfig,
         ) -> p.Result[bool]:
             """Establish the ldap3 server/connection pair and verify bind.
 
@@ -277,7 +278,7 @@ class FlextLdapProtocolsClient:
         @staticmethod
         def add(
             entry: p.Ldif.Entry,
-        ) -> p.Result[p.Ldap.OperationResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.OperationResult]:
             """Add LDAP entry, returning the operation result.
 
             Args:
@@ -292,7 +293,7 @@ class FlextLdapProtocolsClient:
         @staticmethod
         def delete(
             dn: str | p.Ldif.DN,
-        ) -> p.Result[p.Ldap.OperationResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.OperationResult]:
             """Delete LDAP entry, returning the operation result.
 
             Args:
@@ -308,7 +309,7 @@ class FlextLdapProtocolsClient:
         def modify(
             dn: str | p.Ldif.DN,
             changes: t.Ldap.OperationChanges,
-        ) -> p.Result[p.Ldap.OperationResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.OperationResult]:
             """Modify LDAP entry, returning the operation result.
 
             Args:
@@ -323,9 +324,9 @@ class FlextLdapProtocolsClient:
 
         @staticmethod
         def search(
-            search_options: p.Ldap.SearchOptions,
+            search_options: FlextLdapProtocolsLdap.SearchOptions,
             server_type: str = "rfc",
-        ) -> p.Result[p.Ldap.SearchResult]:
+        ) -> p.Result[FlextLdapProtocolsLdap.SearchResult]:
             """Perform LDAP search, returning the search result.
 
             Args:
