@@ -13,7 +13,7 @@ from flext_ldif import FlextLdifProtocols
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_ldap import m, p, t
+    from flext_ldap import p, t
     from flext_ldap._protocols import FlextLdapProtocolsLdap
 
 
@@ -41,7 +41,7 @@ class FlextLdapProtocolsService:
 
         @staticmethod
         def connect(
-            connection_config: m.Ldap.ConnectionConfig,
+            connection_config: FlextLdapProtocolsLdap.ConnectionConfig,
             *,
             auto_retry: bool = False,
             max_retries: int = 3,
@@ -122,7 +122,7 @@ class FlextLdapProtocolsService:
 
         def add(
             self,
-            entry: m.Ldif.Entry,
+            entry: FlextLdifProtocols.Ldif.Entry,
         ) -> FlextLdifProtocols.Result[p.Ldap.OperationResult]:
             """Add an LDAP entry, returning the operation result.
 
@@ -169,14 +169,12 @@ class FlextLdapProtocolsService:
 
         def search(
             self,
-            search_options: m.Ldap.SearchOptions,
-            server_type: str = "rfc",
+            search_options: FlextLdapProtocolsLdap.SearchOptions,
         ) -> FlextLdifProtocols.Result[p.Ldap.SearchResult]:
             """Perform an LDAP search, returning the search result.
 
             Args:
                 search_options: Search configuration (base, filter, scope).
-                server_type: LDAP server type for parsing (default: rfc).
 
             Returns:
                 Result containing SearchResult with Entry models.

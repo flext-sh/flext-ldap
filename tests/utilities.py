@@ -70,7 +70,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
             @staticmethod
             def create_connection_config(
                 ldap_container: Mapping[str, t.Scalar],
-            ) -> m.Ldap.ConnectionConfig:
+            ) -> p.Ldap.ConnectionConfig:
                 """Build a typed connection settings from container metadata.
 
                 Returns:
@@ -111,7 +111,7 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 *,
                 ca_file_var: str,
                 server_name_var: str | None,
-            ) -> m.Ldap.ConnectionConfig:
+            ) -> p.Ldap.ConnectionConfig:
                 """Build an LDAPS config from the local test environment.
 
                 The endpoint comes from ``c.Ldap.Tests.TLS_URL_VAR``; the CA bundle

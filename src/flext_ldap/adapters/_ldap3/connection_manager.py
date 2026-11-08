@@ -11,7 +11,6 @@ from ldap3 import Connection, Server
 
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
 from flext_ldap.constants import c
-from flext_ldap.models import m
 from flext_ldap.protocols import p
 from flext_ldap.utilities import u
 
@@ -22,7 +21,7 @@ class FlextLdapLdap3ConnectionManager:
     @staticmethod
     def create_connection(
         server: p.Ldif.Ldap3Server,
-        settings: m.Ldap.ConnectionConfig,
+        settings: p.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3Connection:
         """Create ldap3 p.Ldap.Ldap3Connection t.JsonValue.
 
@@ -63,7 +62,7 @@ class FlextLdapLdap3ConnectionManager:
         )
 
     @staticmethod
-    def create_server(settings: m.Ldap.ConnectionConfig) -> p.Ldif.Ldap3Server:
+    def create_server(settings: p.Ldap.ConnectionConfig) -> p.Ldif.Ldap3Server:
         """Create the ldap3 Server for ``settings``.
 
         Business Rules:
@@ -86,7 +85,7 @@ class FlextLdapLdap3ConnectionManager:
     @staticmethod
     def handle_tls(
         connection: p.Ldap.Ldap3Connection,
-        settings: m.Ldap.ConnectionConfig,
+        settings: p.Ldap.ConnectionConfig,
     ) -> p.Result[bool]:
         """Handle STARTTLS if requested.
 

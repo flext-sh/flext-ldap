@@ -249,7 +249,7 @@ class FlextLdapServicesUpsertHandler:
             r with ADDED, MODIFIED or SKIPPED.
 
         """
-        entry_for_add = m.Ldif.Entry.model_validate(u.Ldif.as_entry(entry))
+        entry_for_add = u.Ldif.as_entry(entry)
         if entry_for_add.dn is None or not entry_for_add.dn.value:
             return r[p.Ldap.LdapOperationResult].fail("Upsert entry missing DN")
         found = self._ops.find_entry(entry_for_add.dn.value)

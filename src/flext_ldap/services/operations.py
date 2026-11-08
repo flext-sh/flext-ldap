@@ -171,7 +171,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             )
         return found
 
-    def add(self, entry: m.Ldif.Entry) -> p.Result[p.Ldap.OperationResult]:
+    def add(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.OperationResult]:
         """Add an LDAP entry using the active adapter connection.
 
         Business Rules:
@@ -197,7 +197,8 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             r containing OperationResult with success status and entries_affected=1
 
         """
-        entry_for_adapter: m.Ldif.Entry = entry
+        entry_for_adapter: p.Ldif.Entry
+        entry_for_adapter = m.Ldif.Entry.model_validate(entry)
         metadata = entry_for_adapter.metadata
         current_server_raw = (
             metadata.target_server_type
@@ -325,7 +326,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         return r[p.Ldap.LdapBatchStats].ok(stats)
 
     @staticmethod
-    def _normalized_dn(dn: str | m.Ldif.DN, op_name: str) -> p.Result[p.Ldif.DN]:
+    def _normalized_dn(dn: str | p.Ldif.DN, op_name: str) -> p.Result[p.Ldif.DN]:
         """Normalize a str-or-DN input into a validated DN model.
 
         Returns:
@@ -341,7 +342,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             op_name=op_name,
         )
 
-    def delete(self, dn: str | m.Ldif.DN) -> p.Result[p.Ldap.OperationResult]:
+    def delete(self, dn: str | p.Ldif.DN) -> p.Result[p.Ldap.OperationResult]:
         """Delete an LDAP entry identified by DN.
 
         Business Rules:
@@ -376,7 +377,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
 
     def delete_subtree(
         self,
-        dn: str | m.Ldif.DN,
+        dn: str | p.Ldif.DN,
     ) -> p.Result[p.Ldap.SubtreeDeleteResult]:
         """Delete an entry and everything below it, deepest-first.
 
@@ -459,7 +460,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
 
     def modify(
         self,
-        dn: str | m.Ldif.DN,
+        dn: str | p.Ldif.DN,
         changes: t.Ldap.LdapModifyChanges,
     ) -> p.Result[p.Ldap.OperationResult]:
         """Modify an LDAP entry with the provided change set.
@@ -501,7 +502,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
 
     def search(
         self,
-        search_options: m.Ldap.SearchOptions,
+        search_options: p.Ldap.SearchOptions,
         server_type: str = "rfc",
     ) -> p.Result[p.Ldap.SearchResult]:
         """Perform an LDAP search using normalized search options.
@@ -537,7 +538,12 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             return r[p.Ldap.SearchResult].fail(
                 f"Invalid base DN: {base_dn_result.error}",
             )
-        normalized_options = search_options.model_copy(
+        concrete_options = (
+            search_options
+            if isinstance(search_options, m.Ldap.SearchOptions)
+            else m.Ldap.SearchOptions.model_validate(search_options)
+        )
+        normalized_options = concrete_options.model_copy(
             update={"base_dn": base_dn_result.value},
         )
         effective_server_type = server_type or self._server_type

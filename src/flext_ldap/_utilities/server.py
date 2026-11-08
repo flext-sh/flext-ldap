@@ -12,7 +12,6 @@ import ldap3
 
 from flext_ldap._utilities import FlextLdapUtilitiesBase
 from flext_ldap.constants import c
-from flext_ldap.models import m
 from flext_ldap.protocols import p
 
 
@@ -62,7 +61,7 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
 
     @staticmethod
     def create_connection_server(
-        settings: m.Ldap.ConnectionConfig,
+        settings: p.Ldap.ConnectionConfig,
     ) -> p.Ldap.Ldap3TlsServer:
         """Create the ldap3 Server for a connection configuration.
 
