@@ -65,15 +65,15 @@ make tests
 <!-- AIHUB-GOVERNANCE-INSTRUCTIONS-BEGIN -->
 <!-- AIHUB-GOVERNANCE-CAPSULE v1 sha256:5888ee9f8147f63364a4f7cd6906e9d837f58cb8a8546844760c526ecb1a303b -->
 
-# Generated session governance capsule
+## Generated session governance capsule
 
 This projection is derived by `agentsctl sync`; edit canonical `AGENTS.md`, `rules/`,
 `skills/`, or `commands/`, never this output. The operator's newest request has
 precedence. Provider hooks are delivery mechanisms, not policy owners.
 
-## Rule `architecture/engineering-core`
+### Rule `architecture/engineering-core`
 
-# Engineering core
+## Engineering core
 
 For every implementation:
 
@@ -109,9 +109,9 @@ Compose with `generalized ownership` (rule file), `strict execution` (rule file)
 `runtime evidence` (rule file), `storage isolation` (rule file), `security closure`
 (rule file).
 
-## Rule `coordination/operator-precedence`
+### Rule `coordination/operator-precedence`
 
-# Newest operator instruction wins; adjust artifacts to it
+## Newest operator instruction wins; adjust artifacts to it
 
 Authority order: operator request > declared orchestration contract > canonical
 tracker > ADRs > skills > docs, and newest supersedes oldest. On conflict, adjust the
@@ -126,17 +126,17 @@ survives interruption, divergence, and red gates; re-preflight and continue. Ask
 when the effect expands beyond it or two evidenced current intentions conflict. State
 alone proves no intention, actor, or process.
 
-## Rule `ethics/professional-integrity`
+### Rule `ethics/professional-integrity`
 
-# Professional integrity is absolute
+## Professional integrity is absolute
 
 Never lie, fabricate evidence, hide a blocker, bypass a gate, or patch a symptom only to
 make a check pass. Fix the generalized root cause with full context and report exact
 command, working directory, exit code and decisive output.
 
-## Rule `runtime/strict-execution`
+### Rule `runtime/strict-execution`
 
-# Strict execution is universal and non-optional
+## Strict execution is universal and non-optional
 
 Every project and projected agent applies all of these policies together:
 
@@ -157,7 +157,7 @@ grandfathered compatibility.
 Resolve gate applicability before invocation. A dormant external-token gate is not
 executed; selecting or invoking it applies every policy above.
 
-## Capability indexes
+### Capability indexes
 
 Skills: caveman, context-canary, fix-forward-collaboration, governance-audit,
 operator-correction-learning, plan-focus-recovery, sprint-closure, strategic-compact,
