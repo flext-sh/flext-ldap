@@ -19,7 +19,7 @@ import pytest
 from flext_core import FlextSettings
 from flext_tests import FlextTestsSettings
 
-from tests import c, m, p, tm
+from tests import c, m, tm
 
 pytestmark = pytest.mark.unit
 
@@ -97,7 +97,7 @@ class TestsFlextLdapBase:
     )
     @staticmethod
     def test_unwrap_or_returns_value_or_fallback(
-        service_factory: type[p.Ldap.Tests.SuccessService | m.Ldap.Tests.FailService],
+        service_factory: type[m.Ldap.Tests.SuccessService | m.Ldap.Tests.FailService],
         *,
         fallback: bool,
         expected: bool,
