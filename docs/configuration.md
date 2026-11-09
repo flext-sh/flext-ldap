@@ -23,8 +23,6 @@
   - [Credential Management](#credential-management)
   - [SSL/TLS Configuration](#ssltls-configuration)
 - [Performance Tuning](#performance-tuning)
-  - [Connection Pool Optimization](#connection-pool-optimization)
-  - [Search Optimization](#search-optimization)
 
 <!-- TOC END -->
 
@@ -386,33 +384,25 @@ settings = FlextLdapSettings(
 
 ## Performance Tuning
 
-### Connection Pool Optimization
+Submit the complete phase batch to `plan_upsert(entries, planned_entries=())`.
+The LDAP owner groups reads by parent and requested attributes, bounds their
+filters through `c.Ldap.BATCH_SIZE`, and reuses the same preparation for
+`batch_upsert`. Data comparison remains `u.Ldap.compare_entries`.
 
-```python
-# High-traffic configuration
-settings = FlextLdapSettings(
-    pool_size=20,  # Adjust based on concurrent users
-    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,  # Fast ...
-    receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,  # Operation timeout
-    max_retries=2,  # Retry failed operations
-)
-```
+`UpsertPlan.added_dns`, `modified_dns` and `unchanged_dns` are the source of
+its read-only counters. Carry the final `plan.planned_entries` ADD state into
+a later phase through `planned_entries`; an empty ACI replacement on a future ADD is
+unchanged and does not require a directory lookup.
 
-### Search Optimization
+Writes remain ordered. A repeated DN starts a fresh read wave during apply;
+planning projects only the preceding declared RFC changes. Operational
+attributes are requested explicitly, and ambiguous user/operational projection
+uses native schema USAGE instead of a manual attribute table. LDAP 32 is legal
+absence; other read errors, result limits and write errors remain failures.
 
-```python
-from flext_ldap import FlextLdapEntities
-
-# Optimized search request
-search_request = FlextLdapEntities.SearchRequest(
-    base_dn="ou=users,dc=example,dc=com",
-    filter_str="(&(objectClass=person)(uid=*))",
-    scope="onelevel",  # Use minimal scope needed
-    attributes=["uid", "cn"],  # Request only needed attributes
-    size_limit=100,  # Limit result size
-    time_limit=10,  # Set search timeout
-)
-```
+Upsert and batch upsert have no retry knobs or legacy changetype-in-attributes
+route. Connection/TLS configuration remains independent. No directory data is
+cached on disk.
 
 ---
 

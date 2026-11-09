@@ -115,9 +115,40 @@ class FlextLdapProtocolsLdap:
     class UpsertPlan(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        adds: t.NonNegativeInt
-        modifies: t.NonNegativeInt
-        unchanged: t.NonNegativeInt
+        @property
+        def added_dns(self) -> tuple[str, ...]:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def modified_dns(self) -> tuple[str, ...]:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def unchanged_dns(self) -> tuple[str, ...]:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def planned_entries(self) -> tuple[p.Ldif.Entry, ...]:
+            """Final explicitly declared ADD state carried between phases."""
+            ...
+
+        @property
+        def adds(self) -> int:
+            """Number of entries to add."""
+            ...
+
+        @property
+        def modifies(self) -> int:
+            """Number of entries to modify."""
+            ...
+
+        @property
+        def unchanged(self) -> int:
+            """Number of entries already at their desired state."""
+            ...
 
     @runtime_checkable
     class UpsertResult(FlextLdifProtocols.BaseModel, Protocol):
@@ -152,8 +183,6 @@ class FlextLdapProtocolsLdap:
 
         server_type: str
         progress_callback: t.Ldap.ProgressCallbackUnion | None
-        retry_on_errors: Sequence[str]
-        max_retries: t.RetryCount
         stop_on_error: bool
 
     @runtime_checkable

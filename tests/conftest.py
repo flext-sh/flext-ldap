@@ -6,124 +6,45 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from pathlib import Path
-from typing import Protocol, TypeGuard
+from collections.abc import Generator, Mapping
 
 import pytest
 
 from tests import c, t, u
 
-logger = u.fetch_logger(__name__)
-
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """Only LDAP service consumers require external transport readiness."""
+    """Select the native shared LDAP service only for its fixture consumers."""
     for item in items:
-        if "ldap_container" in getattr(item, "fixturenames", ()):
-            item.add_marker(pytest.mark.docker)
-            item.add_marker(
-                pytest.mark.connectivity(
-                    required_vars=("FLEXT_LDAP_BIND_DN", "FLEXT_LDAP_BIND_PASSWORD"),
-                    host=c.LOCALHOST,
-                    port=c.Ldap.Tests.DOCKER_PORT,
-                ),
-            )
-
-
-class WorkerInputConfig(Protocol):
-    """Provide the test double for worker input config."""
-
-    workerinput: Mapping[str, str]
-
-
-def _has_workerinput(settings: pytest.Config) -> TypeGuard[WorkerInputConfig]:
-    workerinput = getattr(settings, "workerinput", None)
-    return isinstance(workerinput, Mapping)
-
-
-def _get_worker_id(settings: pytest.Config) -> str:
-    default_worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID
-    if not _has_workerinput(settings):
-        return default_worker_id
-    worker_id: str = settings.workerinput.get("workerid", default_worker_id)
-    return worker_id
-
-
-def _docker_compose_path() -> Path:
-    return u.Ldap.Tests.repository_root() / c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-
-
-def _docker_compose_available() -> bool:
-    return _docker_compose_path().exists()
-
-
-def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]) -> None:
-    """Provide pytest runtest makereport."""
-    if call.excinfo is None:
-        return
-    exc_msg = str(call.excinfo.value).lower()
-    exc_type_str = str(call.excinfo.type).lower()
-    combined = exc_type_str + " " + exc_msg
-    is_infra = any(e in combined for e in c.Ldap.Tests.ERROR_INFRASTRUCTURE_PATTERNS)
-    is_transient = any(e in combined for e in c.Ldap.Tests.ERROR_TRANSIENT_PATTERNS)
-    if is_infra and not is_transient:
-        worker_id = _get_worker_id(item.session.config)
-        docker = u.Ldap.Tests.get_docker_control(worker_id)
-        docker.mark_container_dirty(c.Ldap.Tests.DOCKER_CONTAINER_NAME)
-        logger.error(
-            "LDAP INFRASTRUCTURE FAILURE in %s, container marked DIRTY: %s",
-            item.nodeid,
-            exc_msg,
-        )
+        if "ldap_container" in item.fixturenames:
+            item.add_marker(pytest.mark.ldap)
 
 
 @pytest.fixture(scope="session")
-def worker_id(request: pytest.FixtureRequest) -> str:
-    """Provide worker id.
+def ldap_container() -> Generator[Mapping[str, t.Scalar]]:
+    """Connect to the selected native service with its own resolved credentials.
 
-    Returns:
-        The resulting ``str``.
-
-    """
-    return _get_worker_id(request.config)
-
-
-@pytest.fixture(scope="session")
-def ldap_container(worker_id: str) -> Mapping[str, t.Scalar]:
-    """Provide ldap container.
-
-    Returns:
-        The resulting ``Mapping[str, t.Scalar]``.
+    Yields:
+        Published connection facts while holding the shared service lease.
 
     """
-    if not _docker_compose_available():
-        pytest.skip(
-            "LDAP smoke tests require the Docker compose file; skipping because "
-            "it is unavailable in this environment.",
-        )
-    lock = u.Ldap.Tests.FileLock(
-        Path.home() / ".flext" / f"{c.Ldap.Tests.DOCKER_CONTAINER_NAME}.lock",
-    )
-    docker_control = u.Ldap.Tests.get_docker_control(worker_id)
-    with lock:
-        execute_result = docker_control.execute()
-        if execute_result.failure:
-            msg = (
-                f"Container {c.Ldap.Tests.DOCKER_CONTAINER_NAME} startup "
-                f"failed (LDAP server unavailable): {execute_result.error}"
-            )
-            pytest.fail(msg)
-        admin_dn, admin_password = u.Ldap.Tests.get_admin_credentials()
-    with lock:
-        u.Ldap.Tests.ensure_basic_ldap_structure()
-    return {
-        "server_url": f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-        "host": c.LOCALHOST,
-        "bind_dn": admin_dn,
-        "password": admin_password,
-        "base_dn": c.Ldap.Tests.DOCKER_BASE_DN,
-        "port": c.Ldap.Tests.DOCKER_PORT,
-        "use_ssl": False,
-        "worker_id": worker_id,
-    }
+    docker = u.Ldap.Tests.get_docker_control()
+    with docker.lease():
+        info = docker.verify().unwrap()
+        environment = docker.fetch_container_environment(
+            info.name,
+            ("LDAP_BASE_DN", "LDAP_ADMIN_PASSWORD"),
+        ).unwrap()
+        base = environment["LDAP_BASE_DN"].get_secret_value()
+        port = u.Tests.resolve_host_port(
+            info, c.Ldap.Tests.DOCKER_CONTAINER_PORT
+        ).unwrap()
+        yield {
+            "server_url": f"ldap://{c.LOCALHOST}:{port}",
+            "host": c.LOCALHOST,
+            "bind_dn": f"cn=admin,{base}",
+            "password": environment["LDAP_ADMIN_PASSWORD"].get_secret_value(),
+            "base_dn": base,
+            "port": port,
+            "use_ssl": False,
+        }

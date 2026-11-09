@@ -12,6 +12,8 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import e, r
+from ldap3 import Server
+from ldap3.utils.conv import escape_filter_chars
 
 from flext_ldap.adapters import FlextLdapEntryAdapter
 from flext_ldap.adapters._ldap3 import (
@@ -94,6 +96,48 @@ class FlextLdapLdap3Adapter(s[bool]):
             ldap3_value = c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE[scope_enum]
             return r[int].ok(int(ldap3_value))
         return r[int].fail(f"Invalid LDAP scope: {scope}")
+
+    def is_user_attribute(self, attribute: str) -> p.Result[bool]:
+        """Read RFC 4512 USAGE from the SDK schema already loaded at bind.
+
+        Returns:
+            Whether this attribute is returned by `*`, or the missing fact.
+
+        """
+        connected = self._get_connection()
+        if connected.failure:
+            return r[bool].from_failure(connected)
+        server = connected.value.server
+        if not isinstance(server, Server) or server.schema is None:
+            return r[bool].fail("Native LDAP schema metadata is unavailable")
+        definition = server.schema.attribute_types.get(attribute.split(";", 1)[0])
+        if definition is None:
+            return r[bool].fail(
+                f"Native schema has no attribute definition: {attribute}"
+            )
+        usage = definition.usage
+        if usage is None or usage == "USER_APPLICATION":
+            return r[bool].ok(value=True)
+        if usage in {"DIRECTORY_OPERATION", "DISTRIBUTED_OPERATION", "DSA_OPERATION"}:
+            return r[bool].ok(value=False)
+        return r[bool].fail(f"Unknown native attribute USAGE: {usage}")
+
+    @staticmethod
+    def rdn_filter(dns: t.StrSequence) -> p.Result[str]:
+        """Build an RFC 4515 OR of native decoded RDN conjunctions.
+
+        Returns:
+            The filter or the first invalid DN/RDN.
+
+        """
+        terms: list[str] = []
+        for dn in dns:
+            rdn = u.Ldif.parse_rdn(u.Ldif.split(dn)[0])
+            if rdn.failure:
+                return r[str].from_failure(rdn)
+            pairs = [f"({a}={escape_filter_chars(v)})" for a, v in rdn.value]
+            terms.append(pairs[0] if len(pairs) == 1 else "(&" + "".join(pairs) + ")")
+        return r[str].ok("(|" + "".join(terms) + ")")
 
     def add(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.OperationResult]:
         """Add LDAP entry via railway: connection → attrs conversion → execute_add.

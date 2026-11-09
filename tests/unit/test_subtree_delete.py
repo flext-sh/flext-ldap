@@ -12,7 +12,7 @@ from typing import override
 import pytest
 
 from flext_ldap.services import FlextLdapOperations
-from tests import c, m, p, r, t, u
+from tests import c, m, p, r, u
 
 pytestmark = pytest.mark.unit
 
@@ -230,30 +230,27 @@ class TestsFlextLdapPlanUpsert:
 
     @staticmethod
     def _modify_entry(dn: str, *, additions: Mapping[str, str]) -> p.Ldif.Entry:
-        attributes: t.MutableStrSequenceMapping = {
-            c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.ChangeType.MODIFY.value],
-            c.Ldif.ChangeOperation.ADD: list(additions),
-        }
-        attributes.update({name: [value] for name, value in additions.items()})
         return m.Ldif.Entry(
             dn=m.Ldif.DN(value=dn),
-            attributes=m.Ldif.Attributes(attributes=attributes, attribute_metadata={}),
-            domain_events=[],
+            attributes=m.Ldif.Attributes(attributes={}),
+            changetype=c.Ldif.ChangeType.MODIFY,
+            change_operations=[
+                m.Ldif.ChangeOperation(
+                    operation=c.Ldif.ChangeOperation.ADD,
+                    attribute=name,
+                    values=[m.Ldif.ChangeOperationValue(value=value)],
+                )
+                for name, value in additions.items()
+            ],
         )
 
-    def test_plan_modify_entry_counts_without_reading_the_directory(self) -> None:
-        """A modify-add entry plans as a modify with no read, like the write path.
-
-        The operations service is not connected, so any directory read would
-        fail the plan: success proves the modify entry was routed without one.
-        """
+    def test_plan_modify_requires_directory_or_declared_state(self) -> None:
+        """A modify cannot claim a write without observing its current state."""
         operations = FlextLdapOperations()
         plan_result = operations.plan_upsert([
             self._modify_entry(self.EXISTS_DN, additions={"description": "added"}),
         ])
-        u.Ldap.Tests.ok(plan_result)
-        plan = plan_result.value
-        u.Ldap.Tests.that((plan.adds, plan.modifies, plan.unchanged), eq=(0, 1, 0))
+        u.Ldap.Tests.that(plan_result.failure, eq=True)
 
     def test_plan_modify_without_additions_fails_like_the_write_path(self) -> None:
         """A modify entry without add operations fails the plan and the upsert alike."""

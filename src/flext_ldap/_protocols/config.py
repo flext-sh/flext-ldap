@@ -116,7 +116,10 @@ class FlextLdapProtocolsConfig:
     class Root(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        Ldap: FlextLdapProtocolsConfig.Ldap
+        @property
+        def Ldap(self) -> FlextLdapProtocolsConfig.Ldap:
+            """LDAP business-rule config namespace."""
+            ...
 
 
 __all__: list[str] = [

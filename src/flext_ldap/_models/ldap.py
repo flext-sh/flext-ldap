@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_ldif import m
 
@@ -250,24 +250,39 @@ class FlextLdapModelsFlextLdap:
             ] = None
 
         class UpsertPlan(m.BaseModel):
-            """Read-only classification of planned upsert operations (zero writes)."""
+            """Ordered operation DNs are the single source of plan counts."""
 
-            adds: Annotated[
-                t.NonNegativeInt,
-                m.Field(
-                    description="Entries absent from the directory (would be added)",
-                ),
-            ] = 0
-            modifies: Annotated[
-                t.NonNegativeInt,
-                m.Field(
-                    description="Entries present with differences (would be modified)",
-                ),
-            ] = 0
-            unchanged: Annotated[
-                t.NonNegativeInt,
-                m.Field(description="Entries already matching the desired state"),
-            ] = 0
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+                frozen=True, extra="forbid"
+            )
+
+            added_dns: tuple[str, ...] = m.Field(default=(), repr=False)
+            modified_dns: tuple[str, ...] = m.Field(default=(), repr=False)
+            unchanged_dns: tuple[str, ...] = m.Field(default=(), repr=False)
+            planned_entries: tuple[t.Port[p.Ldif.Entry], ...] = m.Field(
+                default=(),
+                exclude=True,
+                repr=False,
+                description="Final declared ADD state carried between phases.",
+            )
+
+            @m.computed_field
+            @property
+            def adds(self) -> int:
+                """Number of entries to add."""
+                return len(self.added_dns)
+
+            @m.computed_field
+            @property
+            def modifies(self) -> int:
+                """Number of entries to modify."""
+                return len(self.modified_dns)
+
+            @m.computed_field
+            @property
+            def unchanged(self) -> int:
+                """Number of entries already at their desired state."""
+                return len(self.unchanged_dns)
 
         class UpsertResult(m.BaseModel):
             """Result of a single upsert operation."""
@@ -321,8 +336,6 @@ class FlextLdapModelsFlextLdap:
             )
             server_type: str = c.Ldap.DEFAULT_TYPE
             progress_callback: t.Ldap.ProgressCallbackUnion | None = None
-            retry_on_errors: Sequence[str] = m.Field(default_factory=list[str])
-            max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
             stop_on_error: bool = False
 
         class ConversionMetadata(m.BaseModel):
