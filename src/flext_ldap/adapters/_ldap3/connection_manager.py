@@ -52,7 +52,7 @@ class FlextLdapLdap3ConnectionManager:
             msg = f"Expected ldap3.Server, got {type(server).__name__}"
             raise TypeError(msg)
         # Preserve complete attribute descriptions, including language options.
-        set_config_parameter("CASE_INSENSITIVE_ATTRIBUTE_NAMES", False)
+        set_config_parameter("CASE_INSENSITIVE_ATTRIBUTE_NAMES", value=False)
         return Connection(
             server=server,
             user=settings.bind_dn,

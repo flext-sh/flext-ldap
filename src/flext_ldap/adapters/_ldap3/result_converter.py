@@ -45,6 +45,9 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
             The resulting ``Sequence[tuple[str, Mapping[str,
                 Sequence[str]]]]``.
 
+        Raises:
+            TypeError: If a search entry lacks a DN or attribute mapping.
+
         """
         results: MutableSequence[tuple[str, Mapping[str, Sequence[str]]]] = []
         for response in connection.response:
