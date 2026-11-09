@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
     from flext_ldap import p, t
     from flext_ldap._protocols import FlextLdapProtocolsLdap
@@ -223,6 +223,11 @@ class FlextLdapProtocolsService:
         additional members (``server``, ``result``, ``start_tls``) required
         by the connection manager and operation executor adapters.
         """
+
+        @property
+        def response(self) -> Sequence[t.Ldap.Ldap3SearchResponse]:
+            """Native response records of the completed search."""
+            ...
 
         @property
         def server(self) -> FlextLdifProtocols.Ldif.Ldap3Server:

@@ -19,6 +19,9 @@ class FlextLdapTypesLdap:
     type Ldap3AttributeValues = Sequence[Ldap3AttributeScalar]
     type Ldap3AttributeDict = Mapping[str, Ldap3AttributeValues]
     type Ldap3AttributeValue = Ldap3AttributeScalar | Ldap3AttributeValues
+    type Ldap3SearchResponse = Mapping[
+        str, FlextLdifTypes.JsonValue | bytes | Ldap3AttributeDict
+    ]
     type Ldap3AddAttributeValue = Ldap3AttributeScalar | Sequence[str] | Sequence[bytes]
     type Ldap3AddAttributes = Mapping[str, Ldap3AddAttributeValue]
     type Ldap3ModifyChangeValue = tuple[

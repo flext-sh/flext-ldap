@@ -62,13 +62,13 @@ class FlextLdapUtilitiesComparison(FlextLdapUtilitiesNormalization):
 
     @staticmethod
     def normalize_value_set(values: Sequence[str]) -> set[str]:
-        """Normalize LDAP attribute values for stable comparison.
+        """Preserve exact value identity, including case-sensitive credentials.
 
         Returns:
             The resulting ``set[str]``.
 
         """
-        return {value.lower() for value in values if value}
+        return set(values)
 
     @classmethod
     def process_new_attributes(

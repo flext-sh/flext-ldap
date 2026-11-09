@@ -22,7 +22,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
     """LDAP3 result conversion (SRP).
 
     Public API:
-        - ``convert_ldap3_results`` — translate ``connection.entries`` to parser
+        - ``convert_ldap3_results`` — translate native response records to parser
           ``(dn, attrs)`` tuples.
         - ``convert_parsed_entries`` — translate ``ParseResponse`` from
           ``FlextLdifParser`` into ``r[Sequence[p.Ldif.Entry]]``.
@@ -36,7 +36,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
     def convert_ldap3_results(
         connection: p.Ldap.Ldap3Connection,
     ) -> Sequence[tuple[str, Mapping[str, Sequence[str]]]]:
-        """Convert ``connection.entries`` to parser-compatible (dn, attrs) tuples.
+        """Convert native response records without the lossy Entry abstraction.
 
         None values become empty lists; single values become ``[value]``;
         multi-values stay as lists. Type information is normalized to strings.
@@ -47,12 +47,14 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
 
         """
         results: MutableSequence[tuple[str, Mapping[str, Sequence[str]]]] = []
-        entries: Sequence[p.Ldif.Ldap3Entry] = getattr(connection, "entries", [])
-        for entry in entries:
-            dn = entry.entry_dn or ""
-            attrs_dict = FlextLdapLdap3ResultConverter.extract_attrs_dict(
-                entry.entry_attributes_as_dict,
-            )
+        for response in connection.response:
+            if response.get("type") != "searchResEntry":
+                continue
+            dn, attributes = response.get("dn"), response.get("attributes")
+            if not isinstance(dn, str) or not isinstance(attributes, Mapping):
+                msg = "LDAP search entry requires a DN and attribute mapping"
+                raise TypeError(msg)
+            attrs_dict = FlextLdapLdap3ResultConverter.extract_attrs_dict(attributes)
             results.append((dn, attrs_dict))
         return results
 
