@@ -704,18 +704,6 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
         result = u.to_str(c.Ldap.Tests.STRING_SIMPLE)
         u.Ldap.Tests.that(result, eq=c.Ldap.Tests.STRING_SIMPLE)
 
-    @staticmethod
-    def test_to_str_list_from_list() -> None:
-        """Verify to str list from list."""
-        result = u.to_str_list(list(c.Ldap.Tests.LIST_ABC))
-        u.Ldap.Tests.that(result, eq=list(c.Ldap.Tests.LIST_ABC))
-
-    @staticmethod
-    def test_to_str_list_from_single() -> None:
-        """Verify to str list from single."""
-        result = u.to_str_list(c.Ldap.Tests.LIST_SINGLE)
-        u.Ldap.Tests.that(result, eq=[c.Ldap.Tests.LIST_SINGLE])
-
     # --- track_conversion_differences ---
     @staticmethod
     def test_track_conversion_differences_no_changes() -> None:

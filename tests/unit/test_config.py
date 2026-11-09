@@ -171,11 +171,15 @@ class TestsFlextLdapConfig:
         )
         u.Ldap.Tests.that(dict(schema[c.Ldap.Tests.FIELD_PROPERTIES]), keys=["Ldap"])
 
-    # ── Singleton state sharing (observable contract) ──────────────────
+    # ── Construction isolation (observable contract) ───────────────────
 
     @staticmethod
-    def test_repeated_construction_shares_settings_state() -> None:
-        """Verify repeated construction shares settings state."""
+    def test_repeated_construction_keeps_isolated_state() -> None:
+        """Verify each direct construction keeps its own values.
+
+        Only the global lifecycle (``fetch_global``) publishes a shared
+        singleton; direct construction creates an isolated instance.
+        """
         first = TestsFlextLdapSettings(
             Ldap=_LdapSettings(host=c.Ldap.Tests.CONFIG_FIRST_HOST, port=c.Ldap.PORT),
         )
@@ -186,8 +190,14 @@ class TestsFlextLdapConfig:
             ),
         )
 
-        u.Ldap.Tests.that(first.model_dump(), eq=second.model_dump())
-        u.Ldap.Tests.that(first.Ldap.host, eq=second.Ldap.host)
+        u.Ldap.Tests.that(first.Ldap.host, eq=c.Ldap.Tests.CONFIG_FIRST_HOST)
+        u.Ldap.Tests.that(second.Ldap.host, eq=c.Ldap.Tests.CONFIG_SECOND_HOST)
+        u.Ldap.Tests.that(second.Ldap.port, eq=c.Ldap.Tests.CONFIG_LDAPS_PORT)
+        u.Ldap.Tests.that(
+            TestsFlextLdapSettings.fetch_global(),
+            is_=TestsFlextLdapSettings,
+        )
+        u.Ldap.Tests.that(first is TestsFlextLdapSettings.fetch_global(), eq=False)
 
     # ── Clone semantics ────────────────────────────────────────────────
 

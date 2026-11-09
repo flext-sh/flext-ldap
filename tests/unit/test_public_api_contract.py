@@ -18,14 +18,6 @@ from types import ModuleType
 import pytest
 
 import flext_ldap
-import flext_ldap.api
-import flext_ldap.base
-import flext_ldap.cli
-import flext_ldap.constants
-import flext_ldap.models
-import flext_ldap.protocols
-import flext_ldap.typings
-import flext_ldap.utilities
 from flext_ldap import (
     FlextLdap,
     FlextLdapConstants,
@@ -34,6 +26,14 @@ from flext_ldap import (
     FlextLdapService,
     FlextLdapTypes,
     FlextLdapUtilities,
+    api,
+    base,
+    cli,
+    constants,
+    models,
+    protocols,
+    typings,
+    utilities,
 )
 from tests import c, tm
 
@@ -43,16 +43,17 @@ pytestmark = pytest.mark.unit
 # propagation contract below stays static and typed: every non-package module
 # except dunder metadata (``__init__``, ``__version__``). Packages (``adapters``,
 # ``services``, ``config``, private ``_constants``/``_models``/``_utilities``)
-# are not facade owners.
+# are not facade owners. They are bound by import, never read back as package
+# attributes: the lazy facade keeps only its declared exports in its namespace.
 _DECLARING_MODULES: tuple[ModuleType, ...] = (
-    flext_ldap.api,
-    flext_ldap.base,
-    flext_ldap.cli,
-    flext_ldap.constants,
-    flext_ldap.models,
-    flext_ldap.protocols,
-    flext_ldap.typings,
-    flext_ldap.utilities,
+    api,
+    base,
+    cli,
+    constants,
+    models,
+    protocols,
+    typings,
+    utilities,
 )
 
 # Canonical single-letter alias -> the domain facade it must resolve to.

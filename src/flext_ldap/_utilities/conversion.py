@@ -61,7 +61,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         dn_raw = raw_entry.get("dn")
         dn_values = cls.ldap3_value_to_strings(dn_raw)
         if not dn_values:
-            return r[p.Ldif.Entry].fail("Search entry missing DN")
+            return r[m.Ldif.Entry].fail("Search entry missing DN")
         dn_value = dn_values[0]
         attributes: MutableMapping[str, MutableSequence[str] | str] = {
             key: list(cls.ldap3_value_to_strings(value))
