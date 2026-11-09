@@ -152,6 +152,7 @@ class FlextLdapModelsFlextLdap:
             attributes: Sequence[str] | None = None
             size_limit: t.NonNegativeInt = 0
             time_limit: t.NonNegativeInt = 0
+            controls: t.Ldap.SearchControls | None = None
 
             @classmethod
             def normalized(
@@ -212,6 +213,7 @@ class FlextLdapModelsFlextLdap:
             search_attributes: Sequence[str]
             size_limit: t.NonNegativeInt
             time_limit: t.NonNegativeInt
+            controls: t.Ldap.SearchControls | None = None
 
         class LdapBatchStats(m.BaseModel):
             """Base counters for batch LDAP operations (reused via MRO)."""

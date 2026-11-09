@@ -97,6 +97,25 @@ class FlextLdapLdap3Adapter(s[bool]):
             return r[int].ok(int(ldap3_value))
         return r[int].fail(f"Invalid LDAP scope: {scope}")
 
+    def supports_control(self, oid: str) -> p.Result[bool]:
+        """Read advertised Root DSE controls from the native bind metadata.
+
+        Returns:
+            Whether the control is advertised, or the original capability failure.
+
+        """
+        connected = self._get_connection()
+        if connected.failure:
+            return r[bool].from_failure(connected)
+        server = connected.value.server
+        if not isinstance(server, Server) or server.info is None:
+            return r[bool].fail(
+                "Native LDAP Root DSE capability metadata is unavailable"
+            )
+        return r[bool].ok(
+            any(control[0] == oid for control in server.info.supported_controls)
+        )
+
     def is_user_attribute(self, attribute: str) -> p.Result[bool]:
         """Read RFC 4512 USAGE from the SDK schema already loaded at bind.
 
@@ -272,6 +291,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                             search_attributes=search_options.attributes or [],
                             size_limit=search_options.size_limit,
                             time_limit=search_options.time_limit,
+                            controls=search_options.controls,
                         ),
                         server_type,
                     ),

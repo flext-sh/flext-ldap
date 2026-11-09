@@ -26,6 +26,27 @@ class TestsFlextLdapModelsSearch:
     """
 
     @staticmethod
+    def test_controls_preserve_native_oid_criticality_and_value() -> None:
+        """The public search envelope forwards native control sequences intact."""
+        controls = [(c.Ldap.REAL_ATTRIBUTES_ONLY_CONTROL_OID, True, None)]
+        options = m.Ldap.SearchOptions(
+            base_dn="dc=example,dc=invalid", controls=controls
+        )
+        params = m.Ldap.SearchParams(
+            base_dn=options.base_dn,
+            filter_str=options.filter_str,
+            ldap_scope=c.Ldap.SearchScopeValue.BASE,
+            search_attributes=["*"],
+            size_limit=options.size_limit,
+            time_limit=options.time_limit,
+            controls=options.controls,
+        )
+        u.Ldap.Tests.that(params.controls, eq=controls)
+        u.Ldap.Tests.that(
+            m.Ldap.SearchOptions.base_scope(options.base_dn).controls, eq=None
+        )
+
+    @staticmethod
     def _entry(
         dn: str,
         attributes: Mapping[str, Sequence[str]] | None = None,

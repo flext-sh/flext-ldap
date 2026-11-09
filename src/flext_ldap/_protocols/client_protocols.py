@@ -88,6 +88,10 @@ class FlextLdapProtocolsClient:
             """
             ...
 
+        def supports_control(self, oid: str) -> p.Result[bool]:
+            """Read native advertised Root DSE control capabilities."""
+            ...
+
         def is_user_attribute(self, attribute: str) -> p.Result[bool]:
             """Read the native schema USAGE needed for an ambiguous projection."""
             ...
@@ -271,6 +275,10 @@ class FlextLdapProtocolsClient:
         @property
         def connection(self) -> FlextLdapProtocolsService.Ldap3Connection | None:
             """The active ldap3 connection when one exists."""
+            ...
+
+        def supports_control(self, oid: str) -> p.Result[bool]:
+            """Read native advertised Root DSE control capabilities."""
             ...
 
         def is_user_attribute(self, attribute: str) -> p.Result[bool]:

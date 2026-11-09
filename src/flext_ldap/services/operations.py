@@ -333,6 +333,15 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         subtree_root = dn if isinstance(dn, str) else m.Ldif.DN.model_validate(dn).value
         return self._subtree_delete_handler.run(subtree_root)
 
+    def supports_control(self, oid: str) -> p.Result[bool]:
+        """Read native advertised capabilities through the selected adapter.
+
+        Returns:
+            Whether the server advertises the control, or the original failure.
+
+        """
+        return self._ensure_adapter().supports_control(oid)
+
     def is_user_attribute(self, attribute: str) -> p.Result[bool]:
         """Resolve attribute projection semantics through the selected adapter.
 

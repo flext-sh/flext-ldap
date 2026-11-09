@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from flext_ldap import c, m, p, r, u
+from flext_ldap import c, m, p, r, t, u
 
 
 @dataclass(frozen=True, repr=False)
@@ -36,12 +36,22 @@ class FlextLdapServicesUpsertReader:
             BASE requests for roots/singletons or one ONELEVEL request.
 
         """
+        controls: t.Ldap.SearchControls | None = None
+        if c.Ldap.AttributeName.ALL_ATTRIBUTES in attributes:
+            supported = self._ops.supports_control(
+                c.Ldap.REAL_ATTRIBUTES_ONLY_CONTROL_OID
+            )
+            if supported.failure:
+                return r[list[p.Ldap.SearchOptions]].from_failure(supported)
+            if supported.value:
+                controls = ((c.Ldap.REAL_ATTRIBUTES_ONLY_CONTROL_OID, True, None),)
         if not parent or len(group) == 1:
             return r[list[p.Ldap.SearchOptions]].ok([
                 m.Ldap.SearchOptions(
                     base_dn=e.dn_str,
                     scope=c.Ldap.SearchScope.BASE,
                     attributes=list(attributes),
+                    controls=controls,
                 )
                 for e in group
             ])
@@ -54,6 +64,7 @@ class FlextLdapServicesUpsertReader:
                 scope=c.Ldap.SearchScope.ONELEVEL,
                 filter_str=filter_str.value,
                 attributes=list(attributes),
+                controls=controls,
             )
         ])
 

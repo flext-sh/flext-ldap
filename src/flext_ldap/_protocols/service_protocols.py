@@ -86,6 +86,10 @@ class FlextLdapProtocolsService:
         operations service substitutable (DIP) without a concrete import.
         """
 
+        def supports_control(self, oid: str) -> p.Result[bool]:
+            """Read the native Root DSE advertised control capability."""
+            ...
+
         def is_user_attribute(self, attribute: str) -> p.Result[bool]:
             """Resolve native schema usage for a declared comparison effect."""
             ...

@@ -59,6 +59,7 @@ class FlextLdapProtocolsLdap:
         attributes: Sequence[str] | None
         size_limit: t.NonNegativeInt
         time_limit: t.NonNegativeInt
+        controls: t.Ldap.SearchControls | None
 
     @runtime_checkable
     class SearchParams(FlextLdifProtocols.BaseModel, Protocol):
@@ -91,6 +92,11 @@ class FlextLdapProtocolsLdap:
 
         @property
         def time_limit(self) -> t.NonNegativeInt:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def controls(self) -> t.Ldap.SearchControls | None:
             """Structural member projected from the owning model."""
             ...
 

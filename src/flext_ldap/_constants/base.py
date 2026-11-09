@@ -141,6 +141,8 @@ class FlextLdapConstantsBase:
         NO_INFO = "NO_INFO"
         SCHEMA = "SCHEMA"
 
+    REAL_ATTRIBUTES_ONLY_CONTROL_OID: Final[str] = "2.16.840.1.113730.3.4.17"
+
     @unique
     class TlsValidation(StrEnum):
         """Peer-certificate validation modes for LDAPS and STARTTLS.

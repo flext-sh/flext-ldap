@@ -13,6 +13,9 @@ from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
 
 
 class FlextLdapTypesLdap:
+    type SearchControl = tuple[str, bool, bytes | None]
+    type SearchControls = Sequence[SearchControl]
+
     LDAPException: type[Exception] = _Ldap3LDAPException
 
     type Ldap3AttributeScalar = str | bytes
