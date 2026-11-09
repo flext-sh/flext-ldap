@@ -98,7 +98,7 @@ class FlextLdapLdap3Adapter(s[bool]):
         return r[int].fail(f"Invalid LDAP scope: {scope}")
 
     def supports_control(self, oid: str) -> p.Result[bool]:
-        """Read advertised Root DSE controls from the native bind metadata.
+        """Read advertised controls directly from the Root DSE.
 
         Returns:
             Whether the control is advertised, or the original capability failure.
@@ -107,14 +107,35 @@ class FlextLdapLdap3Adapter(s[bool]):
         connected = self._get_connection()
         if connected.failure:
             return r[bool].from_failure(connected)
-        server = connected.value.server
-        if not isinstance(server, Server) or server.info is None:
-            return r[bool].fail(
-                "Native LDAP Root DSE capability metadata is unavailable"
+        connection = connected.value
+        try:
+            ok = FlextLdapLdap3Wrappers.search(
+                connection,
+                m.Ldap.SearchParams(
+                    base_dn="",
+                    filter_str=c.Ldap.ALL_ENTRIES_FILTER,
+                    ldap_scope=c.Ldap.SearchScopeValue.BASE,
+                    search_attributes=["supportedControl"],
+                    size_limit=0,
+                    time_limit=0,
+                ),
             )
-        return r[bool].ok(
-            any(control[0] == oid for control in server.info.supported_controls)
+        except c.EXC_BROAD_IO_TYPE as exc:
+            return r[bool].fail_op("Root DSE controls search", exc)
+        if not ok:
+            return r[bool].fail(f"Root DSE controls search failed: {connection.result}")
+        entries = self.ResultConverter.convert_ldap3_results(connection)
+        if len(entries) != 1:
+            return r[bool].fail("Root DSE controls search did not return one entry")
+        controls = next(
+            (
+                values
+                for name, values in entries[0][1].items()
+                if name.lower() == "supportedcontrol"
+            ),
+            (),
         )
+        return r[bool].ok(oid in controls)
 
     def is_user_attribute(self, attribute: str) -> p.Result[bool]:
         """Read RFC 4512 USAGE from the SDK schema already loaded at bind.

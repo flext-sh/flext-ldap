@@ -19,21 +19,20 @@ class _Observed:
 
 
 class FlextLdapServicesUpsertReader:
-    """Read requested DNs by parent and projection, never a subtree dump."""
+    """Read requested DNs by projection, never a subtree dump."""
 
     def __init__(self, operations: p.Ldap.LdapOperations) -> None:
         self._ops = operations
 
     def _requests(
         self,
-        parent: str,
         group: Sequence[p.Ldif.Entry],
         attributes: tuple[str, ...],
     ) -> p.Result[list[p.Ldap.SearchOptions]]:
-        """Choose the protocol scope; no retry route exists.
+        """Read exact DNs without assuming RDN attributes are searchable.
 
         Returns:
-            BASE requests for roots/singletons or one ONELEVEL request.
+            BASE requests for the requested entries.
 
         """
         controls: t.Ldap.SearchControls | None = None
@@ -45,27 +44,14 @@ class FlextLdapServicesUpsertReader:
                 return r[list[p.Ldap.SearchOptions]].from_failure(supported)
             if supported.value:
                 controls = ((c.Ldap.REAL_ATTRIBUTES_ONLY_CONTROL_OID, True, None),)
-        if not parent or len(group) == 1:
-            return r[list[p.Ldap.SearchOptions]].ok([
-                m.Ldap.SearchOptions(
-                    base_dn=e.dn_str,
-                    scope=c.Ldap.SearchScope.BASE,
-                    attributes=list(attributes),
-                    controls=controls,
-                )
-                for e in group
-            ])
-        filter_str = self._ops.rdn_filter([entry.dn_str for entry in group])
-        if filter_str.failure:
-            return r[list[p.Ldap.SearchOptions]].from_failure(filter_str)
         return r[list[p.Ldap.SearchOptions]].ok([
             m.Ldap.SearchOptions(
-                base_dn=parent,
-                scope=c.Ldap.SearchScope.ONELEVEL,
-                filter_str=filter_str.value,
+                base_dn=e.dn_str,
+                scope=c.Ldap.SearchScope.BASE,
                 attributes=list(attributes),
                 controls=controls,
             )
+            for e in group
         ])
 
     def _read_queries(
@@ -110,17 +96,13 @@ class FlextLdapServicesUpsertReader:
             Actual requested entries and named projections, or the read failure.
 
         """
-        groups: dict[tuple[str, tuple[str, ...]], list[p.Ldif.Entry]] = {}
-        parents: dict[str, str] = {}
+        groups: dict[tuple[str, ...], list[p.Ldif.Entry]] = {}
         observed = _Observed({}, {})
         for entry in entries:
             key = keys[entry.dn_str]
             if key in planned:
                 observed.entries[key] = planned[key]
                 continue
-            parent = ",".join(u.Ldif.split(entry.dn_str)[1:])
-            parent_key = ",".join(u.Ldif.split(key)[1:])
-            parents[parent_key] = parent
             attributes = (
                 tuple(sorted({op.attribute for op in entry.change_operations}))
                 if entry.changetype == c.Ldif.ChangeType.MODIFY
@@ -131,9 +113,9 @@ class FlextLdapServicesUpsertReader:
                     })
                 )
             )
-            groups.setdefault((parent_key, attributes), []).append(entry)
-        for (parent_key, attributes), group in groups.items():
-            queries = self._requests(parents[parent_key], group, attributes)
+            groups.setdefault(attributes, []).append(entry)
+        for attributes, group in groups.items():
+            queries = self._requests(group, attributes)
             if queries.failure:
                 return r[_Observed].from_failure(queries)
             for entry in group:
