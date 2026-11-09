@@ -509,6 +509,23 @@ classifies an unmeasured diagnostic as a false positive.
 
 ## Source-derived protocol contracts
 
+Protocol family placement and maintenance follow
+ADR-018:
+model mirrors stay beneath `_protocols/`, internal service contracts and DI ports
+under `_protocols/_services/`, and external integration capabilities under
+`_protocols/_external/`. Public `p` names remain stable. Edit the source model or
+service for generated contracts; edit the owning capability for authored ports.
+Use `make mod` for relocation and consumer rewiring and `make gen` for projection
+and automatic retirement of generated `model_conformance.py` files. No witness
+module is a prerequisite for generation or publication.
+The census records placement and the global migration intent before modification;
+the ordered relocation, rewiring and projection phases share that intent. External
+projects reuse the stored migration through the same native refactoring owner,
+resolving and validating their own sources rather than replaying workspace edits.
+Each admitted cohort retains an immutable artifact in the configured
+`config/rewires` directory; `refactor mod --rename-plan` consumes that intent through
+the existing command boundary.
+
 Use canonical source-derived `p.*` contracts decorated with `@runtime_checkable`
 for consumers. ADR-018's simplified-field amendment retains concrete model types
 at persisted field boundaries; callbacks and service contracts consume protocols.

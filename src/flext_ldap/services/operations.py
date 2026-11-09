@@ -365,6 +365,55 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         """
         return self._upsert_handler.plan(entries, planned_entries=planned_entries)
 
+    def serialize_upsert_operations(
+        self,
+        operations: Sequence[p.Ldap.UpsertOperation],
+    ) -> p.Result[list[t.JsonDict]]:
+        """Serialize private plan snapshots through the native RFC LDIF writer.
+
+        Entry and comparison observations become LDIF records; operation codes,
+        modification values and projection scope retain their native JSON shape.
+        Entity audit metadata is outside the LDAP wire record. This snapshot is
+        review evidence, not an executable plan or a recoverable backup.
+
+        Returns:
+            Ordered JSON snapshots, or the original LDIF writer failure.
+
+        """
+        options = m.Ldif.WriteFormatOptions(
+            sort_attributes=True,
+            respect_attribute_order=False,
+            include_timestamps=False,
+            include_version_header=False,
+            write_metadata_as_comments=False,
+            restore_original_format=False,
+        )
+        snapshots: list[t.JsonDict] = []
+        for prepared in operations:
+            entry = self._ldif.write_to_string(
+                [prepared.entry],
+                server_type=c.Ldif.ServerTypes.RFC,
+                format_options=options,
+            )
+            if entry.failure:
+                return r[list[t.JsonDict]].from_failure(entry)
+            observed: str | None = None
+            if prepared.observed_entry is not None:
+                observation = self._ldif.write_to_string(
+                    [prepared.observed_entry],
+                    server_type=c.Ldif.ServerTypes.RFC,
+                    format_options=options,
+                )
+                if observation.failure:
+                    return r[list[t.JsonDict]].from_failure(observation)
+                observed = observation.value
+            snapshots.append({
+                **prepared.model_dump(mode="json", exclude={"entry", "observed_entry"}),
+                "entry": entry.value,
+                "observed_entry": observed,
+            })
+        return r[list[t.JsonDict]].ok(snapshots)
+
     @override
     def execute(self) -> p.Result[p.Ldap.SearchResult]:
         """Report readiness; fails when the connection is not bound.

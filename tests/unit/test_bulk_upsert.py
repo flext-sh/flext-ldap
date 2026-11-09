@@ -6,12 +6,72 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_ldif import FlextLdif
+
 from flext_ldap import FlextLdap
 from tests import c, m, tm, u
 
 
 class TestsFlextLdapBulkUpsert:
     """A projected ADD is real planning input, not an invented directory read."""
+
+    @staticmethod
+    def test_native_snapshots_preserve_rfc_payload_without_entity_audit() -> None:
+        """Fresh public plans retain LDAP payload and observations in stable LDIF."""
+        client, writer = FlextLdap(), FlextLdif()
+        dn = "uid=future,dc=example,dc=invalid"
+        prior_text = (
+            f"dn: {dn}\nobjectClass: top\nobjectClass: inetOrgPerson\n"
+            "uid: future\ncn: Future\nsn: Future\ndescription: Before\n\n"
+        )
+        modify_text = (
+            f"dn: {dn}\ncontrol: 1.2.3 true\nchangetype: modify\n"
+            "replace: description\ndescription: Second\ndescription: First\n-\n\n"
+        )
+        plans = [
+            tm.ok(
+                client.plan_upsert(
+                    tm.ok(writer.parse_string(modify_text, server_type="rfc")).entries,
+                    planned_entries=tm.ok(
+                        writer.parse_string(prior_text, server_type="rfc")
+                    ).entries,
+                )
+            )
+            for _ in range(2)
+        ]
+        tm.that(
+            plans[0].operations[0].entry.unique_id
+            == plans[1].operations[0].entry.unique_id,
+            eq=False,
+        )
+        first, second = [
+            tm.ok(client.serialize_upsert_operations(plan.operations)) for plan in plans
+        ]
+        tm.that(first, eq=second)
+        payload = first[0]["entry"]
+        tm.that(isinstance(payload, str), eq=True)
+        if isinstance(payload, str):
+            restored = tm.ok(writer.parse_string(payload, server_type="rfc")).entries[0]
+            tm.that(restored.controls, length=1)
+            tm.that(
+                [value.value for value in restored.change_operations[0].values],
+                eq=["Second", "First"],
+            )
+        observation = first[0]["observed_entry"]
+        tm.that(isinstance(observation, str), eq=True)
+        if isinstance(observation, str):
+            observed = tm.ok(
+                writer.parse_string(observation, server_type="rfc")
+            ).entries[0]
+            tm.that(observed.attributes_dict["description"], eq=["Before"])
+        tm.that(
+            first[0]["changes"],
+            eq={
+                "description": [[c.Ldap.ModifyOperation.REPLACE, ["Second", "First"]]],
+            },
+        )
+        tm.that(first[0]["observation_is_projected"], eq=True)
+        tm.fail(client.is_connected)
 
     @staticmethod
     def test_clear_on_previously_planned_add_is_a_noop() -> None:

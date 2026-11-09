@@ -101,6 +101,12 @@ class FlextLdapProtocolsClient:
             """Identify the legal LDAP 32 absence in a failed read."""
             ...
 
+        def serialize_upsert_operations(
+            self, operations: Sequence[p.Ldap.UpsertOperation]
+        ) -> p.Result[list[t.JsonDict]]:
+            """Serialize private native plan snapshots through the LDIF writer."""
+            ...
+
         def plan_upsert(
             self,
             entries: Sequence[p.Ldif.Entry],

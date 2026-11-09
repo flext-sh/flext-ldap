@@ -401,6 +401,11 @@ effects or an earlier planned ADD. These observations contain only comparison
 attributes; they are not complete, recoverable directory backups. The frozen
 envelopes retain native payload references; consumers must not mutate them.
 `added_dns`, `modified_dns`, `unchanged_dns` and counts derive from operations.
+For private durable review, call `serialize_upsert_operations(plan.operations)`.
+It delegates payload and observation encoding to the RFC LDIF writer, sorting
+attribute names while preserving values, options, controls and modification order.
+The snapshot retains native operation changes and projection scope without local
+entity identifiers or processing timestamps; it is not an executable plan or backup.
 Carry the final `plan.planned_entries` ADD state into
 a later phase through `planned_entries`; an empty ACI replacement on a future ADD is
 unchanged and does not require a directory lookup.
