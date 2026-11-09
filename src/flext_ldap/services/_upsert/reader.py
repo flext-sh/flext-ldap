@@ -99,7 +99,7 @@ class FlextLdapServicesUpsertReader:
             Actual requested entries and named projections, or the read failure.
 
         """
-        groups: dict[tuple[str, bool], list[p.Ldif.Entry]] = {}
+        groups: dict[tuple[str, tuple[str, ...]], list[p.Ldif.Entry]] = {}
         parents: dict[str, str] = {}
         observed = _Observed({}, {})
         for entry in entries:
@@ -110,11 +110,18 @@ class FlextLdapServicesUpsertReader:
             parent = ",".join(u.Ldif.split(entry.dn_str)[1:])
             parent_key = ",".join(u.Ldif.split(key)[1:])
             parents[parent_key] = parent
-            groups.setdefault(
-                (parent_key, entry.changetype == c.Ldif.ChangeType.MODIFY), []
-            ).append(entry)
-        for (parent_key, _), group in groups.items():
-            attributes = (c.Ldap.AttributeName.ALL_ATTRIBUTES, "+")
+            attributes = (
+                tuple(sorted({op.attribute for op in entry.change_operations}))
+                if entry.changetype == c.Ldif.ChangeType.MODIFY
+                else tuple(
+                    sorted({
+                        c.Ldap.AttributeName.ALL_ATTRIBUTES,
+                        *entry.attributes_dict,
+                    })
+                )
+            )
+            groups.setdefault((parent_key, attributes), []).append(entry)
+        for (parent_key, attributes), group in groups.items():
             queries = self._requests(parents[parent_key], group, attributes)
             if queries.failure:
                 return r[_Observed].from_failure(queries)

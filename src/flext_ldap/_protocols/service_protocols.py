@@ -86,6 +86,19 @@ class FlextLdapProtocolsService:
         operations service substitutable (DIP) without a concrete import.
         """
 
+        def is_user_attribute(self, attribute: str) -> p.Result[bool]:
+            """Resolve native schema usage for a declared comparison effect."""
+            ...
+
+        def rdn_filter(self, dns: t.StrSequence) -> p.Result[str]:
+            """Build the native grouped RDN request filter."""
+            ...
+
+        @staticmethod
+        def no_such_object_error(error_message: str) -> bool:
+            """Identify a genuine LDAP 32 absence in a failed read."""
+            ...
+
         @property
         def logger(self) -> FlextLdifProtocols.Logger:
             """Logger for operation traceability."""

@@ -64,10 +64,15 @@ def _connected(
     Yields:
         The public client and UUID subtree; no Docker lifecycle is invoked here.
 
+    Raises:
+        TypeError: If the service fixture publishes a non-string base DN.
+
     """
     name = f"bulk-{uuid4().hex}"
     base_dn = config["base_dn"]
-    assert isinstance(base_dn, str)
+    if not isinstance(base_dn, str):
+        msg = "The LDAP service fixture must publish a string base DN"
+        raise TypeError(msg)
     root = f"ou={name},{base_dn}"
     with FlextLdap() as client:
         tm.ok(client.connect(u.Ldap.Tests.create_connection_config(config)))
@@ -103,6 +108,7 @@ class TestsFlextLdapBulkIntegration:
             changed = _person(stored.dn_str, "stored", cn="After")
             added = _person(f"uid=added,{root}", "added")
             tm.ok(client.add(stored))
+            baseline = tm.ok(client.find_entry(stored.dn_str, attributes=["*", "+"]))
             batch = [stored, changed, added]
             plan = tm.ok(client.plan_upsert(batch))
             tm.that((plan.adds, plan.modifies, plan.unchanged), eq=(1, 1, 1))
@@ -120,6 +126,11 @@ class TestsFlextLdapBulkIntegration:
             )
             before = tm.ok(client.find_entry(stored.dn_str, attributes=["cn"]))
             tm.that(before.entries[0].attributes_dict["cn"], eq=["Before"])
+            observed = tm.ok(client.find_entry(stored.dn_str, attributes=["*", "+"]))
+            tm.that(
+                observed.entries[0].attributes_dict,
+                eq=baseline.entries[0].attributes_dict,
+            )
             applied = tm.ok(client.batch_upsert(batch, stop_on_error=True))
             tm.that((applied.synced, applied.skipped, applied.failed), eq=(2, 1, 0))
             again = tm.ok(client.plan_upsert([changed, added]))
@@ -154,7 +165,7 @@ class TestsFlextLdapBulkIntegration:
             applied = tm.ok(client.batch_upsert(batch, stop_on_error=True))
             tm.that((applied.synced, applied.skipped), eq=(3, 1))
             after = tm.ok(client.find_entry(person.dn_str, attributes=["description"]))
-            tm.that(after.entries[0].attributes_dict.get("description"), eq=None)
+            tm.fail(bool(after.entries[0].attributes_dict.get("description")))
 
     @staticmethod
     def test_native_add_and_delete_values_match_apply(
@@ -262,7 +273,7 @@ class TestsFlextLdapBulkIntegration:
                 )
             )
             tm.that(unchanged.entries[0].attributes_dict["entryUUID"], eq=original_uuid)
-            tm.that(unchanged.entries[0].attributes_dict.get("description"), eq=None)
+            tm.fail(bool(unchanged.entries[0].attributes_dict.get("description")))
 
     @staticmethod
     def test_first_write_error_stops_without_positive_batch_result(
@@ -273,7 +284,7 @@ class TestsFlextLdapBulkIntegration:
             first = _person(f"uid=first,{root}", "first")
             bad = _person(f"uid=bad,{root}", "bad")
             attrs = dict(bad.attributes_dict)
-            attrs["unregisteredBulkAttribute" + uuid4().hex] = ["Invalid"]
+            attrs["objectClass"].append("unregisteredBulkClass" + uuid4().hex)
             bad = bad.model_copy(
                 update={"attributes": m.Ldif.Attributes(attributes=attrs)}
             )

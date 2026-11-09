@@ -388,6 +388,10 @@ Submit the complete phase batch to `plan_upsert(entries, planned_entries=())`.
 The LDAP owner groups reads by parent and requested attributes, bounds their
 filters through `c.Ldap.BATCH_SIZE`, and reuses the same preparation for
 `batch_upsert`. Data comparison remains `u.Ldap.compare_entries`.
+DATA reads request the native `*` user-attribute projection plus desired attribute
+names; MODIFY reads request the named changes. Only operations with identical
+attribute projections share a grouped read. This keeps unrelated operational
+attributes outside the comparison while preserving explicitly requested ones.
 
 `UpsertPlan.operations` holds the ordered native preparations shared with writes:
 the original entry, operation, exact native modification changes, and
