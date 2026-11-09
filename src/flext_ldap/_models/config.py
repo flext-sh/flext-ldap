@@ -10,11 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
-
-from flext_ldif import m, t
-
-from flext_ldap._protocols import FlextLdapProtocolsConfig
+from flext_ldif import m
 
 
 class FlextLdapModelsConfig:
@@ -97,10 +93,7 @@ class FlextLdapModelsConfig:
 
         model_config = m.ConfigDict(frozen=True, extra="ignore")
 
-        Ldap: Annotated[
-            FlextLdapProtocolsConfig.Ldap,
-            t.schema_for_model(FlextLdapModelsConfig.Ldap),
-        ] = m.Field(
+        Ldap: FlextLdapModelsConfig.Ldap = m.Field(
             description="LDAP business-rule config namespace.",
         )
 
