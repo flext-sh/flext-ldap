@@ -7,17 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass
 
 from flext_ldap import c, m, p, r, t, u
 from flext_ldap.services._upsert.reader import FlextLdapServicesUpsertReader
-
-
-@dataclass(frozen=True, repr=False)
-class _Prepared:
-    entry: p.Ldif.Entry
-    operation: str
-    changes: t.Ldap.OperationChanges
 
 
 class FlextLdapServicesUpsertHandler:
@@ -65,7 +57,8 @@ class FlextLdapServicesUpsertHandler:
             key = keys[entry.dn_str]
             if key in seen or len(wave) == c.Ldap.BATCH_SIZE:
                 yield wave
-                wave, seen = [], set()
+                wave = []
+                seen = set()
             wave.append(entry)
             seen.add(key)
         if wave:
@@ -213,7 +206,7 @@ class FlextLdapServicesUpsertHandler:
         named: frozenset[str] = frozenset(),
         declared_new: bool = False,
         effects: Sequence[t.Ldap.OperationChanges] = (),
-    ) -> p.Result[_Prepared]:
+    ) -> p.Result[p.Ldap.UpsertOperation]:
         """Use one comparison authority for both plans and writes.
 
         Returns:
@@ -221,27 +214,43 @@ class FlextLdapServicesUpsertHandler:
 
         """
         if entry.changetype != c.Ldif.ChangeType.MODIFY and existing is None:
-            return r[_Prepared].ok(_Prepared(entry, c.Ldap.UpsertOperation.ADDED, {}))
+            return r[p.Ldap.UpsertOperation].ok(
+                m.Ldap.UpsertOperation.model_validate({
+                    "entry": entry,
+                    "operation": c.Ldap.UpsertOperation.ADDED,
+                    "changes": {},
+                    "observed_entry": None,
+                    "observation_is_projected": False,
+                })
+            )
         if existing is None:
-            return r[_Prepared].fail("Modify target does not exist")
+            return r[p.Ldap.UpsertOperation].fail("Modify target does not exist")
         view = self._view(
             entry, existing, named=named, declared_new=declared_new, effects=effects
         )
         if view.failure:
-            return r[_Prepared].from_failure(view)
+            return r[p.Ldap.UpsertOperation].from_failure(view)
         compared = (
             self._modify_changes(entry, view.value)
             if entry.changetype == c.Ldif.ChangeType.MODIFY
             else u.Ldap.compare_entries(view.value, entry)
         )
         if compared.failure:
-            return r[_Prepared].from_failure(compared)
+            return r[p.Ldap.UpsertOperation].from_failure(compared)
         operation = (
             c.Ldap.UpsertOperation.MODIFIED
             if compared.value
             else c.Ldap.UpsertOperation.SKIPPED
         )
-        return r[_Prepared].ok(_Prepared(entry, operation, compared.value))
+        return r[p.Ldap.UpsertOperation].ok(
+            m.Ldap.UpsertOperation.model_validate({
+                "entry": entry,
+                "operation": operation,
+                "changes": compared.value,
+                "observed_entry": view.value,
+                "observation_is_projected": declared_new or any(effects),
+            })
+        )
 
     def plan(
         self,
@@ -261,11 +270,7 @@ class FlextLdapServicesUpsertHandler:
         keys = valid.value
         declared = {keys[e.dn_str]: e for e in planned_entries}
         effects: dict[str, list[t.Ldap.OperationChanges]] = {}
-        dns: dict[str, list[str]] = {
-            c.Ldap.UpsertOperation.ADDED: [],
-            c.Ldap.UpsertOperation.MODIFIED: [],
-            c.Ldap.UpsertOperation.SKIPPED: [],
-        }
+        preparations: list[p.Ldap.UpsertOperation] = []
         for wave in self._waves(entries, keys):
             observed = self._reader.read(wave, declared, keys)
             if observed.failure:
@@ -282,7 +287,7 @@ class FlextLdapServicesUpsertHandler:
                 if prepared.failure:
                     return r[p.Ldap.UpsertPlan].from_failure(prepared)
                 value = prepared.value
-                dns[value.operation].append(entry.dn_str)
+                preparations.append(value)
                 if value.operation == c.Ldap.UpsertOperation.ADDED:
                     declared[key] = entry
                 elif key in declared:
@@ -290,15 +295,15 @@ class FlextLdapServicesUpsertHandler:
                 else:
                     effects.setdefault(key, []).append(value.changes)
         return r[p.Ldap.UpsertPlan].ok(
-            m.Ldap.UpsertPlan(
-                added_dns=tuple(dns[c.Ldap.UpsertOperation.ADDED]),
-                modified_dns=tuple(dns[c.Ldap.UpsertOperation.MODIFIED]),
-                unchanged_dns=tuple(dns[c.Ldap.UpsertOperation.SKIPPED]),
-                planned_entries=tuple(declared.values()),
-            )
+            m.Ldap.UpsertPlan.model_validate({
+                "operations": tuple(preparations),
+                "planned_entries": tuple(declared.values()),
+            })
         )
 
-    def _write(self, prepared: _Prepared) -> p.Result[p.Ldap.LdapOperationResult]:
+    def _write(
+        self, prepared: p.Ldap.UpsertOperation
+    ) -> p.Result[p.Ldap.LdapOperationResult]:
         """Emit one prepared write with no further directory lookup.
 
         Returns:

@@ -389,8 +389,15 @@ The LDAP owner groups reads by parent and requested attributes, bounds their
 filters through `c.Ldap.BATCH_SIZE`, and reuses the same preparation for
 `batch_upsert`. Data comparison remains `u.Ldap.compare_entries`.
 
-`UpsertPlan.added_dns`, `modified_dns` and `unchanged_dns` are the source of
-its read-only counters. Carry the final `plan.planned_entries` ADD state into
+`UpsertPlan.operations` holds the ordered native preparations shared with writes:
+the original entry, operation, exact native modification changes, and
+`observed_entry` (the effective comparison projection or observed absence).
+`observation_is_projected` identifies observations containing preceding declared
+effects or an earlier planned ADD. These observations contain only comparison
+attributes; they are not complete, recoverable directory backups. The frozen
+envelopes retain native payload references; consumers must not mutate them.
+`added_dns`, `modified_dns`, `unchanged_dns` and counts derive from operations.
+Carry the final `plan.planned_entries` ADD state into
 a later phase through `planned_entries`; an empty ACI replacement on a future ADD is
 unchanged and does not require a directory lookup.
 

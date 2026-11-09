@@ -112,27 +112,61 @@ class FlextLdapProtocolsLdap:
         cause: str | None
 
     @runtime_checkable
+    class UpsertOperation(FlextLdifProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def entry(self) -> p.Ldif.Entry:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def operation(self) -> c.Ldap.UpsertOperation:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def changes(self) -> t.Ldap.OperationChanges:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def observed_entry(self) -> p.Ldif.Entry | None:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def observation_is_projected(self) -> bool:
+            """Structural member projected from the owning model."""
+            ...
+
+    @runtime_checkable
     class UpsertPlan(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def added_dns(self) -> tuple[str, ...]:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def modified_dns(self) -> tuple[str, ...]:
-            """Structural member projected from the owning model."""
-            ...
-
-        @property
-        def unchanged_dns(self) -> tuple[str, ...]:
+        def operations(self) -> tuple[FlextLdapProtocolsLdap.UpsertOperation, ...]:
             """Structural member projected from the owning model."""
             ...
 
         @property
         def planned_entries(self) -> tuple[p.Ldif.Entry, ...]:
-            """Final explicitly declared ADD state carried between phases."""
+            """Final declared ADD state carried between phases."""
+            ...
+
+        @property
+        def added_dns(self) -> tuple[str, ...]:
+            """DNs of native ADD preparations, in input order."""
+            ...
+
+        @property
+        def modified_dns(self) -> tuple[str, ...]:
+            """DNs of native MODIFY preparations, in input order."""
+            ...
+
+        @property
+        def unchanged_dns(self) -> tuple[str, ...]:
+            """DNs of native no-op preparations, in input order."""
             ...
 
         @property

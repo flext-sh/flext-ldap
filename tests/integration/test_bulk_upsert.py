@@ -34,14 +34,20 @@ def _person(
     )
 
 
-def _replace(dn: str, attribute: str, values: list[str]) -> p.Ldif.Entry:
+def _replace(
+    dn: str,
+    attribute: str,
+    values: list[str],
+    *,
+    operation: c.Ldif.ChangeOperation = c.Ldif.ChangeOperation.REPLACE,
+) -> p.Ldif.Entry:
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes(attributes={attribute: values}),
         changetype=c.Ldif.ChangeType.MODIFY,
         change_operations=[
             m.Ldif.ChangeOperation(
-                operation=c.Ldif.ChangeOperation.REPLACE,
+                operation=operation,
                 attribute=attribute,
                 values=[m.Ldif.ChangeOperationValue(value=value) for value in values],
             )
@@ -60,7 +66,9 @@ def _connected(
 
     """
     name = f"bulk-{uuid4().hex}"
-    root = f"ou={name},{config['base_dn']}"
+    base_dn = config["base_dn"]
+    assert isinstance(base_dn, str)
+    root = f"ou={name},{base_dn}"
     with FlextLdap() as client:
         tm.ok(client.connect(u.Ldap.Tests.create_connection_config(config)))
         tm.ok(
@@ -100,6 +108,16 @@ class TestsFlextLdapBulkIntegration:
             tm.that((plan.adds, plan.modifies, plan.unchanged), eq=(1, 1, 1))
             tm.that(plan.added_dns, eq=(added.dn_str,))
             tm.that(plan.modified_dns, eq=(stored.dn_str,))
+            tm.that(
+                [value.entry.dn_str for value in plan.operations],
+                eq=[value.dn_str for value in batch],
+            )
+            tm.that(plan.operations[2].observed_entry, eq=None)
+            tm.that(plan.operations[2].changes, eq={})
+            tm.that(
+                plan.operations[1].changes,
+                eq={"cn": [(c.Ldap.ModifyOperation.REPLACE, ["After"])]},
+            )
             before = tm.ok(client.find_entry(stored.dn_str, attributes=["cn"]))
             tm.that(before.entries[0].attributes_dict["cn"], eq=["Before"])
             applied = tm.ok(client.batch_upsert(batch, stop_on_error=True))
@@ -115,18 +133,69 @@ class TestsFlextLdapBulkIntegration:
         with _connected(ldap_container) as (client, root):
             person = _person(f"uid=waves,{root}", "waves", description="Start")
             tm.ok(client.add(person))
+            values_by_wave: list[list[str]] = [["Middle"], ["Middle"], ["Final"], []]
             batch = [
                 _replace(person.dn_str, "description", values)
-                for values in [["Middle"], ["Middle"], ["Final"], []]
+                for values in values_by_wave
             ]
             plan = tm.ok(client.plan_upsert(batch))
             tm.that((plan.modifies, plan.unchanged), eq=(3, 1))
+            observations = [
+                value.observed_entry.attributes_dict.get("description")
+                if value.observed_entry is not None
+                else None
+                for value in plan.operations
+            ]
+            tm.that(observations, eq=[["Start"], ["Middle"], ["Middle"], ["Final"]])
+            tm.that(plan.operations[0].observation_is_projected, eq=False)
+            tm.that(plan.operations[2].observation_is_projected, eq=True)
             before = tm.ok(client.find_entry(person.dn_str, attributes=["description"]))
             tm.that(before.entries[0].attributes_dict["description"], eq=["Start"])
             applied = tm.ok(client.batch_upsert(batch, stop_on_error=True))
             tm.that((applied.synced, applied.skipped), eq=(3, 1))
             after = tm.ok(client.find_entry(person.dn_str, attributes=["description"]))
-            tm.fail(after.entries[0].attributes_dict.get("description"))
+            tm.that(after.entries[0].attributes_dict.get("description"), eq=None)
+
+    @staticmethod
+    def test_native_add_and_delete_values_match_apply(
+        ldap_container: Mapping[str, t.Scalar],
+    ) -> None:
+        """Expose exact native value operations without writing during planning."""
+        with _connected(ldap_container) as (client, root):
+            person = _person(f"uid=values,{root}", "values", description="First")
+            tm.ok(client.add(person))
+            batch = [
+                _replace(
+                    person.dn_str,
+                    "description",
+                    ["First", "Second"],
+                    operation=c.Ldif.ChangeOperation.ADD,
+                ),
+                _replace(
+                    person.dn_str,
+                    "description",
+                    ["First"],
+                    operation=c.Ldif.ChangeOperation.DELETE,
+                ),
+                _replace(person.dn_str, "description", ["Second"]),
+            ]
+            plan = tm.ok(client.plan_upsert(batch))
+            tm.that(
+                [value.changes for value in plan.operations],
+                eq=[
+                    {"description": [(c.Ldap.ModifyOperation.ADD, ["Second"])]},
+                    {"description": [(c.Ldap.ModifyOperation.DELETE, ["First"])]},
+                    {},
+                ],
+            )
+            before = tm.ok(client.find_entry(person.dn_str, attributes=["description"]))
+            tm.that(before.entries[0].attributes_dict["description"], eq=["First"])
+            applied = tm.ok(client.batch_upsert(batch, stop_on_error=True))
+            tm.that(
+                (applied.synced, applied.skipped), eq=(plan.modifies, plan.unchanged)
+            )
+            after = tm.ok(client.find_entry(person.dn_str, attributes=["description"]))
+            tm.that(after.entries[0].attributes_dict["description"], eq=["Second"])
 
     @staticmethod
     def test_multivalued_escaped_rdns_and_missing_parent(
@@ -193,7 +262,7 @@ class TestsFlextLdapBulkIntegration:
                 )
             )
             tm.that(unchanged.entries[0].attributes_dict["entryUUID"], eq=original_uuid)
-            tm.fail(unchanged.entries[0].attributes_dict.get("description"))
+            tm.that(unchanged.entries[0].attributes_dict.get("description"), eq=None)
 
     @staticmethod
     def test_first_write_error_stops_without_positive_batch_result(

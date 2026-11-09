@@ -249,22 +249,71 @@ class FlextLdapModelsFlextLdap:
                 m.Field(description="Failure cause reported for failed_dn"),
             ] = None
 
-        class UpsertPlan(m.BaseModel):
-            """Ordered operation DNs are the single source of plan counts."""
+        class UpsertOperation(m.BaseModel):
+            """One native preparation shared by planning and writing.
+
+            ``observed_entry`` is the effective comparison projection, including
+            preceding declared effects, or observed absence. It is never a full
+            directory backup. Freezing protects the envelope; native payloads
+            retain their references and must not be mutated by consumers.
+            """
 
             model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
                 frozen=True, extra="forbid"
             )
 
-            added_dns: tuple[str, ...] = m.Field(default=(), repr=False)
-            modified_dns: tuple[str, ...] = m.Field(default=(), repr=False)
-            unchanged_dns: tuple[str, ...] = m.Field(default=(), repr=False)
+            entry: t.Port[p.Ldif.Entry] = m.Field(repr=False)
+            operation: c.Ldap.UpsertOperation
+            changes: t.Ldap.OperationChanges = m.Field(repr=False)
+            observed_entry: t.Port[p.Ldif.Entry] | None = m.Field(repr=False)
+            observation_is_projected: bool
+
+        class UpsertPlan(m.BaseModel):
+            """Ordered native preparations are the single source of plan counts."""
+
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+                frozen=True, extra="forbid"
+            )
+
+            operations: tuple[
+                FlextLdapModelsFlextLdap.FlextLdapModelsLdap.UpsertOperation, ...
+            ] = m.Field(default=(), repr=False)
             planned_entries: tuple[t.Port[p.Ldif.Entry], ...] = m.Field(
                 default=(),
                 exclude=True,
                 repr=False,
                 description="Final declared ADD state carried between phases.",
             )
+
+            @m.computed_field(repr=False)
+            @property
+            def added_dns(self) -> tuple[str, ...]:
+                """DNs of native ADD preparations, in input order."""
+                return tuple(
+                    value.entry.dn_str
+                    for value in self.operations
+                    if value.operation == c.Ldap.UpsertOperation.ADDED
+                )
+
+            @m.computed_field(repr=False)
+            @property
+            def modified_dns(self) -> tuple[str, ...]:
+                """DNs of native MODIFY preparations, in input order."""
+                return tuple(
+                    value.entry.dn_str
+                    for value in self.operations
+                    if value.operation == c.Ldap.UpsertOperation.MODIFIED
+                )
+
+            @m.computed_field(repr=False)
+            @property
+            def unchanged_dns(self) -> tuple[str, ...]:
+                """DNs of native no-op preparations, in input order."""
+                return tuple(
+                    value.entry.dn_str
+                    for value in self.operations
+                    if value.operation == c.Ldap.UpsertOperation.SKIPPED
+                )
 
             @m.computed_field
             @property
