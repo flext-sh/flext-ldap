@@ -323,7 +323,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
 
             LIST_ABC: Final[Sequence[str]] = ("a", "b", "c")
             LIST_ABC_UPPER: Final[Sequence[str]] = ("A", "B", "C")
-            LIST_SINGLE: Final[str] = "single"
 
             FILTER_TRUTHY_INPUT: Final[Mapping[str, str]] = MappingProxyType({
                 "a": "value",
