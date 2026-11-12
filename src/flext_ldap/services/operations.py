@@ -3,29 +3,10 @@
 This module keeps protocol concerns inside the adapter while exposing typed
 inputs, normalized results, and reusable comparison utilities for callers.
 
-Business Rules:
-    - All LDAP operations are delegated to the adapter layer (Ldap3Adapter)
-    - DN normalization is applied before all search operations using
-      u.Ldif.norm() to ensure consistent DN format
-    - Entry comparison ignores operational attributes defined in
-      c.Ldif.OperationalAttributes.IGNORE_SET
-    - Upsert operations implement add-or-modify pattern:
-      1. First attempts ADD operation
-      2. If entry exists (LDAP error 68), compares attributes and applies MODIFY
-      3. If no changes detected, operation is marked as SKIPPED
-    - Schema modifications are handled specially via changetype=modify entries
-
-Audit Implications:
-    - All operations log to s.logger for traceability
-    - batch_upsert tracks synced/failed/skipped counts for compliance reporting
-    - Progress callbacks enable real-time audit trail during batch operations
-    - Error messages are logged with entry DN and index for forensic analysis
-
-Architecture Notes:
-    - Uses Railway-Oriented Programming pattern (r) for error handling
-    - No exceptions are raised; all failures return r.fail()
-    - All methods are type-safe with strict Pydantic v2 validation
-    - Python 3.13: uses guard-based sequence handling
+Upsert planning and application share one bounded-read preparation. Writes
+remain sequential and repeated DNs start a fresh read wave. Plain entries use
+the established comparison owner; modify entries use native ChangeOperations.
+Every failed read or write retains its original failure outcome.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -241,76 +222,25 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         entries: Sequence[p.Ldif.Entry],
         *,
         progress_callback: t.Ldap.LdapProgressCallback | None = None,
-        retry_on_errors: Sequence[str] | None = None,
-        max_retries: int = 1,
         stop_on_error: bool = False,
     ) -> p.Result[p.Ldap.LdapBatchStats]:
-        """Upsert multiple entries and track per-item progress.
-
-        Business Rules:
-            - Processes entries sequentially (not parallel) for consistency
-            - Each entry uses upsert logic (add/modify/skip based on comparison)
-            - Progress callback is invoked after each entry (current, total, dn, stats)
-            - stop_on_error=True aborts batch on first failure
-            - stop_on_error=False continues processing remaining entries
-            - Batch fails when any entry fails; mixed success is not reported as success
-            - Statistics track synced (added+modified), failed, and skipped counts
-
-        Audit Implications:
-            - Batch operations log start/end with total entry count
-            - Progress callbacks enable real-time audit trail during processing
-            - Individual entry failures are logged with index and DN
-            - Final statistics (synced/failed/skipped) logged for compliance reporting
-
-        Architecture:
-            - Uses upsert() method for each entry
-            - Progress callback signature: (current: int, total: int, dn: str, stats:
-            LdapBatchStats)
-            - Returns r pattern - no exceptions raised
-
-        Args:
-            entries: List of entries to upsert (must include DN and attributes)
-            progress_callback: Optional callback for progress tracking (4 parameters)
-            retry_on_errors: Error patterns to retry on (e.g., ["session terminated"])
-            max_retries: Maximum retries per entry (default: 1, no retry)
-            stop_on_error: Stop processing on first error (default: False, continue)
+        """Apply bounded-read waves in input order; preserve every write error.
 
         Returns:
-            r containing LdapBatchStats with synced/failed/skipped counts
+            Actual batch statistics or the original failed operation.
 
         """
-        sync_options = m.Ldap.SyncPhaseConfig(
-            progress_callback=progress_callback,
-            retry_on_errors=list(retry_on_errors or []),
-            max_retries=max_retries,
-            stop_on_error=stop_on_error,
-        )
         stats = m.Ldap.LdapBatchStats()
-        total_entries = len(entries)
-        for i, entry in enumerate(entries, 1):
-            try:
-                outcome = self._process_batch_entry(
-                    entry,
-                    sync_options,
-                    stats,
-                    i,
-                    total_entries,
+        for index, (entry, outcome) in enumerate(
+            self._upsert_handler.execute_many(entries), 1
+        ):
+            self._update_batch_stats(outcome, stats, index, entry.dn_str, len(entries))
+            if progress_callback is not None:
+                self._invoke_batch_progress_callback(
+                    progress_callback, index, len(entries), entry.dn_str, stats
                 )
-            except c.EXC_BROAD_IO_TYPE as exc:
-                return r[p.Ldap.LdapBatchStats].fail(
-                    f"Batch upsert aborted on unexpected exception at entry {i}: {exc}",
-                    exception=exc,
-                )
-            if sync_options.stop_on_error and outcome.failure:
+            if outcome.failure and stop_on_error:
                 return r[p.Ldap.LdapBatchStats].from_failure(outcome)
-        self.logger.info(
-            "Batch upsert completed",
-            operation=c.Ldap.OperationName.BATCH_UPSERT,
-            total_entries=total_entries,
-            synced=stats.synced,
-            failed=stats.failed,
-            skipped=stats.skipped,
-        )
         return self._finish_batch_upsert(stats)
 
     @staticmethod
@@ -403,29 +333,95 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         subtree_root = dn if isinstance(dn, str) else m.Ldif.DN.model_validate(dn).value
         return self._subtree_delete_handler.run(subtree_root)
 
+    def supports_control(self, oid: str) -> p.Result[bool]:
+        """Read native advertised capabilities through the selected adapter.
+
+        Returns:
+            Whether the server advertises the control, or the original failure.
+
+        """
+        return self._ensure_adapter().supports_control(oid)
+
+    def is_user_attribute(self, attribute: str) -> p.Result[bool]:
+        """Resolve attribute projection semantics through the selected adapter.
+
+        Returns:
+            The SDK schema classification or its original failure.
+
+        """
+        return self._ensure_adapter().is_user_attribute(attribute)
+
+    def rdn_filter(self, dns: t.StrSequence) -> p.Result[str]:
+        """Delegate native filter escaping to the protocol adapter.
+
+        Returns:
+            The grouped request filter or its original failure.
+
+        """
+        return self._ensure_adapter().rdn_filter(dns)
+
     def plan_upsert(
         self,
         entries: Sequence[p.Ldif.Entry],
+        *,
+        planned_entries: Sequence[p.Ldif.Entry] = (),
     ) -> p.Result[p.Ldap.UpsertPlan]:
-        """Classify entries for upsert without writing (dry plan).
-
-        Business Rules:
-            - Delegates to FlextLdapServicesUpsertHandler.plan (the owner of the
-              upsert compare semantics owns "what would change")
-            - Routes each entry like the write path: a ``changetype: modify``
-              entry with add operations is a modify (no search); any other
-              entry is classified against the live directory as
-              add/modify/unchanged
-            - Zero writes are issued
-
-        Args:
-            entries: Entries to classify against the directory
+        """Plan one batch, reusing the declared state of prior planned additions.
 
         Returns:
-            r containing UpsertPlan with add/modify/unchanged counts.
+            The action DNs and their derived counts, or the read failure.
 
         """
-        return self._upsert_handler.plan(entries)
+        return self._upsert_handler.plan(entries, planned_entries=planned_entries)
+
+    def serialize_upsert_operations(
+        self,
+        operations: Sequence[p.Ldap.UpsertOperation],
+    ) -> p.Result[list[t.JsonDict]]:
+        """Serialize private plan snapshots through the native RFC LDIF writer.
+
+        Entry and comparison observations become LDIF records; operation codes,
+        modification values and projection scope retain their native JSON shape.
+        Entity audit metadata is outside the LDAP wire record. This snapshot is
+        review evidence, not an executable plan or a recoverable backup.
+
+        Returns:
+            Ordered JSON snapshots, or the original LDIF writer failure.
+
+        """
+        options = m.Ldif.WriteFormatOptions(
+            sort_attributes=True,
+            respect_attribute_order=False,
+            include_timestamps=False,
+            include_version_header=False,
+            write_metadata_as_comments=False,
+            restore_original_format=False,
+        )
+        snapshots: list[t.JsonDict] = []
+        for prepared in operations:
+            entry = self._ldif.write_to_string(
+                [prepared.entry],
+                server_type=c.Ldif.ServerTypes.RFC,
+                format_options=options,
+            )
+            if entry.failure:
+                return r[list[t.JsonDict]].from_failure(entry)
+            observed: str | None = None
+            if prepared.observed_entry is not None:
+                observation = self._ldif.write_to_string(
+                    [prepared.observed_entry],
+                    server_type=c.Ldif.ServerTypes.RFC,
+                    format_options=options,
+                )
+                if observation.failure:
+                    return r[list[t.JsonDict]].from_failure(observation)
+                observed = observation.value
+            snapshots.append({
+                **prepared.model_dump(mode="json", exclude={"entry", "observed_entry"}),
+                "entry": entry.value,
+                "observed_entry": observed,
+            })
+        return r[list[t.JsonDict]].ok(snapshots)
 
     @override
     def execute(self) -> p.Result[p.Ldap.SearchResult]:
@@ -552,72 +548,14 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             server_type=effective_server_type,
         )
 
-    def upsert(
-        self,
-        entry: p.Ldif.Entry,
-        *,
-        retry_on_errors: Sequence[str] | None = None,
-        max_retries: int = 1,
-    ) -> p.Result[p.Ldap.LdapOperationResult]:
-        """Upsert an entry, optionally retrying for configured error patterns.
-
-        Business Rules:
-            - First attempts ADD operation via FlextLdapServicesUpsertHandler
-            - If entry exists (LDAP error 68), performs search and comparison
-            - Entry comparison ignores operational attributes (modifyTimestamp, etc.)
-            - If entries are identical, operation is SKIPPED (no changes needed)
-            - If entries differ, MODIFY operation is applied with computed changes
-            - Schema modification entries (changetype=modify) are handled specially
-            - Retry mechanism uses u.retry() for transient errors
-            - Retry only occurs if error matches retry_on_errors patterns
-
-        Audit Implications:
-            - Upsert operations log operation type (ADDED, MODIFIED, SKIPPED)
-            - Retry attempts are logged individually for compliance
-            - Skipped operations indicate no changes needed (audit efficiency)
-
-        Architecture:
-            - Uses FlextLdapServicesUpsertHandler.execute() for core upsert logic
-            - Retry logic uses u.retry()
-            - Returns r pattern - no exceptions raised
-
-        Args:
-            entry: Entry model to upsert (must include DN and attributes)
-            retry_on_errors: Error patterns to retry on (e.g. ["session terminated"])
-            max_retries: Maximum number of retry attempts (default: 1, no retry)
+    def upsert(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.LdapOperationResult]:
+        """Apply one entry through the same bounded-read preparation as a batch.
 
         Returns:
-            r containing LdapOperationResult with operation type
-                (ADDED|MODIFIED|SKIPPED)
+            The actual single-entry outcome.
 
         """
-        if not (retry_on_errors and max_retries > 1):
-            return self._upsert_handler.execute(entry)
-        result = self._upsert_handler.execute(entry)
-        if result.success or not retry_on_errors:
-            return result
-        error_str = u.Ldap.norm_str(str(result.error), case="lower")
-        if not any(
-            u.Ldap.norm_in(error_str, [pattern], case="lower")
-            for pattern in retry_on_errors
-        ):
-            return result
-
-        def wrapped_execute() -> p.Result[p.Ldap.LdapOperationResult]:
-            """Re-run the upsert handler once for a retry attempt.
-
-            Returns:
-                The resulting ``p.Result[p.Ldap.LdapOperationResult]``.
-
-            """
-            return self._upsert_handler.execute(entry)
-
-        retry_result: p.Result[p.Ldap.LdapOperationResult] = u.retry(
-            operation=wrapped_execute,
-            max_attempts=max_retries,
-            delay_seconds=1.0,
-        )
-        return retry_result
+        return self._upsert_handler.execute(entry)
 
     @staticmethod
     def _invoke_batch_progress_callback(
@@ -630,43 +568,6 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         """Invoke progress callback with error handling."""
         callback_stats = stats.model_copy()
         callback(entry_index, total, entry_dn or "", callback_stats)
-
-    def _process_batch_entry(
-        self,
-        entry: p.Ldif.Entry,
-        sync_options: p.Ldap.SyncPhaseConfig,
-        stats: p.Ldap.LdapBatchStats,
-        entry_index: int,
-        total_entries: int,
-    ) -> p.Result[p.Ldap.LdapOperationResult]:
-        """Process one batch entry while preserving its causal outcome.
-
-        Returns:
-            The original upsert result, including server diagnostics.
-
-        """
-        entry_dn = u.Ldap.dn_str(str(entry.dn) if entry.dn else None)
-        upsert_result = self.upsert(
-            entry,
-            retry_on_errors=sync_options.retry_on_errors,
-            max_retries=sync_options.max_retries,
-        )
-        self._update_batch_stats(
-            upsert_result,
-            stats,
-            entry_index,
-            entry_dn,
-            total_entries,
-        )
-        if sync_options.progress_callback:
-            self._invoke_batch_progress_callback(
-                sync_options.progress_callback,
-                entry_index,
-                total_entries,
-                entry_dn,
-                stats,
-            )
-        return upsert_result
 
     def _update_batch_stats(
         self,

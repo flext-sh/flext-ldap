@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_ldif import FlextLdifProtocols
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
     from flext_ldap import p, t
     from flext_ldap._protocols import FlextLdapProtocolsLdap
@@ -85,6 +85,23 @@ class FlextLdapProtocolsService:
         handlers declare only the members they delegate to, keeping the
         operations service substitutable (DIP) without a concrete import.
         """
+
+        def supports_control(self, oid: str) -> p.Result[bool]:
+            """Read the native Root DSE advertised control capability."""
+            ...
+
+        def is_user_attribute(self, attribute: str) -> p.Result[bool]:
+            """Resolve native schema usage for a declared comparison effect."""
+            ...
+
+        def rdn_filter(self, dns: t.StrSequence) -> p.Result[str]:
+            """Build the native grouped RDN request filter."""
+            ...
+
+        @staticmethod
+        def no_such_object_error(error_message: str) -> bool:
+            """Identify a genuine LDAP 32 absence in a failed read."""
+            ...
 
         @property
         def logger(self) -> FlextLdifProtocols.Logger:
@@ -223,6 +240,11 @@ class FlextLdapProtocolsService:
         additional members (``server``, ``result``, ``start_tls``) required
         by the connection manager and operation executor adapters.
         """
+
+        @property
+        def response(self) -> Sequence[t.Ldap.Ldap3SearchResponse] | None:
+            """Native response records of the last search, ``None`` before any."""
+            ...
 
         @property
         def server(self) -> FlextLdifProtocols.Ldif.Ldap3Server:

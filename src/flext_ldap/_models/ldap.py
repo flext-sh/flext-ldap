@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_ldif import m
 
@@ -152,6 +152,7 @@ class FlextLdapModelsFlextLdap:
             attributes: Sequence[str] | None = None
             size_limit: t.NonNegativeInt = 0
             time_limit: t.NonNegativeInt = 0
+            controls: t.Ldap.SearchControls | None = None
 
             @classmethod
             def normalized(
@@ -212,6 +213,7 @@ class FlextLdapModelsFlextLdap:
             search_attributes: Sequence[str]
             size_limit: t.NonNegativeInt
             time_limit: t.NonNegativeInt
+            controls: t.Ldap.SearchControls | None = None
 
         class LdapBatchStats(m.BaseModel):
             """Base counters for batch LDAP operations (reused via MRO)."""
@@ -249,25 +251,89 @@ class FlextLdapModelsFlextLdap:
                 m.Field(description="Failure cause reported for failed_dn"),
             ] = None
 
-        class UpsertPlan(m.BaseModel):
-            """Read-only classification of planned upsert operations (zero writes)."""
+        class UpsertOperation(m.BaseModel):
+            """One native preparation shared by planning and writing.
 
-            adds: Annotated[
-                t.NonNegativeInt,
-                m.Field(
-                    description="Entries absent from the directory (would be added)",
-                ),
-            ] = 0
-            modifies: Annotated[
-                t.NonNegativeInt,
-                m.Field(
-                    description="Entries present with differences (would be modified)",
-                ),
-            ] = 0
-            unchanged: Annotated[
-                t.NonNegativeInt,
-                m.Field(description="Entries already matching the desired state"),
-            ] = 0
+            ``observed_entry`` is the effective comparison projection, including
+            preceding declared effects, or observed absence. It is never a full
+            directory backup. Freezing protects the envelope; native payloads
+            retain their references and must not be mutated by consumers.
+            """
+
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+                frozen=True, extra="forbid"
+            )
+
+            entry: t.Port[p.Ldif.Entry] = m.Field(repr=False)
+            operation: c.Ldap.UpsertOperation
+            changes: t.Ldap.OperationChanges = m.Field(repr=False)
+            observed_entry: t.Port[p.Ldif.Entry] | None = m.Field(repr=False)
+            observation_is_projected: bool
+
+        class UpsertPlan(m.BaseModel):
+            """Ordered native preparations are the single source of plan counts."""
+
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+                frozen=True, extra="forbid"
+            )
+
+            operations: tuple[
+                FlextLdapModelsFlextLdap.FlextLdapModelsLdap.UpsertOperation, ...
+            ] = m.Field(default=(), repr=False)
+            planned_entries: tuple[t.Port[p.Ldif.Entry], ...] = m.Field(
+                default=(),
+                exclude=True,
+                repr=False,
+                description="Final declared ADD state carried between phases.",
+            )
+
+            @m.computed_field(repr=False)
+            @property
+            def added_dns(self) -> tuple[str, ...]:
+                """DNs of native ADD preparations, in input order."""
+                return tuple(
+                    value.entry.dn_str
+                    for value in self.operations
+                    if value.operation == c.Ldap.UpsertOperation.ADDED
+                )
+
+            @m.computed_field(repr=False)
+            @property
+            def modified_dns(self) -> tuple[str, ...]:
+                """DNs of native MODIFY preparations, in input order."""
+                return tuple(
+                    value.entry.dn_str
+                    for value in self.operations
+                    if value.operation == c.Ldap.UpsertOperation.MODIFIED
+                )
+
+            @m.computed_field(repr=False)
+            @property
+            def unchanged_dns(self) -> tuple[str, ...]:
+                """DNs of native no-op preparations, in input order."""
+                return tuple(
+                    value.entry.dn_str
+                    for value in self.operations
+                    if value.operation == c.Ldap.UpsertOperation.SKIPPED
+                )
+
+            @m.computed_field
+            @property
+            def adds(self) -> int:
+                """Number of entries to add."""
+                return len(self.added_dns)
+
+            @m.computed_field
+            @property
+            def modifies(self) -> int:
+                """Number of entries to modify."""
+                return len(self.modified_dns)
+
+            @m.computed_field
+            @property
+            def unchanged(self) -> int:
+                """Number of entries already at their desired state."""
+                return len(self.unchanged_dns)
 
         class UpsertResult(m.BaseModel):
             """Result of a single upsert operation."""
@@ -321,8 +387,6 @@ class FlextLdapModelsFlextLdap:
             )
             server_type: str = c.Ldap.DEFAULT_TYPE
             progress_callback: t.Ldap.ProgressCallbackUnion | None = None
-            retry_on_errors: Sequence[str] = m.Field(default_factory=list[str])
-            max_retries: t.RetryCount = c.Ldap.DEFAULT_MAX_RETRIES
             stop_on_error: bool = False
 
         class ConversionMetadata(m.BaseModel):

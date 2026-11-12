@@ -59,6 +59,7 @@ class FlextLdapProtocolsLdap:
         attributes: Sequence[str] | None
         size_limit: t.NonNegativeInt
         time_limit: t.NonNegativeInt
+        controls: t.Ldap.SearchControls | None
 
     @runtime_checkable
     class SearchParams(FlextLdifProtocols.BaseModel, Protocol):
@@ -94,6 +95,11 @@ class FlextLdapProtocolsLdap:
             """Structural member projected from the owning model."""
             ...
 
+        @property
+        def controls(self) -> t.Ldap.SearchControls | None:
+            """Structural member projected from the owning model."""
+            ...
+
     @runtime_checkable
     class LdapBatchStats(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
@@ -112,12 +118,77 @@ class FlextLdapProtocolsLdap:
         cause: str | None
 
     @runtime_checkable
+    class UpsertOperation(FlextLdifProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def entry(self) -> p.Ldif.Entry:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def operation(self) -> c.Ldap.UpsertOperation:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def changes(self) -> t.Ldap.OperationChanges:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def observed_entry(self) -> p.Ldif.Entry | None:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def observation_is_projected(self) -> bool:
+            """Structural member projected from the owning model."""
+            ...
+
+    @runtime_checkable
     class UpsertPlan(FlextLdifProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        adds: t.NonNegativeInt
-        modifies: t.NonNegativeInt
-        unchanged: t.NonNegativeInt
+        @property
+        def operations(self) -> tuple[FlextLdapProtocolsLdap.UpsertOperation, ...]:
+            """Structural member projected from the owning model."""
+            ...
+
+        @property
+        def planned_entries(self) -> tuple[p.Ldif.Entry, ...]:
+            """Final declared ADD state carried between phases."""
+            ...
+
+        @property
+        def added_dns(self) -> tuple[str, ...]:
+            """DNs of native ADD preparations, in input order."""
+            ...
+
+        @property
+        def modified_dns(self) -> tuple[str, ...]:
+            """DNs of native MODIFY preparations, in input order."""
+            ...
+
+        @property
+        def unchanged_dns(self) -> tuple[str, ...]:
+            """DNs of native no-op preparations, in input order."""
+            ...
+
+        @property
+        def adds(self) -> int:
+            """Number of entries to add."""
+            ...
+
+        @property
+        def modifies(self) -> int:
+            """Number of entries to modify."""
+            ...
+
+        @property
+        def unchanged(self) -> int:
+            """Number of entries already at their desired state."""
+            ...
 
     @runtime_checkable
     class UpsertResult(FlextLdifProtocols.BaseModel, Protocol):
@@ -152,8 +223,6 @@ class FlextLdapProtocolsLdap:
 
         server_type: str
         progress_callback: t.Ldap.ProgressCallbackUnion | None
-        retry_on_errors: Sequence[str]
-        max_retries: t.RetryCount
         stop_on_error: bool
 
     @runtime_checkable

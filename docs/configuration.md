@@ -23,8 +23,6 @@
   - [Credential Management](#credential-management)
   - [SSL/TLS Configuration](#ssltls-configuration)
 - [Performance Tuning](#performance-tuning)
-  - [Connection Pool Optimization](#connection-pool-optimization)
-  - [Search Optimization](#search-optimization)
 
 <!-- TOC END -->
 
@@ -386,33 +384,41 @@ settings = FlextLdapSettings(
 
 ## Performance Tuning
 
-### Connection Pool Optimization
+Submit the complete phase batch to `plan_upsert(entries, planned_entries=())`.
+The LDAP owner groups reads by parent and requested attributes, bounds their
+filters through `c.Ldap.BATCH_SIZE`, and reuses the same preparation for
+`batch_upsert`. Data comparison remains `u.Ldap.compare_entries`.
+DATA reads request the native `*` user-attribute projection plus desired attribute
+names; MODIFY reads request the named changes. Only operations with identical
+attribute projections share a grouped read. This keeps unrelated operational
+attributes outside the comparison while preserving explicitly requested ones.
 
-```python
-# High-traffic configuration
-settings = FlextLdapSettings(
-    pool_size=20,  # Adjust based on concurrent users
-    connection_timeout=FlextLdapConstants.LdapRetry.CONNECTION_RETRY_DELAY,  # Fast ...
-    receive_timeout=FlextLdapConstants.LdapRetry.SERVER_READY_TIMEOUT,  # Operation timeout
-    max_retries=2,  # Retry failed operations
-)
-```
+`UpsertPlan.operations` holds the ordered native preparations shared with writes:
+the original entry, operation, exact native modification changes, and
+`observed_entry` (the effective comparison projection or observed absence).
+`observation_is_projected` identifies observations containing preceding declared
+effects or an earlier planned ADD. These observations contain only comparison
+attributes; they are not complete, recoverable directory backups. The frozen
+envelopes retain native payload references; consumers must not mutate them.
+`added_dns`, `modified_dns`, `unchanged_dns` and counts derive from operations.
+For private durable review, call `serialize_upsert_operations(plan.operations)`.
+It delegates payload and observation encoding to the RFC LDIF writer, sorting
+attribute names while preserving values, options, controls and modification order.
+The snapshot retains native operation changes and projection scope without local
+entity identifiers or processing timestamps; it is not an executable plan or backup.
+Carry the final `plan.planned_entries` ADD state into
+a later phase through `planned_entries`; an empty ACI replacement on a future ADD is
+unchanged and does not require a directory lookup.
 
-### Search Optimization
+Writes remain ordered. A repeated DN starts a fresh read wave during apply;
+planning projects only the preceding declared RFC changes. Operational
+attributes are requested explicitly, and ambiguous user/operational projection
+uses native schema USAGE instead of a manual attribute table. LDAP 32 is legal
+absence; other read errors, result limits and write errors remain failures.
 
-```python
-from flext_ldap import FlextLdapEntities
-
-# Optimized search request
-search_request = FlextLdapEntities.SearchRequest(
-    base_dn="ou=users,dc=example,dc=com",
-    filter_str="(&(objectClass=person)(uid=*))",
-    scope="onelevel",  # Use minimal scope needed
-    attributes=["uid", "cn"],  # Request only needed attributes
-    size_limit=100,  # Limit result size
-    time_limit=10,  # Set search timeout
-)
-```
+Upsert and batch upsert have no retry knobs or legacy changetype-in-attributes
+route. Connection/TLS configuration remains independent. No directory data is
+cached on disk.
 
 ---
 

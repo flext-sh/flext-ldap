@@ -95,6 +95,7 @@ class FlextLdapUtilitiesServer(FlextLdapUtilitiesBase):
             use_ssl=settings.use_ssl,
             tls=tls,
             connect_timeout=settings.timeout,
+            get_info=FlextLdapUtilitiesServer.resolve_get_info(c.Ldap.Ldap3GetInfo.ALL),
         )
         return server
 

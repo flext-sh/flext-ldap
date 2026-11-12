@@ -252,9 +252,6 @@ class FlextLdapSync(FlextLdapOperations):
         batch_result = self.batch_upsert(
             list(entries),
             progress_callback=single_phase_callback,
-            retry_on_errors=sync_config.retry_on_errors
-            or ["session terminated", "not connected", "invalid messageid", "socket"],
-            max_retries=sync_config.max_retries,
             stop_on_error=sync_config.stop_on_error,
         )
         if batch_result.failure:
@@ -341,8 +338,6 @@ class FlextLdapSync(FlextLdapOperations):
             settings=m.Ldap.SyncPhaseConfig(
                 server_type=settings.server_type,
                 progress_callback=phase_callback,
-                retry_on_errors=settings.retry_on_errors,
-                max_retries=settings.max_retries,
                 stop_on_error=settings.stop_on_error,
             ),
         )

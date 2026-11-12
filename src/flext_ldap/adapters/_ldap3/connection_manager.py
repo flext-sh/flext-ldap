@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import e, r
-from ldap3 import Connection, Server
+from ldap3 import Connection, Server, set_config_parameter
 
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
 from flext_ldap.constants import c
@@ -51,6 +51,8 @@ class FlextLdapLdap3ConnectionManager:
         if not isinstance(server, Server):
             msg = f"Expected ldap3.Server, got {type(server).__name__}"
             raise TypeError(msg)
+        # Preserve complete attribute descriptions, including language options.
+        set_config_parameter("CASE_INSENSITIVE_ATTRIBUTE_NAMES", value=False)
         return Connection(
             server=server,
             user=settings.bind_dn,

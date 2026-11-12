@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldif import m as flext_ldif_m
+from flext_ldif import FlextLdifModels
 
 from flext_ldap._models import (
     FlextLdapModelsBase,
@@ -19,7 +19,7 @@ from flext_ldap._models import (
 )
 
 
-class FlextLdapModels(flext_ldif_m):
+class FlextLdapModels(FlextLdifModels):
     """LDAP domain models extending m.
 
     Hierarchy:

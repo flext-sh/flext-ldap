@@ -12,6 +12,8 @@ from __future__ import annotations
 from typing import ClassVar, override
 
 from flext_ldif import e, r
+from ldap3 import Server
+from ldap3.utils.conv import escape_filter_chars
 
 from flext_ldap.adapters import FlextLdapEntryAdapter
 from flext_ldap.adapters._ldap3 import (
@@ -94,6 +96,88 @@ class FlextLdapLdap3Adapter(s[bool]):
             ldap3_value = c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE[scope_enum]
             return r[int].ok(int(ldap3_value))
         return r[int].fail(f"Invalid LDAP scope: {scope}")
+
+    def supports_control(self, oid: str) -> p.Result[bool]:
+        """Read advertised controls directly from the Root DSE.
+
+        Returns:
+            Whether the control is advertised, or the original capability failure.
+
+        """
+        connected = self._get_connection()
+        if connected.failure:
+            return r[bool].from_failure(connected)
+        connection = connected.value
+        try:
+            ok = FlextLdapLdap3Wrappers.search(
+                connection,
+                m.Ldap.SearchParams(
+                    base_dn="",
+                    filter_str=c.Ldap.ALL_ENTRIES_FILTER,
+                    ldap_scope=c.Ldap.SearchScopeValue.BASE,
+                    search_attributes=["supportedControl"],
+                    size_limit=0,
+                    time_limit=0,
+                ),
+            )
+        except c.EXC_BROAD_IO_TYPE as exc:
+            return r[bool].fail_op("Root DSE controls search", exc)
+        if not ok:
+            return r[bool].fail(f"Root DSE controls search failed: {connection.result}")
+        entries = self.ResultConverter.convert_ldap3_results(connection)
+        if len(entries) != 1:
+            return r[bool].fail("Root DSE controls search did not return one entry")
+        controls = next(
+            (
+                values
+                for name, values in entries[0][1].items()
+                if name.lower() == "supportedcontrol"
+            ),
+            (),
+        )
+        return r[bool].ok(oid in controls)
+
+    def is_user_attribute(self, attribute: str) -> p.Result[bool]:
+        """Read RFC 4512 USAGE from the SDK schema already loaded at bind.
+
+        Returns:
+            Whether this attribute is returned by `*`, or the missing fact.
+
+        """
+        connected = self._get_connection()
+        if connected.failure:
+            return r[bool].from_failure(connected)
+        server = connected.value.server
+        if not isinstance(server, Server) or server.schema is None:
+            return r[bool].fail("Native LDAP schema metadata is unavailable")
+        definition = server.schema.attribute_types.get(attribute.split(";", 1)[0])
+        if definition is None:
+            return r[bool].fail(
+                f"Native schema has no attribute definition: {attribute}"
+            )
+        usage = definition.usage
+        if usage is None or usage == "USER_APPLICATION":
+            return r[bool].ok(value=True)
+        if usage in {"DIRECTORY_OPERATION", "DISTRIBUTED_OPERATION", "DSA_OPERATION"}:
+            return r[bool].ok(value=False)
+        return r[bool].fail(f"Unknown native attribute USAGE: {usage}")
+
+    @staticmethod
+    def rdn_filter(dns: t.StrSequence) -> p.Result[str]:
+        """Build an RFC 4515 OR of native decoded RDN conjunctions.
+
+        Returns:
+            The filter or the first invalid DN/RDN.
+
+        """
+        terms: list[str] = []
+        for dn in dns:
+            rdn = u.Ldif.parse_rdn(u.Ldif.split(dn)[0])
+            if rdn.failure:
+                return r[str].from_failure(rdn)
+            pairs = [f"({a}={escape_filter_chars(v)})" for a, v in rdn.value]
+            terms.append(pairs[0] if len(pairs) == 1 else "(&" + "".join(pairs) + ")")
+        return r[str].ok("(|" + "".join(terms) + ")")
 
     def add(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.OperationResult]:
         """Add LDAP entry via railway: connection → attrs conversion → execute_add.
@@ -228,6 +312,7 @@ class FlextLdapLdap3Adapter(s[bool]):
                             search_attributes=search_options.attributes or [],
                             size_limit=search_options.size_limit,
                             time_limit=search_options.time_limit,
+                            controls=search_options.controls,
                         ),
                         server_type,
                     ),

@@ -164,48 +164,14 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                 tm.ok(result)
 
             @staticmethod
-            def repository_root() -> Path:
-                """Resolve the workspace root that owns the shared LDAP compose.
-
-                Walks ancestors for the shared ``docker/`` compose asset so the
-                resolver is independent of test-file nesting depth. In-workspace
-                this returns the monorepo root that holds the shared compose; run
-                standalone (submodule checkout without the shared compose) it
-                returns the submodule root, where the compose is absent so the
-                container fixture skips instead of faking the service.
+            def get_docker_control() -> FlextTestsDocker:
+                """Resolve the packaged service through its canonical owner.
 
                 Returns:
-                    The resulting ``Path``.
+                    The native shared LDAP controller, without executing it.
 
                 """
-                rel: str = c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL
-                here: Path = Path(__file__).resolve()
-                for parent in here.parents:
-                    if (parent / rel).exists():
-                        return parent
-                return here.parents[1]
-
-            @staticmethod
-            def get_docker_control(
-                _worker_id: str = c.Ldap.Tests.DOCKER_DEFAULT_WORKER_ID,
-            ) -> FlextTestsDocker:
-                """Create Docker test infrastructure controller.
-
-                Returns:
-                    The resulting ``FlextTestsDocker``.
-
-                """
-                return tk.compose(
-                    compose_file=c.Ldap.Tests.DOCKER_COMPOSE_FILE_REL,
-                    target=m.Tests.ContainerConfig(
-                        container_name=c.Ldap.Tests.DOCKER_CONTAINER_NAME,
-                        service=c.Ldap.Tests.DOCKER_SERVICE_NAME,
-                        host=c.LOCALHOST,
-                        port=c.Ldap.Tests.DOCKER_CONTAINER_PORT,
-                        startup_timeout=c.Ldap.Tests.DOCKER_STARTUP_TIMEOUT,
-                    ),
-                    repository_root=TestsFlextLdapUtilities.Ldap.Tests.repository_root(),
-                )
+                return tk.shared(c.Ldap.Tests.DOCKER_CONTAINER_NAME)
 
             @staticmethod
             def get_admin_credentials() -> tuple[str, str]:
@@ -224,47 +190,6 @@ class TestsFlextLdapUtilities(FlextTestsUtilities, FlextLdapUtilities):
                     },
                 )
                 return configured.Ldap.bind_dn, configured.Ldap.bind_password
-
-            @classmethod
-            def ensure_basic_ldap_structure(cls) -> None:
-                """Ensure the base organizational units exist for smoke tests.
-
-                Raises:
-                    RuntimeError: If Failed to create.
-
-                """
-                admin_dn, admin_password = cls.get_admin_credentials()
-                connection = u.Ldap.create_connection(
-                    u.Ldap.create_server_from_url(
-                        f"ldap://{c.LOCALHOST}:{c.Ldap.Tests.DOCKER_PORT}",
-                        get_info=c.Ldap.Ldap3GetInfo.NO_INFO,
-                    ),
-                    user=admin_dn,
-                    password=admin_password,
-                    auto_bind=True,
-                    receive_timeout=1,
-                )
-                try:
-                    for ou_name in c.Ldap.Tests.DOCKER_OU_NAMES:
-                        dn = f"ou={ou_name},{c.Ldap.Tests.DOCKER_BASE_DN}"
-                        created = connection.add(
-                            dn,
-                            ["top", "organizationalUnit"],
-                            {"ou": ou_name},
-                        )
-                        if created:
-                            continue
-                        result_payload = connection.result
-                        description = (
-                            ""
-                            if result_payload is None
-                            else str(result_payload.get("description", ""))
-                        )
-                        if description != "entryAlreadyExists":
-                            message = f"Failed to create {dn}: {description}"
-                            raise RuntimeError(message)
-                finally:
-                    connection.unbind()
 
             @staticmethod
             def single_phase_cb(

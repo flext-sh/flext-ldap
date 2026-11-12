@@ -139,6 +139,7 @@ class FlextLdapLdap3Wrappers:
             attributes=list(params.search_attributes),
             size_limit=params.size_limit,
             time_limit=params.time_limit,
+            controls=params.controls,
         )
 
     @staticmethod

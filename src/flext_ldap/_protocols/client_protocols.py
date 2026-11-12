@@ -56,8 +56,6 @@ class FlextLdapProtocolsClient:
             entries: Sequence[p.Ldif.Entry],
             *,
             progress_callback: t.Ldap.LdapProgressCallback | None = None,
-            retry_on_errors: Sequence[str] | None = None,
-            max_retries: int = 1,
             stop_on_error: bool = False,
         ) -> p.Result[p.Ldap.LdapBatchStats]:
             """Upsert multiple entries and report canonical batch statistics.
@@ -66,8 +64,6 @@ class FlextLdapProtocolsClient:
                 entries: LDIF entries to add or update.
                 progress_callback: Optional callback invoked per entry with
                     ``(current, total, dn, stats)``.
-                retry_on_errors: Error substrings that trigger a retry.
-                max_retries: Maximum attempts per entry when retrying.
                 stop_on_error: Halt the batch on the first failure.
 
             Returns:
@@ -92,14 +88,40 @@ class FlextLdapProtocolsClient:
             """
             ...
 
+        def supports_control(self, oid: str) -> p.Result[bool]:
+            """Read native advertised Root DSE control capabilities."""
+            ...
+
+        def is_user_attribute(self, attribute: str) -> p.Result[bool]:
+            """Read the native schema USAGE needed for an ambiguous projection."""
+            ...
+
+        def rdn_filter(self, dns: t.StrSequence) -> p.Result[str]:
+            """Build the native grouped RDN filter."""
+            ...
+
+        @staticmethod
+        def no_such_object_error(error_message: str) -> bool:
+            """Identify the legal LDAP 32 absence in a failed read."""
+            ...
+
+        def serialize_upsert_operations(
+            self, operations: Sequence[p.Ldap.UpsertOperation]
+        ) -> p.Result[list[t.JsonDict]]:
+            """Serialize private native plan snapshots through the LDIF writer."""
+            ...
+
         def plan_upsert(
             self,
             entries: Sequence[p.Ldif.Entry],
+            *,
+            planned_entries: Sequence[p.Ldif.Entry] = (),
         ) -> p.Result[p.Ldap.UpsertPlan]:
             """Classify entries for upsert without writing (dry plan).
 
             Args:
                 entries: LDIF entries to classify against current state.
+                planned_entries: Explicit ADD state declared by prior planning phases.
 
             Returns:
                 Result containing UpsertPlan with per-entry actions.
@@ -253,6 +275,18 @@ class FlextLdapProtocolsClient:
         @property
         def connection(self) -> FlextLdapProtocolsService.Ldap3Connection | None:
             """The active ldap3 connection when one exists."""
+            ...
+
+        def supports_control(self, oid: str) -> p.Result[bool]:
+            """Read native advertised Root DSE control capabilities."""
+            ...
+
+        def is_user_attribute(self, attribute: str) -> p.Result[bool]:
+            """Read the native schema USAGE needed for an ambiguous projection."""
+            ...
+
+        def rdn_filter(self, dns: t.StrSequence) -> p.Result[str]:
+            """Build the native grouped RDN filter."""
             ...
 
         def connect(
