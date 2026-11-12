@@ -168,7 +168,7 @@ class FlextLdapUtilitiesConversion(FlextLdapUtilitiesNormalization):
         """
         result = m.Ldif.FlexibleCategories()
         for entry in entries:
-            result[cls.resolve_entry_category(entry)].append(entry)
+            result.add_entries(cls.resolve_entry_category(entry), [entry])
         return result
 
 
