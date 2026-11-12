@@ -242,8 +242,8 @@ class FlextLdapProtocolsService:
         """
 
         @property
-        def response(self) -> Sequence[t.Ldap.Ldap3SearchResponse]:
-            """Native response records of the completed search."""
+        def response(self) -> Sequence[t.Ldap.Ldap3SearchResponse] | None:
+            """Native response records of the last search, ``None`` before any."""
             ...
 
         @property
