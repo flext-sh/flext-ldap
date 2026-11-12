@@ -50,7 +50,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
 
         """
         results: MutableSequence[tuple[str, Mapping[str, Sequence[str]]]] = []
-        for response in connection.response:
+        for response in connection.response or ():
             if response.get("type") != "searchResEntry":
                 continue
             dn, attributes = response.get("dn"), response.get("attributes")
