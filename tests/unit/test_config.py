@@ -121,10 +121,15 @@ class TestsFlextLdapConfig:
     @staticmethod
     def test_empty_bind_credentials_are_preserved() -> None:
         """Verify empty bind credentials are preserved."""
-        cfg = TestsFlextLdapSettings(Ldap=_LdapSettings(bind_dn="", bind_password=""))
+        cfg = TestsFlextLdapSettings(
+            Ldap=_LdapSettings(
+                bind_dn=c.Ldap.Tests.STRING_EMPTY,
+                bind_password=c.Ldap.Tests.STRING_EMPTY,
+            ),
+        )
 
-        u.Ldap.Tests.that(cfg.Ldap.bind_dn, eq="")
-        u.Ldap.Tests.that(cfg.Ldap.bind_password, eq="")
+        u.Ldap.Tests.that(cfg.Ldap.bind_dn, eq=c.Ldap.Tests.STRING_EMPTY)
+        u.Ldap.Tests.that(cfg.Ldap.bind_password, eq=c.Ldap.Tests.STRING_EMPTY)
 
     # ── Serialization contract ─────────────────────────────────────────
 
