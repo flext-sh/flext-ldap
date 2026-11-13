@@ -258,6 +258,23 @@ class FlextLdapProtocolsClient:
             """
             ...
 
+        def search_many(
+            self,
+            searches: Sequence[p.Ldap.SearchOptions],
+            server_type: str = "rfc",
+        ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
+            """Pipeline independent searches on the one connection.
+
+            Args:
+                searches: Search configurations, read in this order
+                server_type: LDAP server type for parsing (default: RFC)
+
+            Returns:
+                One SearchResult outcome per request, or the connection failure
+
+            """
+            ...
+
     @runtime_checkable
     class LdapAdapter(Protocol):
         """Protocol for LDAP adapters.
@@ -279,6 +296,12 @@ class FlextLdapProtocolsClient:
 
         def supports_control(self, oid: str) -> p.Result[bool]:
             """Read native advertised Root DSE control capabilities."""
+            ...
+
+        def root_dse(
+            self, attributes: t.StrSequence
+        ) -> p.Result[t.Ldap.OperationAttributes]:
+            """Read the requested Root DSE attributes on the bound connection."""
             ...
 
         def is_user_attribute(self, attribute: str) -> p.Result[bool]:
@@ -356,18 +379,18 @@ class FlextLdapProtocolsClient:
             ...
 
         @staticmethod
-        def search(
-            search_options: p.Ldap.SearchOptions,
+        def search_many(
+            searches: Sequence[p.Ldap.SearchOptions],
             server_type: str = "rfc",
-        ) -> p.Result[p.Ldap.SearchResult]:
-            """Perform LDAP search, returning the search result.
+        ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
+            """Pipeline LDAP searches, returning one outcome per request.
 
             Args:
-                search_options: Search configuration (base, filter, scope).
+                searches: Search configurations (base, filter, scope).
                 server_type: LDAP server type for result parsing.
 
             Returns:
-                Result containing SearchResult with Entry models.
+                One SearchResult outcome per request, or the connection failure.
 
             """
             ...

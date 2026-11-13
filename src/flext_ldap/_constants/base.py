@@ -182,6 +182,8 @@ class FlextLdapConstantsBase:
     SINGLE_PHASE_PARAM_COUNT: Final[int] = 4
     DN_TRUNCATION_LENGTH: Final[int] = 100
     BATCH_SIZE: Final[int] = 100
+    MAX_OUTSTANDING_SEARCHES: Final[int] = 64
+    """Searches pipelined on the one connection before the oldest is awaited."""
 
     VALID_STATUSES: Final[frozenset[Status]] = frozenset({
         Status.PENDING,

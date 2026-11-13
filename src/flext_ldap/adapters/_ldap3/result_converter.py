@@ -16,6 +16,7 @@ from flext_ldif import r
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3ResultExtract
 from flext_ldap.models import m
 from flext_ldap.protocols import p
+from flext_ldap.typings import t
 
 
 class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
@@ -34,7 +35,7 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
 
     @staticmethod
     def convert_ldap3_results(
-        connection: p.Ldap.Ldap3Connection,
+        response: Sequence[t.Ldap.Ldap3SearchResponse],
     ) -> Sequence[tuple[str, Mapping[str, Sequence[str]]]]:
         """Convert native response records without the lossy Entry abstraction.
 
@@ -50,10 +51,10 @@ class FlextLdapLdap3ResultConverter(FlextLdapLdap3ResultExtract):
 
         """
         results: MutableSequence[tuple[str, Mapping[str, Sequence[str]]]] = []
-        for response in connection.response or ():
-            if response.get("type") != "searchResEntry":
+        for record in response:
+            if record.get("type") != "searchResEntry":
                 continue
-            dn, attributes = response.get("dn"), response.get("attributes")
+            dn, attributes = record.get("dn"), record.get("attributes")
             if not isinstance(dn, str) or not isinstance(attributes, Mapping):
                 msg = "LDAP search entry requires a DN and attribute mapping"
                 raise TypeError(msg)

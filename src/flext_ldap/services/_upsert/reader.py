@@ -62,27 +62,44 @@ class FlextLdapServicesUpsertReader:
     ) -> p.Result[dict[str, p.Ldif.Entry]]:
         """Execute protocol requests without treating an incomplete read as absence.
 
+        The requests are pipelined on the one connection, so the wave costs
+        about one network round trip rather than one per DN.
+
         Returns:
             Requested entries only; LDAP 32 is a genuine empty result.
 
         """
+        executed = self._ops.search_many(queries)
+        if executed.failure:
+            return r[dict[str, p.Ldif.Entry]].from_failure(executed)
         entries: dict[str, p.Ldif.Entry] = {}
-        for query in queries:
-            found = self._ops.search(query)
+        for found in executed.value:
             if found.failure:
                 if self._ops.no_such_object_error(str(found.error)):
                     continue
                 return r[dict[str, p.Ldif.Entry]].from_failure(found)
             for entry in found.value.entries:
-                if entry.dn_str not in keys:
-                    key = u.Ldif.dn_key(entry.dn_str)
-                    if key.failure:
-                        return r[dict[str, p.Ldif.Entry]].from_failure(key)
-                    keys[entry.dn_str] = key.value
-                key = keys[entry.dn_str]
-                if key in requested:
-                    entries[key] = entry
+                key = self._key(entry.dn_str, keys)
+                if key.failure:
+                    return r[dict[str, p.Ldif.Entry]].from_failure(key)
+                if key.value in requested:
+                    entries[key.value] = entry
         return r[dict[str, p.Ldif.Entry]].ok(entries)
+
+    @staticmethod
+    def _key(dn: str, keys: dict[str, str]) -> p.Result[str]:
+        """Resolve a returned DN to its comparison key, once per DN text.
+
+        Returns:
+            The cached or newly computed DN key, or the DN parse failure.
+
+        """
+        if dn not in keys:
+            key = u.Ldif.dn_key(dn)
+            if key.failure:
+                return key
+            keys[dn] = key.value
+        return r[str].ok(keys[dn])
 
     def read(
         self,

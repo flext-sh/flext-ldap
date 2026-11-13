@@ -137,6 +137,50 @@ class TestsFlextLdapBulkIntegration:
             tm.that((again.adds, again.modifies, again.unchanged), eq=(0, 0, 2))
 
     @staticmethod
+    def test_pipelined_reads_keep_presence_absence_and_order(
+        ldap_container: Mapping[str, t.Scalar],
+    ) -> None:
+        """Reads beyond several pipeline windows match each DN's own state."""
+        with _connected(ldap_container) as (client, root):
+            count = 2 * c.Ldap.MAX_OUTSTANDING_SEARCHES + 3
+            batch = [
+                _person(f"uid=read{i},{root}", f"read{i}", cn="Stored")
+                for i in range(count)
+            ]
+            for entry in batch[::2]:
+                tm.ok(client.add(entry))
+            absent = {entry.dn_str for entry in batch[1::2]}
+            outcomes = tm.ok(
+                client.search_many([
+                    m.Ldap.SearchOptions.base_scope(entry.dn_str) for entry in batch
+                ])
+            )
+            tm.that(outcomes, length=count)
+            for index, (entry, found) in enumerate(zip(batch, outcomes, strict=True)):
+                if index % 2:
+                    tm.fail(found)
+                    tm.ok(client.no_such_object_error(str(found.error)))
+                    continue
+                result = tm.ok(found)
+                tm.that([value.dn_str for value in result.entries], eq=[entry.dn_str])
+                tm.that(result.entries[0].attributes_dict["cn"], eq=["Stored"])
+            for selection, counts in (
+                (batch[::2], (0, 0, count // 2 + 1)),
+                (batch[1::2], (count // 2, 0, 0)),
+                (batch, (count // 2, 0, count // 2 + 1)),
+            ):
+                plan = tm.ok(client.plan_upsert(selection))
+                tm.that((plan.adds, plan.modifies, plan.unchanged), eq=counts)
+                tm.that(
+                    [value.entry.dn_str for value in plan.operations],
+                    eq=[value.dn_str for value in selection],
+                )
+                tm.that(
+                    [value.observed_entry is None for value in plan.operations],
+                    eq=[value.dn_str in absent for value in selection],
+                )
+
+    @staticmethod
     def test_repeated_modifies_read_fresh_ordered_waves(
         ldap_container: Mapping[str, t.Scalar],
     ) -> None:

@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Sequence
 from typing import override
 
@@ -516,7 +517,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             - Failed searches log error messages with search parameters
 
         Architecture:
-            - Delegates to Ldap3Adapter.search() for protocol-level execution
+            - Delegates to :meth:`search_many`, the single protocol path
             - Uses FlextLdifParser for server-specific entry parsing
             - Returns r pattern - no exceptions raised
 
@@ -529,23 +530,59 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             r containing SearchResult with Entry models
 
         """
-        base_dn_result = u.Ldif.norm(search_options.base_dn)
-        if base_dn_result.failure:
-            return r[p.Ldap.SearchResult].fail(
-                f"Invalid base DN: {base_dn_result.error}",
+        return self.search_many([search_options], server_type).flat_map(
+            operator.itemgetter(0),
+        )
+
+    def search_many(
+        self,
+        searches: Sequence[p.Ldap.SearchOptions],
+        server_type: str = "rfc",
+    ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
+        """Pipeline independent searches on the one connection, in request order.
+
+        Business Rules:
+            - Every base DN is normalized as in :meth:`search`
+            - Requests share the connection with a bounded number outstanding,
+              so the batch does not pay one network round trip per request
+            - Each request keeps its own outcome (e.g. noSuchObject or the
+              failure raised while sending or awaiting it)
+
+        Returns:
+            One SearchResult outcome per request, or the first invalid base DN
+            or connection failure.
+
+        """
+        return (
+            r[p.Ldap.SearchOptions]
+            .traverse(searches, self._normalized_search, exceptions=())
+            .flat_map(
+                lambda normalized: self._ensure_adapter().search_many(
+                    normalized,
+                    server_type=server_type or self._server_type,
+                )
             )
-        concrete_options = (
-            search_options
-            if isinstance(search_options, m.Ldap.SearchOptions)
-            else m.Ldap.SearchOptions.model_validate(search_options)
         )
-        normalized_options = concrete_options.model_copy(
-            update={"base_dn": base_dn_result.value},
-        )
-        effective_server_type = server_type or self._server_type
-        return self._ensure_adapter().search(
-            normalized_options,
-            server_type=effective_server_type,
+
+    @staticmethod
+    def _normalized_search(
+        search_options: p.Ldap.SearchOptions,
+    ) -> p.Result[p.Ldap.SearchOptions]:
+        """Validate one request and normalize its base DN.
+
+        Returns:
+            The normalized options, or the invalid base DN failure.
+
+        """
+        return (
+            u.Ldif
+            .norm(search_options.base_dn)
+            .map_error(lambda error: f"Invalid base DN: {error}")
+            .map(
+                lambda base_dn: m.Ldap.SearchOptions.model_validate(
+                    search_options
+                ).model_copy(update={"base_dn": base_dn})
+            )
         )
 
     def upsert(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.LdapOperationResult]:

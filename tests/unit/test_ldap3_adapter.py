@@ -90,7 +90,7 @@ class TestsFlextLdapLdap3Adapter:
                     filter_str=c.Ldap.Tests.SEARCH_FILTER_CN,
                     scope=c.Ldap.SearchScope.SUBTREE,
                 )
-                u.Ldap.Tests.fail(adapter.search(options), has=needle)
+                u.Ldap.Tests.fail(adapter.search_many([options]), has=needle)
 
     @staticmethod
     def test_disconnect_is_idempotent_and_keeps_state_unbound(

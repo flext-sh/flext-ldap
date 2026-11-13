@@ -109,25 +109,32 @@ class FlextLdapUtilitiesRootDse(FlextLdapUtilitiesDetection):
         root_dse_result = cls.query_root_dse(connection)
         if root_dse_result.failure:
             return r[str].fail(f"Failed to query rootDSE: {root_dse_result.error}")
-        root_dse_attrs = root_dse_result.value
-        return r[str].ok(
-            cls.detect_server_type(
-                vendor_name=cls.resolve_first_attribute_value(
-                    root_dse_attrs,
-                    c.Ldap.RootDseAttribute.VENDOR_NAME,
-                ),
-                vendor_version=cls.resolve_first_attribute_value(
-                    root_dse_attrs,
-                    c.Ldap.RootDseAttribute.VENDOR_VERSION,
-                ),
-                naming_contexts=root_dse_attrs.get(
-                    c.Ldap.RootDseAttribute.NAMING_CONTEXTS,
-                    [],
-                ),
-                supported_extensions=root_dse_attrs.get(
-                    c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS,
-                    [],
-                ),
+        return r[str].ok(cls.detect_from_root_dse(root_dse_result.value))
+
+    @classmethod
+    def detect_from_root_dse(cls, root_dse_attrs: t.Ldap.OperationAttributes) -> str:
+        """Classify the LDAP server type from already read rootDSE attributes.
+
+        Returns:
+            The detected server type.
+
+        """
+        return cls.detect_server_type(
+            vendor_name=cls.resolve_first_attribute_value(
+                root_dse_attrs,
+                c.Ldap.RootDseAttribute.VENDOR_NAME,
+            ),
+            vendor_version=cls.resolve_first_attribute_value(
+                root_dse_attrs,
+                c.Ldap.RootDseAttribute.VENDOR_VERSION,
+            ),
+            naming_contexts=root_dse_attrs.get(
+                c.Ldap.RootDseAttribute.NAMING_CONTEXTS,
+                [],
+            ),
+            supported_extensions=root_dse_attrs.get(
+                c.Ldap.RootDseAttribute.SUPPORTED_EXTENSIONS,
+                [],
             ),
         )
 

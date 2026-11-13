@@ -19,7 +19,6 @@ from flext_ldap.adapters import FlextLdapAdapterHost
 from flext_ldap.constants import c
 from flext_ldap.models import m
 from flext_ldap.protocols import p
-from flext_ldap.services import FlextLdapServerDetector
 from flext_ldap.typings import t
 from flext_ldap.utilities import u
 
@@ -131,24 +130,20 @@ class FlextLdapConnection(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         """Detect LDAP server type after successful connection.
 
         Raises:
-            RuntimeError: If No active connection available for server detection; or if
-                ``detection_result.failure``.
+            RuntimeError: If the rootDSE read fails on the bound connection.
 
         """
-        adapter = self._ensure_adapter()
-        connection = adapter.connection
-        if not connection:
-            error_message = "No active connection available for server detection"
+        root_dse = self._ensure_adapter().root_dse([
+            c.Ldap.AttributeName.ALL_ATTRIBUTES
+        ])
+        if root_dse.failure:
+            error_message = f"Failed to query rootDSE: {root_dse.error}"
             raise RuntimeError(error_message)
-        detector = FlextLdapServerDetector()
-        detection_result: p.Result[str] = detector.detect_from_connection(connection)
-        if detection_result.failure:
-            raise RuntimeError(detection_result.error or "Server detection failed")
-        self._server_type = detection_result.value
+        self._server_type = u.Ldap.detect_from_root_dse(root_dse.value)
         self.logger.info(
             "Server type detected automatically",
             operation=c.Ldap.OperationName.CONNECT,
-            detected_server_type=detection_result.value,
+            detected_server_type=self._server_type,
         )
 
 

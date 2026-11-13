@@ -33,18 +33,32 @@ class FlextLdapLdap3Wrappers:
     def _ldap3_method(
         connection: p.Ldap.Ldap3Connection,
         method_name: str,
-    ) -> Callable[..., bool]:
+    ) -> Callable[..., int]:
         """Get a typed callable for an untyped ldap3 Connection method.
 
         ldap3 library methods return Unknown types which cause pyright errors.
-        This helper extracts the method via getattr and wraps the return as bool.
+        On the ASYNC strategy a request method returns its message id, and
+        bind/unbind return their bool status.
 
         Returns:
-            The resulting ``Callable[..., bool]``.
+            The resulting ``Callable[..., int]``.
 
         """
-        method: Callable[..., bool] = getattr(connection, method_name)
+        method: Callable[..., int] = getattr(connection, method_name)
         return method
+
+    @staticmethod
+    def response(
+        connection: p.Ldap.Ldap3Connection,
+        message_id: int,
+    ) -> tuple[Sequence[t.Ldap.Ldap3SearchResponse], t.JsonMapping]:
+        """Await one outstanding request within the configured response timeout.
+
+        Returns:
+            The native response records and the LDAP result of ``message_id``.
+
+        """
+        return connection.get_response(message_id)
 
     @staticmethod
     def add(
@@ -52,7 +66,7 @@ class FlextLdapLdap3Wrappers:
         dn: str,
         object_class: Sequence[str] | str | None,
         attributes: Mapping[str, Sequence[str]],
-    ) -> bool:
+    ) -> int:
         """Type-safe wrapper for untyped ldap3 Connection.add().
 
         Attribute values are forwarded verbatim: ldap3 accepts sequence
@@ -64,18 +78,18 @@ class FlextLdapLdap3Wrappers:
         ``objectClassViolation``.
 
         Returns:
-            The resulting ``bool``.
+            The message id of the sent request.
 
         """
         add_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "add")
         return add_fn(dn, object_class, dict(attributes))
 
     @staticmethod
-    def delete(connection: p.Ldap.Ldap3Connection, dn: str) -> bool:
+    def delete(connection: p.Ldap.Ldap3Connection, dn: str) -> int:
         """Type-safe wrapper for untyped ldap3 Connection.delete().
 
         Returns:
-            The resulting ``bool``.
+            The message id of the sent request.
 
         """
         delete_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "delete")
@@ -101,29 +115,29 @@ class FlextLdapLdap3Wrappers:
 
         """
         bind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "bind")
-        return bind_fn()
+        return bool(bind_fn())
 
     @staticmethod
     def modify(
         connection: p.Ldap.Ldap3Connection,
         dn: str,
         changes: t.Ldap.OperationChanges,
-    ) -> bool:
+    ) -> int:
         """Type-safe wrapper for untyped ldap3 Connection.modify().
 
         Returns:
-            The resulting ``bool``.
+            The message id of the sent request.
 
         """
         modify_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "modify")
         return modify_fn(dn, changes)
 
     @staticmethod
-    def search(connection: p.Ldap.Ldap3Connection, params: p.Ldap.SearchParams) -> bool:
-        """Safely invoke ldap3 search on dynamic connection objects.
+    def search(connection: p.Ldap.Ldap3Connection, params: p.Ldap.SearchParams) -> int:
+        """Send one ldap3 search without awaiting its response.
 
         Returns:
-            The resulting ``bool``.
+            The message id of the sent request.
 
         """
         scope_map: Mapping[int, c.Ldap.Ldap3SearchScope] = {
@@ -169,7 +183,7 @@ class FlextLdapLdap3Wrappers:
 
         """
         unbind_fn = FlextLdapLdap3Wrappers._ldap3_method(connection, "unbind")
-        return unbind_fn()
+        return bool(unbind_fn())
 
 
 __all__: list[str] = ["FlextLdapLdap3Wrappers"]
