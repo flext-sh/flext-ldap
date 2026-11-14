@@ -12,7 +12,7 @@
 
 <!-- TOC END -->
 
-Gerado do dump da plataforma Semgrep (deployment `datacosmos`, 2026-08-06).
+Gerado do dump da plataforma Semgrep da organização (2026-08-06).
 
 Bead: `mro-p57t.13`
 
