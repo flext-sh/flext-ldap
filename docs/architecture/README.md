@@ -68,7 +68,6 @@ API Facade → Service Layer → Adapter Layer → Protocol + Models
 - `services/connection.py` – connection lifecycle and server detection integration
 - `services/operations.py` – CRUD, search, and batch upsert operations
 - `services/sync.py` – LDIF-driven synchronization utilities
-- `services/detection.py` – runtime server-type detection from rootDSE
 
 **Adapters**:
 

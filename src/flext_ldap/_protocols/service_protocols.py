@@ -90,6 +90,13 @@ class FlextLdapProtocolsService:
             """Read the native Root DSE advertised control capability."""
             ...
 
+        def search_many(
+            self,
+            searches: Sequence[FlextLdapProtocolsLdap.SearchOptions],
+        ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
+            """Pipeline independent searches, one outcome per request in order."""
+            ...
+
         def is_user_attribute(self, attribute: str) -> p.Result[bool]:
             """Resolve native schema usage for a declared comparison effect."""
             ...
@@ -259,6 +266,13 @@ class FlextLdapProtocolsService:
         @property
         def start_tls(self) -> Callable[..., bool]:
             """The callable implementing STARTTLS negotiation."""
+            ...
+
+        @property
+        def get_response(
+            self,
+        ) -> Callable[..., tuple[Sequence[t.Ldap.Ldap3SearchResponse], t.JsonMapping]]:
+            """The ASYNC-strategy wait returning one request's response and result."""
             ...
 
 

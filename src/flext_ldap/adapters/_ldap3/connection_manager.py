@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_ldif import e, r
-from ldap3 import Connection, Server, set_config_parameter
+from ldap3 import ASYNC, Connection, Server, set_config_parameter
 
 from flext_ldap.adapters._ldap3 import FlextLdapLdap3Wrappers
 from flext_ldap.constants import c
@@ -29,7 +29,12 @@ class FlextLdapLdap3ConnectionManager:
             - Bind credentials (user, password) from settings
             - Constructor never binds; the adapter binds after taking ownership
             - auto_range from settings controls automatic range handling
-            - Receive timeout uses settings.timeout value
+            - The native ASYNC strategy lets independent requests share the
+              one connection without paying one round trip each
+            - Every response wait (bind, StartTLS, schema, operations) uses
+              settings.timeout through ldap3's process-wide
+              RESPONSE_WAITING_TIMEOUT; a socket receive timeout is not set
+              because it makes the ASYNC receiver thread spin after close
             - p.Ldap.Ldap3Connection is created but may not be bound yet
 
         Architecture:
@@ -53,6 +58,7 @@ class FlextLdapLdap3ConnectionManager:
             raise TypeError(msg)
         # Preserve complete attribute descriptions, including language options.
         set_config_parameter("CASE_INSENSITIVE_ATTRIBUTE_NAMES", value=False)
+        set_config_parameter("RESPONSE_WAITING_TIMEOUT", settings.timeout)
         return Connection(
             server=server,
             user=settings.bind_dn,
@@ -60,7 +66,7 @@ class FlextLdapLdap3ConnectionManager:
             auto_bind=False,
             auto_range=settings.auto_range,
             check_names=False,
-            receive_timeout=settings.timeout,
+            client_strategy=ASYNC,
         )
 
     @staticmethod

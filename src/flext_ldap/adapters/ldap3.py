@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from itertools import starmap
 from typing import ClassVar, override
 
 from flext_ldif import e, r
@@ -97,6 +99,36 @@ class FlextLdapLdap3Adapter(s[bool]):
             return r[int].ok(int(ldap3_value))
         return r[int].fail(f"Invalid LDAP scope: {scope}")
 
+    def root_dse(
+        self, attributes: t.StrSequence
+    ) -> p.Result[t.Ldap.OperationAttributes]:
+        """Read the requested Root DSE attributes on the bound connection.
+
+        Returns:
+            The Root DSE attribute values, or the original read failure.
+
+        """
+        root = m.Ldap.SearchParams(
+            base_dn="",
+            filter_str=c.Ldap.ALL_ENTRIES_FILTER,
+            ldap_scope=c.Ldap.SearchScopeValue.BASE,
+            search_attributes=list(attributes),
+            size_limit=0,
+            time_limit=0,
+        )
+        found = self._get_connection().flat_map(
+            lambda connection: self.SearchExecutor.execute(
+                connection, [root], c.Ldif.ServerTypes.RFC
+            )[0]
+        )
+        if found.failure:
+            return r[t.Ldap.OperationAttributes].from_failure(found)
+        if len(found.value) != 1:
+            return r[t.Ldap.OperationAttributes].fail(
+                "Root DSE search did not return one entry"
+            )
+        return r[t.Ldap.OperationAttributes].ok(found.value[0].attributes_dict)
+
     def supports_control(self, oid: str) -> p.Result[bool]:
         """Read advertised controls directly from the Root DSE.
 
@@ -104,38 +136,19 @@ class FlextLdapLdap3Adapter(s[bool]):
             Whether the control is advertised, or the original capability failure.
 
         """
-        connected = self._get_connection()
-        if connected.failure:
-            return r[bool].from_failure(connected)
-        connection = connected.value
-        try:
-            ok = FlextLdapLdap3Wrappers.search(
-                connection,
-                m.Ldap.SearchParams(
-                    base_dn="",
-                    filter_str=c.Ldap.ALL_ENTRIES_FILTER,
-                    ldap_scope=c.Ldap.SearchScopeValue.BASE,
-                    search_attributes=["supportedControl"],
-                    size_limit=0,
-                    time_limit=0,
-                ),
+        return self.root_dse(["supportedControl"]).map(
+            lambda attributes: (
+                oid
+                in next(
+                    (
+                        values
+                        for name, values in attributes.items()
+                        if name.lower() == "supportedcontrol"
+                    ),
+                    (),
+                )
             )
-        except c.EXC_BROAD_IO_TYPE as exc:
-            return r[bool].fail_op("Root DSE controls search", exc)
-        if not ok:
-            return r[bool].fail(f"Root DSE controls search failed: {connection.result}")
-        entries = self.ResultConverter.convert_ldap3_results(connection)
-        if len(entries) != 1:
-            return r[bool].fail("Root DSE controls search did not return one entry")
-        controls = next(
-            (
-                values
-                for name, values in entries[0][1].items()
-                if name.lower() == "supportedcontrol"
-            ),
-            (),
         )
-        return r[bool].ok(oid in controls)
 
     def is_user_attribute(self, attribute: str) -> p.Result[bool]:
         """Read RFC 4512 USAGE from the SDK schema already loaded at bind.
@@ -285,45 +298,107 @@ class FlextLdapLdap3Adapter(s[bool]):
             lambda conn: self.OperationExecutor.execute_modify(conn, dn, changes),
         )
 
-    def search(
+    def search_many(
         self,
-        search_options: p.Ldap.SearchOptions,
+        searches: Sequence[p.Ldap.SearchOptions],
         server_type: c.Ldif.ServerTypes | str = c.Ldif.ServerTypes.RFC,
-    ) -> p.Result[p.Ldap.SearchResult]:
-        """Perform LDAP search and wrap entries in ``m.Ldap.SearchResult``.
+    ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
+        """Pipeline LDAP searches and wrap each in ``m.Ldap.SearchResult``.
+
+        Business Rules:
+            - Every base DN is normalized with ``u.Ldif.norm()`` (the single
+              owner of search-request preparation)
+            - Each request keeps its own outcome (e.g. noSuchObject or the
+              failure raised while sending or awaiting it)
 
         Returns:
-            The resulting ``p.Result[p.Ldap.SearchResult]``.
+            One search result per request in request order, or the first
+            invalid base DN, connection or scope failure.
 
         """
         return (
-            self
-            ._get_connection()
+            r[p.Ldap.SearchOptions]
+            .traverse(searches, self._normalized, exceptions=())
             .flat_map(
-                lambda conn: FlextLdapLdap3Adapter._map_scope(
-                    search_options.scope,
-                ).flat_map(
-                    lambda scope: self.SearchExecutor.execute(
-                        conn,
-                        m.Ldap.SearchParams(
-                            base_dn=search_options.base_dn,
-                            filter_str=search_options.filter_str,
-                            ldap_scope=scope,
-                            search_attributes=search_options.attributes or [],
-                            size_limit=search_options.size_limit,
-                            time_limit=search_options.time_limit,
-                            controls=search_options.controls,
-                        ),
-                        server_type,
-                    ),
-                ),
+                lambda normalized: self._get_connection().flat_map(
+                    lambda connection: (
+                        r[p.Ldap.SearchParams]
+                        .traverse(normalized, self._search_params, exceptions=())
+                        .map(
+                            lambda params: list(
+                                starmap(
+                                    self._search_result,
+                                    zip(
+                                        self.SearchExecutor.execute(
+                                            connection, params, server_type
+                                        ),
+                                        normalized,
+                                        strict=True,
+                                    ),
+                                )
+                            )
+                        )
+                    )
+                )
             )
+        )
+
+    @staticmethod
+    def _normalized(
+        options: p.Ldap.SearchOptions,
+    ) -> p.Result[p.Ldap.SearchOptions]:
+        """Validate one request and normalize its base DN.
+
+        Returns:
+            The normalized options, or the invalid base DN failure.
+
+        """
+        return (
+            u.Ldif
+            .norm(options.base_dn)
+            .map_error(lambda error: f"Invalid base DN: {error}")
             .map(
-                lambda entries: m.Ldap.SearchResult(
-                    entries=entries,
-                    search_options=search_options,
-                ),
+                lambda base_dn: m.Ldap.SearchOptions.model_validate(options).model_copy(
+                    update={"base_dn": base_dn}
+                )
             )
+        )
+
+    @staticmethod
+    def _search_params(
+        options: p.Ldap.SearchOptions,
+    ) -> p.Result[p.Ldap.SearchParams]:
+        """Translate one request into native ldap3 search parameters.
+
+        Returns:
+            The ldap3 parameters, or the invalid scope failure.
+
+        """
+        return FlextLdapLdap3Adapter._map_scope(options.scope).map(
+            lambda scope: m.Ldap.SearchParams(
+                base_dn=options.base_dn,
+                filter_str=options.filter_str,
+                ldap_scope=scope,
+                search_attributes=options.attributes or [],
+                size_limit=options.size_limit,
+                time_limit=options.time_limit,
+                controls=options.controls,
+            )
+        )
+
+    @staticmethod
+    def _search_result(
+        outcome: p.Result[Sequence[p.Ldif.Entry]],
+        options: p.Ldap.SearchOptions,
+    ) -> p.Result[p.Ldap.SearchResult]:
+        """Wrap one request's entries with the options that produced them.
+
+        Returns:
+            The search result, or the request's own LDAP failure.
+
+        """
+        return outcome.map(
+            lambda entries: m.Ldap.SearchResult(entries=entries, search_options=options)
         )
 
     def _get_connection(self) -> p.Result[p.Ldap.Ldap3Connection]:

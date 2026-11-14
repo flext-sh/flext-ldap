@@ -44,16 +44,16 @@ failure explicit.
 
 ### Server Detection
 
-- **File**: `src/flext_ldap/services/detection.py`
-- **Responsibility**: Inspect `rootDSE` attributes from a live connection and infer the
-  directory server type using in-project heuristics instead of the flext-ldif detector.
-- **Inputs**: Bound `ldap3.Connection`
-- **Outputs**: `r[str]` containing the detected server label.
+- **Files**: `src/flext_ldap/services/connection.py`, `src/flext_ldap/adapters/ldap3.py`
+- **Responsibility**: After bind, the adapter's `root_dse` reads `rootDSE` on the
+  connection and `u.Ldap.detect_from_root_dse` infers the directory server type using
+  in-project heuristics instead of the flext-ldif detector.
+- **Outputs**: the detected server label used for result parsing.
 
 ## Collaboration Pattern
 
 ```text
-ldap → Connection → (optional) ServerDetector
+ldap → Connection (rootDSE server detection)
           → Operations (search/CRUD/upsert)
           → SyncService (uses Operations under the hood)
 ```

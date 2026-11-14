@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Sequence
 from typing import override
 
@@ -39,7 +40,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
 
     Business Rules:
         - Connection must be bound before operations (validated via is_connected)
-        - Search operations normalize base_dn using u.Ldif.norm()
+        - Search base_dn is normalized using u.Ldif.norm() by the adapter
         - Add/Modify/Delete operations convert string DNs to DN models
         - Upsert implements LDAP idempotent write: add -> exists check -> modify
         - Batch operations track per-entry progress and support stop_on_error
@@ -504,7 +505,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         """Perform an LDAP search using normalized search options.
 
         Business Rules:
-            - Base DN is normalized using u.Ldif.norm() before search
+            - Base DN is normalized using u.Ldif.norm() by the adapter
             - Normalization ensures consistent DN format across server types
             - Search filter syntax is validated by LDAP server
             - Server type determines parsing servers for entry attributes
@@ -516,7 +517,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             - Failed searches log error messages with search parameters
 
         Architecture:
-            - Delegates to Ldap3Adapter.search() for protocol-level execution
+            - Delegates to :meth:`search_many`, the single protocol path
             - Uses FlextLdifParser for server-specific entry parsing
             - Returns r pattern - no exceptions raised
 
@@ -529,23 +530,23 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
             r containing SearchResult with Entry models
 
         """
-        base_dn_result = u.Ldif.norm(search_options.base_dn)
-        if base_dn_result.failure:
-            return r[p.Ldap.SearchResult].fail(
-                f"Invalid base DN: {base_dn_result.error}",
-            )
-        concrete_options = (
-            search_options
-            if isinstance(search_options, m.Ldap.SearchOptions)
-            else m.Ldap.SearchOptions.model_validate(search_options)
+        return self.search_many([search_options], server_type).flat_map(
+            operator.itemgetter(0),
         )
-        normalized_options = concrete_options.model_copy(
-            update={"base_dn": base_dn_result.value},
-        )
-        effective_server_type = server_type or self._server_type
-        return self._ensure_adapter().search(
-            normalized_options,
-            server_type=effective_server_type,
+
+    def search_many(
+        self,
+        searches: Sequence[p.Ldap.SearchOptions],
+        server_type: str = "rfc",
+    ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
+        """Delegate pipelined searches to the selected adapter.
+
+        Returns:
+            One SearchResult outcome per request, or the adapter's failure.
+
+        """
+        return self._ensure_adapter().search_many(
+            searches, server_type or self._server_type
         )
 
     def upsert(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.LdapOperationResult]:

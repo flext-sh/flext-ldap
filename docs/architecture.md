@@ -24,16 +24,15 @@ services or adapters for testing and alternative runtimes.
  ldap facade (api.py)
   ├── Connection (services/connection.py)
   ├── Operations (services/operations.py)
-  ├── Sync (services/sync.py)
-  └── Server detection (services/detection.py)
+  └── Sync (services/sync.py)
         └── Ldap3Adapter / EntryAdapter (adapters/*.py)
             └── ldap3 + flext-ldif
 ```
 
 - **Facade**: :class:`flext_ldap.api.ldap` composes the services and exposes the
   high-level API used by callers.
-- **Services**: Connection, Operations, Sync, and Server Detection manage LDAP lifecycle
-  concerns and return typed :class:`flext_core.r` values.
+- **Services**: Connection (with rootDSE server detection), Operations, and Sync
+  manage LDAP lifecycle concerns and return typed :class:`flext_core.r` values.
 - **Adapters**: :class:`flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter` and
   :class:`flext_ldap.adapters.entry.FlextLdapEntryAdapter` isolate protocol handling and
   entry normalization; :class:`flext_ldap.adapters.host.FlextLdapAdapterHost` lazily
@@ -57,16 +56,17 @@ services or adapters for testing and alternative runtimes.
    :class:`~flext_ldap._models.FlextLdapModels.ConnectionConfig` when needed.
 1. :class:`~flext_ldap.services.connection.FlextLdapConnection` delegates binding to
    :class:`~flext_ldap.adapters.ldap3.FlextLdapLdap3Adapter`, with optional retry handling.
-1. After a successful bind, the connection service can trigger
-   :class:`~flext_ldap.services.detection.FlextLdapServerDetector` to infer the server
-   type from `rootDSE` attributes.
+1. After a successful bind, the connection service reads `rootDSE` through the
+   adapter and classifies the server type with `u.Ldap.detect_from_root_dse`.
 
 ### Search and CRUD
 
 1. The facade forwards search/add/modify/delete calls to
    :class:`~flext_ldap.services.operations.FlextLdapOperations`.
-1. The operations service normalizes DNs and delegates protocol calls to the LDAP
-   adapter, which returns typed results already parsed by `flext-ldif`.
+1. The operations service delegates protocol calls to the LDAP adapter, which
+   normalizes search base DNs, pipelines independent searches on the one ASYNC
+   connection (at most `c.Ldap.MAX_OUTSTANDING_SEARCHES` outstanding), and returns
+   typed results already parsed by `flext-ldif`.
 1. Results are wrapped in `r` instances for explicit success/failure handling.
 
 ### Synchronization
@@ -80,8 +80,7 @@ services or adapters for testing and alternative runtimes.
 
 ### Server Detection
 
-1. :class:`~flext_ldap.services.detection.FlextLdapServerDetector` queries `rootDSE`
-   using the active ldap3 connection.
+1. The adapter's `root_dse` reads `rootDSE` on the active connection.
 1. Vendor attributes are matched against lightweight in-project heuristics to return a
    server label (for example, `rfc`, `openldap`, `ad`) without relying on external
    detection helpers.

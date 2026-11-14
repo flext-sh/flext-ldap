@@ -59,29 +59,32 @@ class FlextLdapLdap3OperationExecutor:
     def _execute(
         connection: p.Ldap.Ldap3Connection,
         operation_type: c.Ldap.OperationType,
-        wrapper_call: Callable[[], bool],
+        wrapper_call: Callable[[], int],
     ) -> p.Result[p.Ldap.OperationResult]:
         failure_prefix = c.Ldap.OPERATION_FAILURE_PREFIXES[operation_type]
         try:
-            if wrapper_call():
-                return r[p.Ldap.OperationResult].ok(
-                    m.Ldap.OperationResult(
-                        success=True,
-                        operation_type=operation_type,
-                        message=c.Ldap.OPERATION_SUCCESS_MESSAGES[operation_type],
-                        entries_affected=1,
-                    ),
-                )
+            _, result_payload = FlextLdapLdap3Wrappers.response(
+                connection, wrapper_call()
+            )
         except c.EXC_BROAD_IO_TYPE as exc:
             return r[p.Ldap.OperationResult].fail_op(failure_prefix, exc)
+        if result_payload.get("result") == c.Ldap.ResultCode.SUCCESS:
+            return r[p.Ldap.OperationResult].ok(
+                m.Ldap.OperationResult(
+                    success=True,
+                    operation_type=operation_type,
+                    message=c.Ldap.OPERATION_SUCCESS_MESSAGES[operation_type],
+                    entries_affected=1,
+                ),
+            )
         return FlextLdapLdap3OperationExecutor._extract_error_result(
-            connection,
+            result_payload,
             failure_prefix,
         )
 
     @staticmethod
     def _extract_error_result(
-        connection: p.Ldap.Ldap3Connection,
+        result_payload: t.JsonMapping,
         prefix: str,
     ) -> p.Result[p.Ldap.OperationResult]:
         """Build ``r.fail`` retaining the server description and diagnostic.
@@ -91,16 +94,14 @@ class FlextLdapLdap3OperationExecutor:
 
         """
         error_msg = f"{prefix}: LDAP operation returned failure status"
-        result_payload = connection.result
-        if result_payload is not None:
-            payload = FlextLdapLdap3OperationExecutor.ResultPayload.model_validate(
-                result_payload,
-            )
-            description = payload.description
-            if description is not None:
-                error_msg = f"{prefix}: {description}"
-            if payload.message:
-                error_msg = f"{error_msg}: {payload.message}"
+        payload = FlextLdapLdap3OperationExecutor.ResultPayload.model_validate(
+            result_payload,
+        )
+        description = payload.description
+        if description is not None:
+            error_msg = f"{prefix}: {description}"
+        if payload.message:
+            error_msg = f"{error_msg}: {payload.message}"
         return r[p.Ldap.OperationResult].fail(
             error_msg,
             error_data=result_payload,

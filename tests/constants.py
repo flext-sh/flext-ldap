@@ -254,17 +254,6 @@ class TestsFlextLdapConstants(FlextTestsConstants, FlextLdapConstants):
             BIND_ADMIN_DN: Final[str] = "cn=admin,dc=x,dc=y"
             BIND_ADMIN_PASSWORD: Final[str] = _bind_admin_password()
 
-            DETECTION_EXECUTE_SCENARIOS: Final[
-                Sequence[
-                    tuple[Mapping[str, bool | float | str | None] | None, bool, str]
-                ]
-            ] = (
-                # Substrings match the centralized flext-core error format —
-                # ``ERR_SERVICE_TYPE_MISMATCH`` and the validate-connection
-                # wrapper. Keep these aligned with the canonical messages.
-                ({}, True, "parameter required"),
-                ({"connection": "invalid"}, True, "ldap3.Connection"),
-            )
             DETECTION_GET_FIRST_VALUE_SCENARIOS: Final[
                 Sequence[tuple[Mapping[str, Sequence[str]], str, str | None]]
             ] = (

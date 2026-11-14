@@ -12,11 +12,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import ClassVar
+from collections.abc import Mapping, Sequence
 
 import pytest
-from ldap3 import MOCK_SYNC, Connection, Server
 
 from tests import c, m, p, t, tm, u
 
@@ -45,48 +43,6 @@ def _entry(
         ),
         domain_events=[],
     )
-
-
-def _bound_mock_connection() -> Connection:
-    """Build a bound ldap3 ``MOCK_SYNC`` connection exposing a rootDSE.
-
-    The offline DIT publishes the rootDSE under its empty DN with raw BER
-    string (``bytes``) values, exactly as the real offline strategy decodes
-    them.
-
-    Returns:
-        The bound ``Connection`` with the rootDSE attributes in place.
-
-    """
-    server = Server("mock")
-    conn = Connection(server, client_strategy=MOCK_SYNC)
-    conn.server.dit[""] = {
-        "objectClass": [b"top"],
-        "namingContexts": [b"dc=example,dc=com"],
-        "vendorName": [b"OpenLDAP"],
-        "vendorVersion": [b"2.4.57"],
-    }
-    method_name = "bind"
-    bind_call: Callable[..., bool] = getattr(conn, method_name)
-    bind_call()
-    return conn
-
-
-class TestsFlextLdapRootDseProbePayload:
-    """Shared ldap3-shaped ``result``/``entries`` payload for root-DSE probes."""
-
-    result_payload: ClassVar[t.JsonMapping] = {}
-    entry_payloads: ClassVar[Sequence[str]] = ()
-
-    @property
-    def result(self) -> t.JsonMapping:
-        """The ldap3 raw result payload."""
-        return self.result_payload
-
-    @property
-    def entries(self) -> Sequence[str]:
-        """The ldap3 raw entries."""
-        return self.entry_payloads
 
 
 class TestsFlextLdapUtilitiesUnit:
@@ -326,27 +282,6 @@ class TestsFlextLdapUtilitiesUnitDetect(TestsFlextLdapUtilitiesUnit):
             supported_extensions=(),
         )
         u.Ldap.Tests.that(result, eq=c.Ldif.ServerTypes.RFC.value)
-
-    # --- detect_from_connection ---
-    @staticmethod
-    def test_detect_from_connection_failure() -> None:
-        """Verify detect from connection failure."""
-
-        class FailSearch(TestsFlextLdapRootDseProbePayload):
-            @staticmethod
-            def search(**_kwargs: str | int | bool | None) -> bool:
-                return False
-
-        result = u.Ldap.detect_from_connection(FailSearch())
-        u.Ldap.Tests.fail(result)
-
-    @staticmethod
-    def test_detect_from_connection_with_ldap3_offline_strategy() -> None:
-        """detect_from_connection classifies the vendor from real rootDSE data."""
-        result = u.Ldap.detect_from_connection(_bound_mock_connection())
-
-        tm.ok(result.success)
-        tm.that(result.value, eq="openldap")
 
     @staticmethod
     def test_dn_str_with_string() -> None:
@@ -596,76 +531,6 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
         changes = u.Ldap.process_deleted_attributes(existing_attrs, frozenset(), {"cn"})
         tm.that(changes, has="sn")
         tm.that(changes, lacks="cn")
-
-    # --- query_root_dse ---
-    @staticmethod
-    def test_query_root_dse_no_search_method() -> None:
-        """Verify query root dse no search method."""
-
-        class NoSearch(TestsFlextLdapRootDseProbePayload):
-            search: None = None
-
-        result = u.Ldap.query_root_dse(NoSearch())
-        u.Ldap.Tests.fail(result)
-
-    @staticmethod
-    def test_query_root_dse_search_returns_false() -> None:
-        """Verify query root dse search returns false."""
-
-        class FalseSearch(TestsFlextLdapRootDseProbePayload):
-            @staticmethod
-            def search(**_kwargs: str | int | bool | None) -> bool:
-                return False
-
-        result = u.Ldap.query_root_dse(FalseSearch())
-        u.Ldap.Tests.fail(result)
-
-    @staticmethod
-    def test_query_root_dse_no_entries() -> None:
-        """Verify query root dse no entries."""
-
-        class EmptySearch(TestsFlextLdapRootDseProbePayload):
-            result_payload: ClassVar[t.JsonMapping] = {"result": 0}
-
-            @staticmethod
-            def search(**_kwargs: str | int | bool | None) -> bool:
-                return True
-
-        result = u.Ldap.query_root_dse(EmptySearch())
-        u.Ldap.Tests.fail(result)
-
-    @staticmethod
-    def test_query_root_dse_invalid_entry_type() -> None:
-        """Verify query root dse invalid entry type."""
-
-        class BadEntry(TestsFlextLdapRootDseProbePayload):
-            result_payload: ClassVar[t.JsonMapping] = {"result": 0}
-            entry_payloads: ClassVar[Sequence[str]] = ["not_ldap3_entry"]
-
-            @staticmethod
-            def search(**_kwargs: str | int | bool | None) -> bool:
-                return True
-
-        result = u.Ldap.query_root_dse(BadEntry())
-        u.Ldap.Tests.fail(result)
-
-    @staticmethod
-    def test_query_root_dse_with_ldap3_offline_strategy() -> None:
-        """query_root_dse reads rootDSE attributes through a real ldap3 connection.
-
-        The bound ``MOCK_SYNC`` connection from ``_bound_mock_connection`` is
-        ldap3's own offline runtime, so the exercised path matches production.
-        The outcome is asserted deterministically, never as ``success or
-        failure``.
-        """
-        result = u.Ldap.query_root_dse(_bound_mock_connection())
-
-        tm.ok(result.success)
-        tm.that(
-            result.value.get(c.Ldap.RootDseAttribute.NAMING_CONTEXTS),
-            has="dc=example,dc=com",
-        )
-        tm.that(result.value.get(c.Ldap.RootDseAttribute.VENDOR_NAME), has="OpenLDAP")
 
     @staticmethod
     def test_rdn_attribute_names_multivalued_rdn() -> None:
