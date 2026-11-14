@@ -305,28 +305,61 @@ class FlextLdapLdap3Adapter(s[bool]):
     ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
         """Pipeline LDAP searches and wrap each in ``m.Ldap.SearchResult``.
 
+        Business Rules:
+            - Every base DN is normalized with ``u.Ldif.norm()`` (the single
+              owner of search-request preparation)
+            - Each request keeps its own outcome (e.g. noSuchObject or the
+              failure raised while sending or awaiting it)
+
         Returns:
             One search result per request in request order, or the first
-            connection or scope failure.
+            invalid base DN, connection or scope failure.
 
         """
         return (
-            self
-            ._get_connection()
+            r[p.Ldap.SearchOptions]
+            .traverse(searches, self._normalized, exceptions=())
             .flat_map(
-                lambda connection: (
-                    r[p.Ldap.SearchParams]
-                    .traverse(searches, self._search_params, exceptions=())
-                    .map(
-                        lambda params: self.SearchExecutor.execute(
-                            connection, params, server_type
+                lambda normalized: self._get_connection().flat_map(
+                    lambda connection: (
+                        r[p.Ldap.SearchParams]
+                        .traverse(normalized, self._search_params, exceptions=())
+                        .map(
+                            lambda params: list(
+                                starmap(
+                                    self._search_result,
+                                    zip(
+                                        self.SearchExecutor.execute(
+                                            connection, params, server_type
+                                        ),
+                                        normalized,
+                                        strict=True,
+                                    ),
+                                )
+                            )
                         )
                     )
                 )
             )
+        )
+
+    @staticmethod
+    def _normalized(
+        options: p.Ldap.SearchOptions,
+    ) -> p.Result[p.Ldap.SearchOptions]:
+        """Validate one request and normalize its base DN.
+
+        Returns:
+            The normalized options, or the invalid base DN failure.
+
+        """
+        return (
+            u.Ldif
+            .norm(options.base_dn)
+            .map_error(lambda error: f"Invalid base DN: {error}")
             .map(
-                lambda outcomes: list(
-                    starmap(self._search_result, zip(outcomes, searches, strict=True))
+                lambda base_dn: m.Ldap.SearchOptions.model_validate(options).model_copy(
+                    update={"base_dn": base_dn}
                 )
             )
         )

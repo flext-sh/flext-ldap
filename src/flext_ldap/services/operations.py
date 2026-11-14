@@ -40,7 +40,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
 
     Business Rules:
         - Connection must be bound before operations (validated via is_connected)
-        - Search operations normalize base_dn using u.Ldif.norm()
+        - Search base_dn is normalized using u.Ldif.norm() by the adapter
         - Add/Modify/Delete operations convert string DNs to DN models
         - Upsert implements LDAP idempotent write: add -> exists check -> modify
         - Batch operations track per-entry progress and support stop_on_error
@@ -505,7 +505,7 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         """Perform an LDAP search using normalized search options.
 
         Business Rules:
-            - Base DN is normalized using u.Ldif.norm() before search
+            - Base DN is normalized using u.Ldif.norm() by the adapter
             - Normalization ensures consistent DN format across server types
             - Search filter syntax is validated by LDAP server
             - Server type determines parsing servers for entry attributes
@@ -539,50 +539,14 @@ class FlextLdapOperations(FlextLdapAdapterHost[p.Ldap.SearchResult]):
         searches: Sequence[p.Ldap.SearchOptions],
         server_type: str = "rfc",
     ) -> p.Result[Sequence[p.Result[p.Ldap.SearchResult]]]:
-        """Pipeline independent searches on the one connection, in request order.
-
-        Business Rules:
-            - Every base DN is normalized as in :meth:`search`
-            - Requests share the connection with a bounded number outstanding,
-              so the batch does not pay one network round trip per request
-            - Each request keeps its own outcome (e.g. noSuchObject or the
-              failure raised while sending or awaiting it)
+        """Delegate pipelined searches to the selected adapter.
 
         Returns:
-            One SearchResult outcome per request, or the first invalid base DN
-            or connection failure.
+            One SearchResult outcome per request, or the adapter's failure.
 
         """
-        return (
-            r[p.Ldap.SearchOptions]
-            .traverse(searches, self._normalized_search, exceptions=())
-            .flat_map(
-                lambda normalized: self._ensure_adapter().search_many(
-                    normalized,
-                    server_type=server_type or self._server_type,
-                )
-            )
-        )
-
-    @staticmethod
-    def _normalized_search(
-        search_options: p.Ldap.SearchOptions,
-    ) -> p.Result[p.Ldap.SearchOptions]:
-        """Validate one request and normalize its base DN.
-
-        Returns:
-            The normalized options, or the invalid base DN failure.
-
-        """
-        return (
-            u.Ldif
-            .norm(search_options.base_dn)
-            .map_error(lambda error: f"Invalid base DN: {error}")
-            .map(
-                lambda base_dn: m.Ldap.SearchOptions.model_validate(
-                    search_options
-                ).model_copy(update={"base_dn": base_dn})
-            )
+        return self._ensure_adapter().search_many(
+            searches, server_type or self._server_type
         )
 
     def upsert(self, entry: p.Ldif.Entry) -> p.Result[p.Ldap.LdapOperationResult]:

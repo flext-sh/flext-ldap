@@ -41,7 +41,6 @@ class FlextLdapConstantsBase:
         """LDAP operation name constants."""
 
         CONNECT = "connect"
-        DETECT_FROM_CONNECTION = "detect_from_connection"
         LDAP3_TO_LDIF_ENTRY = "ldap3_to_ldif_entry"
         LDIF_ENTRY_TO_LDAP3_ATTRIBUTES = "ldif_entry_to_ldap3_attributes"
         BIND = "bind"

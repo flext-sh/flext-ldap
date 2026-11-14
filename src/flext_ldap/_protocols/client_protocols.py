@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_ldif import p
-
 from flext_ldap._protocols import FlextLdapProtocolsService
 
 if TYPE_CHECKING:

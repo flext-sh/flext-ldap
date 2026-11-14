@@ -70,25 +70,25 @@ def _user_entry(dn: str, identifier: str, *, cn: str) -> p.Ldif.Entry:
 def _modify_add_entry(dn: str, attribute: str, value: str) -> p.Ldif.Entry:
     """Build a ``changetype: modify`` entry adding one attribute value.
 
+    The shape is the one the flext-ldif parser produces for an LDIF
+    ``changetype: modify`` / ``add:`` record: a MODIFY changetype carrying
+    native change operations, never the directives as attribute names.
+
     Returns:
         The resulting ``m.Ldif.Entry``.
 
     """
     return m.Ldif.Entry(
         dn=m.Ldif.DN(value=dn),
-        attributes=m.Ldif.Attributes.model_validate({
-            "attributes": {
-                c.Ldap.AttributeName.CHANGETYPE: [c.Ldif.ChangeType.MODIFY.value],
-                c.Ldif.ChangeOperation.ADD: [attribute],
-                attribute: [value],
-            },
-            "attribute_metadata": {},
-            "metadata": None,
-        }),
-        changetype=None,
-        metadata=None,
-        validation_metadata=None,
-        domain_events=[],
+        attributes=m.Ldif.Attributes(attributes={attribute: [value]}),
+        changetype=c.Ldif.ChangeType.MODIFY,
+        change_operations=[
+            m.Ldif.ChangeOperation(
+                operation=c.Ldif.ChangeOperation.ADD,
+                attribute=attribute,
+                values=[m.Ldif.ChangeOperationValue(value=value)],
+            )
+        ],
     )
 
 

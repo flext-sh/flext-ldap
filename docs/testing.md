@@ -85,7 +85,6 @@ Coverage measured for `flext_ldap` only, from the unit-test run:
 | `_models/ldap.py`                       | 160        | 17     | 89.38%   | ✅     |
 | `services/api_runtime.py`               | 12         | 2      | 83.33%   | ✅     |
 | `services/sync.py`                      | 117        | 30     | 74.36%   | ✅     |
-| `services/detection.py`                 | 24         | 7      | 70.83%   | ✅     |
 | `adapters/ldap3.py`                     | 86         | 29     | 66.28%   | ⚠️     |
 | `adapters/_ldap3/connection_manager.py` | 29         | 11     | 62.07%   | ⚠️     |
 | `services/connection.py`                | 44         | 21     | 52.27%   | ⚠️     |
