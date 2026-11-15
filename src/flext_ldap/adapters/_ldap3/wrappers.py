@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
+from ldap3 import NO_ATTRIBUTES, Server, get_config_parameter
+
 from flext_ldap.constants import c
 from flext_ldap.protocols import p
 from flext_ldap.typings import t
@@ -133,6 +135,42 @@ class FlextLdapLdap3Wrappers:
         return modify_fn(dn, changes)
 
     @staticmethod
+    def defined_attributes(
+        connection: p.Ldap.Ldap3Connection,
+        attributes: Sequence[str],
+    ) -> list[str]:
+        """Keep the selected attributes the loaded server schema defines.
+
+        A server ignores an attribute description it does not recognize (RFC
+        4511 §4.5.1.8), so dropping it leaves the answer unchanged. ldap3
+        refuses such a selection on the client once the schema is loaded,
+        which fails the comparison of a directory with entries of a newer
+        schema. Selectors ldap3 itself exempts (``*``, ``+``, ``1.1``) and a
+        selection without a loaded schema pass untouched; a selection left
+        empty selects no attribute.
+
+        Returns:
+            The attribute selection to send.
+
+        """
+        server = connection.server
+        if not isinstance(server, Server) or server.schema is None:
+            return list(attributes)
+        known = server.schema.attribute_types
+        if not known:
+            return list(attributes)
+        exempt = {
+            str(item).lower()
+            for item in get_config_parameter("ATTRIBUTES_EXCLUDED_FROM_CHECK")
+        }
+        kept = [
+            item
+            for item in attributes
+            if item.lower() in exempt or item.partition(";")[0] in known
+        ]
+        return kept or [NO_ATTRIBUTES] if attributes else kept
+
+    @staticmethod
     def search(connection: p.Ldap.Ldap3Connection, params: p.Ldap.SearchParams) -> int:
         """Send one ldap3 search without awaiting its response.
 
@@ -150,7 +188,9 @@ class FlextLdapLdap3Wrappers:
             search_base=params.base_dn,
             search_filter=params.filter_str,
             search_scope=scope_map[params.ldap_scope],
-            attributes=list(params.search_attributes),
+            attributes=FlextLdapLdap3Wrappers.defined_attributes(
+                connection, params.search_attributes
+            ),
             size_limit=params.size_limit,
             time_limit=params.time_limit,
             controls=params.controls,
