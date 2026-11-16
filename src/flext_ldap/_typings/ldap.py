@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from typing import ClassVar
 
 from flext_ldif import FlextLdifTypes
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
@@ -16,7 +17,7 @@ class FlextLdapTypesLdap:
     type SearchControl = tuple[str, bool, bytes | None]
     type SearchControls = Sequence[SearchControl]
 
-    LDAPException: type[Exception] = _Ldap3LDAPException
+    LDAPException: ClassVar[type[Exception]] = _Ldap3LDAPException
 
     type Ldap3AttributeScalar = str | bytes
     type Ldap3AttributeValues = Sequence[Ldap3AttributeScalar]
