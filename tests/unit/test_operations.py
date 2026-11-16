@@ -1,4 +1,4 @@
-"""Unit tests for flext_ldap.services.operations.FlextLdapOperations.
+"""Unit tests for flext_ldap.services.operations.FlextLdap.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,14 +8,14 @@ from __future__ import annotations
 
 import pytest
 
-from flext_ldap.services import FlextLdapOperations
+from flext_ldap import FlextLdap
 from tests import c, m, p, t, u
 
 pytestmark = pytest.mark.unit
 
 
-class TestsFlextLdapOperations:
-    """Public behavior tests for FlextLdapOperations."""
+class TestsFlextLdap:
+    """Public behavior tests for FlextLdap."""
 
     @staticmethod
     def _entry(dn: str) -> p.Ldif.Entry:
@@ -28,7 +28,7 @@ class TestsFlextLdapOperations:
     @staticmethod
     def test_is_connected_not_connected() -> None:
         """Verify is connected not connected."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         u.Ldap.Tests.that(not operations.is_connected, eq=True)
 
     @pytest.mark.parametrize(
@@ -42,20 +42,20 @@ class TestsFlextLdapOperations:
         expected: bool,
     ) -> None:
         """Verify already exists error detection."""
-        result = FlextLdapOperations.already_exists_error(error_message)
+        result = FlextLdap.already_exists_error(error_message)
         u.Ldap.Tests.that(result, eq=expected)
 
     @staticmethod
     def test_execute_method_returns_failure_when_not_connected() -> None:
         """Verify execute method returns failure when not connected."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         result = operations.execute()
         u.Ldap.Tests.fail(result)
 
     @staticmethod
     def test_search_without_connection_returns_failure() -> None:
         """Verify search without connection returns failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
             filter_str=c.Ldap.Tests.RFC_DEFAULT_FILTER,
@@ -67,7 +67,7 @@ class TestsFlextLdapOperations:
     @staticmethod
     def test_search_invalid_base_dn_returns_failure() -> None:
         """Verify search invalid base dn returns failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.MODELS_INVALID_DN_FORMAT,
             filter_str=c.Ldap.ALL_ENTRIES_FILTER,
@@ -79,21 +79,21 @@ class TestsFlextLdapOperations:
 
     def test_add_without_connection_returns_failure(self) -> None:
         """Verify add without connection returns failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         result = operations.add(self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE))
         u.Ldap.Tests.fail(result)
 
     @staticmethod
     def test_delete_without_connection_returns_failure() -> None:
         """Verify delete without connection returns failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         result = operations.delete(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE)
         u.Ldap.Tests.fail(result)
 
     @staticmethod
     def test_modify_without_connection_returns_failure() -> None:
         """Verify modify without connection returns failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         changes: t.Ldap.OperationChanges = {
             "cn": [(int(c.Ldap.ModifyOperation.REPLACE), [c.Ldap.Tests.STRING_SIMPLE])],
         }
@@ -103,7 +103,7 @@ class TestsFlextLdapOperations:
 
     def test_batch_upsert_stop_on_error_returns_failure(self) -> None:
         """Verify batch upsert stop on error returns failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         entries = [
             self._entry(c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN),
             self._entry(c.Ldap.Tests.ENTRY_DN_TEST_EXAMPLE),
@@ -115,7 +115,7 @@ class TestsFlextLdapOperations:
 
     def test_batch_upsert_all_failed_returns_failure(self) -> None:
         """Verify batch upsert all failed returns failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         entries = [self._entry(c.Ldap.Tests.SYNC_FACADE_TEST_USER_DN)]
 
         error = u.Ldap.Tests.fail(operations.batch_upsert(entries, stop_on_error=False))
@@ -127,7 +127,7 @@ class TestsFlextLdapOperations:
     @staticmethod
     def test_upsert_schema_modify_missing_dn_returns_failure() -> None:
         """A native modify record still requires the target DN."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         entry = m.Ldif.Entry(
             dn=None,
             changetype=c.Ldif.ChangeType.MODIFY,
@@ -166,7 +166,7 @@ class TestsFlextLdapOperations:
         the invalid-DN case is a model-validation concern, not an add-not-connected
         concern. ``test_invalid_dn_rejected_by_model`` covers that contract.
         """
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         dn = c.Ldap.Tests.ENTRY_DN_SCENARIOS[case]
         result = operations.add(self._entry(dn))
         u.Ldap.Tests.fail(result)
@@ -186,7 +186,7 @@ class TestsFlextLdapOperations:
         case: c.Ldap.Tests.EntryOperationCase,
     ) -> None:
         """Test delete operation with various DN formats (not connected scenario)."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         dn = c.Ldap.Tests.ENTRY_DN_SCENARIOS[case]
         result = operations.delete(dn)
         u.Ldap.Tests.fail(result)
@@ -197,7 +197,7 @@ class TestsFlextLdapOperations:
         case: c.Ldap.Tests.SearchFilterCase,
     ) -> None:
         """Test search operation with various filter types (not connected scenario)."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         search_filter = c.Ldap.Tests.SEARCH_FILTER_SCENARIOS_ADVANCED[case]
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -213,7 +213,7 @@ class TestsFlextLdapOperations:
         case: c.Ldap.Tests.SearchScopeCase,
     ) -> None:
         """Test search operation with various scope types (not connected scenario)."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         scope_str = c.Ldap.Tests.SEARCH_SCOPE_SCENARIOS[case]
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -229,7 +229,7 @@ class TestsFlextLdapOperations:
         case: c.Ldap.Tests.SearchSizeCase,
     ) -> None:
         """Test search operation with various size limits (not connected scenario)."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         size_limit = c.Ldap.Tests.SEARCH_SIZE_SCENARIOS[case]
         search_options = m.Ldap.SearchOptions(
             base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
@@ -243,7 +243,7 @@ class TestsFlextLdapOperations:
     @staticmethod
     def test_batch_upsert_empty_batch_returns_success() -> None:
         """Test batch_upsert with empty entry list (not connected scenario)."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         entries: list[p.Ldif.Entry] = []
         result = operations.batch_upsert(entries, stop_on_error=False)
         u.Ldap.Tests.ok(result)
