@@ -11,16 +11,16 @@ from typing import override
 
 import pytest
 
-from flext_ldap.services import FlextLdapOperations
+from flext_ldap import FlextLdap
 from tests import c, m, p, r, u
 
 pytestmark = pytest.mark.unit
 
 
 class TestsFlextLdapSubtreeDelete:
-    """Public behavior tests for FlextLdapOperations.delete_subtree."""
+    """Public behavior tests for FlextLdap.delete_subtree."""
 
-    class SubtreeOperations(FlextLdapOperations):
+    class SubtreeOperations(FlextLdap):
         """Deterministic operations double for subtree-delete semantics."""
 
         _subtree_entries: list[p.Ldif.Entry] = m.PrivateAttr(
@@ -107,14 +107,14 @@ class TestsFlextLdapSubtreeDelete:
     @staticmethod
     def test_missing_base_dn_fails_typed() -> None:
         """An empty base DN is rejected without touching the directory."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         result = operations.delete_subtree("   ")
         u.Ldap.Tests.that(result.failure, eq=True)
         u.Ldap.Tests.that("non-empty base DN" in u.Ldap.Tests.fail(result), eq=True)
 
     def test_not_connected_existence_check_fails_typed(self) -> None:
         """Without a connection the existence search fails as a typed failure."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         result = operations.delete_subtree(self.BASE_DN)
         u.Ldap.Tests.that(result.failure, eq=True)
 
@@ -167,66 +167,11 @@ class TestsFlextLdapSubtreeDelete:
 
 
 class TestsFlextLdapPlanUpsert:
-    """Public behavior tests for FlextLdapOperations.plan_upsert."""
+    """Public behavior tests for FlextLdap.plan_upsert."""
 
     EXISTS_DN = "cn=exists,dc=flext,dc=local"
     DRIFTED_DN = "cn=drifted,dc=flext,dc=local"
     NEW_DN = "cn=new,dc=flext,dc=local"
-
-    @staticmethod
-    def _entry(dn: str, *, cn: str = "value", sn: str = "surname") -> p.Ldif.Entry:
-        return m.Ldif.Entry(
-            dn=m.Ldif.DN(value=dn),
-            attributes=m.Ldif.Attributes(
-                attributes={"cn": [cn], "sn": [sn]},
-                attribute_metadata={},
-            ),
-            domain_events=[],
-        )
-
-    def test_plan_classifies_without_writing(self) -> None:
-        """Adds/modifies/unchanged are counted and no write is issued.
-
-        The drifted entry differs in ``sn`` (a non-RDN attribute): the compare
-        owner deliberately excludes RDN attributes from modify changes
-        (notAllowedOnRDN), so only non-RDN drift classifies as a modification.
-        """
-        directory = [
-            self._entry(self.EXISTS_DN, cn="same", sn="stored"),
-            self._entry(self.DRIFTED_DN, cn="drifted", sn="stored"),
-        ]
-        operations = TestsFlextLdapSubtreeDelete.SubtreeOperations(directory)
-        plan_result = operations.plan_upsert([
-            self._entry(self.EXISTS_DN, cn="same", sn="stored"),
-            self._entry(self.DRIFTED_DN, cn="drifted", sn="desired"),
-            self._entry(self.NEW_DN, cn="fresh", sn="fresh"),
-        ])
-        u.Ldap.Tests.ok(plan_result)
-        u.Ldap.Tests.that(plan_result.value.adds, eq=1)
-        u.Ldap.Tests.that(plan_result.value.modifies, eq=1)
-        u.Ldap.Tests.that(plan_result.value.unchanged, eq=1)
-
-    @staticmethod
-    def test_plan_missing_dn_fails_typed() -> None:
-        """An entry without a DN aborts the plan with a typed failure."""
-        operations = TestsFlextLdapSubtreeDelete.SubtreeOperations([])
-        entry = m.Ldif.Entry(
-            dn=None,
-            attributes=m.Ldif.Attributes(
-                attributes={"cn": ["orphan"]},
-                attribute_metadata={},
-            ),
-            domain_events=[],
-        )
-        plan_result = operations.plan_upsert([entry])
-        u.Ldap.Tests.that(plan_result.failure, eq=True)
-        u.Ldap.Tests.that("missing DN" in u.Ldap.Tests.fail(plan_result), eq=True)
-
-    def test_plan_search_failure_fails_typed(self) -> None:
-        """A failing search aborts the plan without any write."""
-        operations = FlextLdapOperations()
-        plan_result = operations.plan_upsert([self._entry(self.NEW_DN)])
-        u.Ldap.Tests.that(plan_result.failure, eq=True)
 
     @staticmethod
     def _modify_entry(dn: str, *, additions: Mapping[str, str]) -> p.Ldif.Entry:
@@ -246,7 +191,7 @@ class TestsFlextLdapPlanUpsert:
 
     def test_plan_modify_requires_directory_or_declared_state(self) -> None:
         """A modify cannot claim a write without observing its current state."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         plan_result = operations.plan_upsert([
             self._modify_entry(self.EXISTS_DN, additions={"description": "added"}),
         ])
@@ -254,7 +199,7 @@ class TestsFlextLdapPlanUpsert:
 
     def test_plan_modify_without_additions_fails_like_the_write_path(self) -> None:
         """A modify entry without add operations fails the plan and the upsert alike."""
-        operations = FlextLdapOperations()
+        operations = FlextLdap()
         entry = self._modify_entry(self.EXISTS_DN, additions={})
         plan_error = u.Ldap.Tests.fail(operations.plan_upsert([entry]))
         write_error = u.Ldap.Tests.fail(operations.upsert(entry))

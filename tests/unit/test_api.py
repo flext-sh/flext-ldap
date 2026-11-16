@@ -10,7 +10,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_ldap.services import FlextLdapSync
+from flext_ldap import FlextLdap
 from tests import c, ldap, m, t, u
 
 pytestmark = [pytest.mark.unit]
@@ -81,7 +81,7 @@ class TestsFlextLdapApi:
         """Verify is multi phase callback."""
         callback = self._callback_for_case(case)
         expected, _ = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
-        u.Ldap.Tests.that(FlextLdapSync.multi_phase_callback(callback), eq=expected)
+        u.Ldap.Tests.that(FlextLdap.multi_phase_callback(callback), eq=expected)
 
     @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
     def test_is_single_phase_callback(
@@ -91,7 +91,7 @@ class TestsFlextLdapApi:
         """Verify is single phase callback."""
         callback = self._callback_for_case(case)
         _, expected = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
-        u.Ldap.Tests.that(FlextLdapSync.single_phase_callback(callback), eq=expected)
+        u.Ldap.Tests.that(FlextLdap.single_phase_callback(callback), eq=expected)
 
     @staticmethod
     def test_search_without_connection_returns_failure() -> None:
