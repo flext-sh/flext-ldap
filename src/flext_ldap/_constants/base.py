@@ -15,7 +15,7 @@ import ssl
 from collections.abc import Mapping, Sequence
 from enum import IntEnum, StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_ldif import FlextLdifConstants
 from ldap3.core.exceptions import LDAPException as _Ldap3LDAPException
@@ -140,7 +140,7 @@ class FlextLdapConstantsBase:
         NO_INFO = "NO_INFO"
         SCHEMA = "SCHEMA"
 
-    REAL_ATTRIBUTES_ONLY_CONTROL_OID: Final[str] = "2.16.840.1.113730.3.4.17"
+    REAL_ATTRIBUTES_ONLY_CONTROL_OID: ClassVar[str] = "2.16.840.1.113730.3.4.17"
 
     @unique
     class TlsValidation(StrEnum):
@@ -163,45 +163,45 @@ class FlextLdapConstantsBase:
         SUPPORTED_EXTENSIONS = "supportedExtension"
 
     NAME: ClassVar[str] = "FLEXT_LDAP"
-    VENDOR_STRING_MAX_TOKENS: Final[int] = 2
-    DEFAULT_MAX_RETRIES: Final[int] = 5
-    DEFAULT_RETRY_DELAY: Final[float] = 1.0
-    PORT: Final[int] = 389
-    TIMEOUT: Final[int] = FlextLdifConstants.DEFAULT_TIMEOUT_SECONDS
-    AUTO_BIND: Final[bool] = True
-    AUTO_RANGE: Final[bool] = True
-    DEFAULT_BIND_DN: Final[str] = ""
-    DEFAULT_BIND_PASSWORD: Final[str] = ""
-    DEFAULT_USE_SSL: Final[bool] = False
-    DEFAULT_USE_TLS: Final[bool] = False
-    ALL_ENTRIES_FILTER: Final[str] = "(objectClass=*)"
-    UNKNOWN_CATEGORY: Final[str] = "unknown"
-    EXAMPLE_BASE_DN: Final[str] = "dc=example,dc=com"
-    MULTI_PHASE_PARAM_COUNT: Final[int] = 5
-    SINGLE_PHASE_PARAM_COUNT: Final[int] = 4
-    DN_TRUNCATION_LENGTH: Final[int] = 100
-    BATCH_SIZE: Final[int] = 100
-    MAX_OUTSTANDING_SEARCHES: Final[int] = 64
+    VENDOR_STRING_MAX_TOKENS: ClassVar[int] = 2
+    DEFAULT_MAX_RETRIES: ClassVar[int] = 5
+    DEFAULT_RETRY_DELAY: ClassVar[float] = 1.0
+    PORT: ClassVar[int] = 389
+    TIMEOUT: ClassVar[int] = FlextLdifConstants.DEFAULT_TIMEOUT_SECONDS
+    AUTO_BIND: ClassVar[bool] = True
+    AUTO_RANGE: ClassVar[bool] = True
+    DEFAULT_BIND_DN: ClassVar[str] = ""
+    DEFAULT_BIND_PASSWORD: ClassVar[str] = ""
+    DEFAULT_USE_SSL: ClassVar[bool] = False
+    DEFAULT_USE_TLS: ClassVar[bool] = False
+    ALL_ENTRIES_FILTER: ClassVar[str] = "(objectClass=*)"
+    UNKNOWN_CATEGORY: ClassVar[str] = "unknown"
+    EXAMPLE_BASE_DN: ClassVar[str] = "dc=example,dc=com"
+    MULTI_PHASE_PARAM_COUNT: ClassVar[int] = 5
+    SINGLE_PHASE_PARAM_COUNT: ClassVar[int] = 4
+    DN_TRUNCATION_LENGTH: ClassVar[int] = 100
+    BATCH_SIZE: ClassVar[int] = 100
+    MAX_OUTSTANDING_SEARCHES: ClassVar[int] = 64
     """Searches pipelined on the one connection before the oldest is awaited."""
 
-    VALID_STATUSES: Final[frozenset[Status]] = frozenset({
+    VALID_STATUSES: ClassVar[frozenset[Status]] = frozenset({
         Status.PENDING,
         Status.RUNNING,
         Status.COMPLETED,
         Status.FAILED,
     })
 
-    PARTIAL_SUCCESS_CODES: Final[frozenset[ResultCode]] = frozenset({
+    PARTIAL_SUCCESS_CODES: ClassVar[frozenset[ResultCode]] = frozenset({
         ResultCode.SUCCESS,
         ResultCode.REFERRAL,
     })
 
-    ENTRY_ALREADY_EXISTS_RE: Final[t.RegexPattern] = re.compile(
+    ENTRY_ALREADY_EXISTS_RE: ClassVar[t.RegexPattern] = re.compile(
         r"entry already exists|already exists|entryalreadyexists|ldap_already_exists",
         re.IGNORECASE,
     )
 
-    NO_SUCH_OBJECT_RE: Final[t.RegexPattern] = re.compile(
+    NO_SUCH_OBJECT_RE: ClassVar[t.RegexPattern] = re.compile(
         r"nosuchobject|no such object",
         re.IGNORECASE,
     )
@@ -226,18 +226,18 @@ class FlextLdapConstantsBase:
     )
     "Per-operation error message prefixes used by the ldap3 operation executor."
 
-    EXC_CONNECTION: Final[tuple[type[Exception], ...]] = (
+    EXC_CONNECTION: ClassVar[tuple[type[Exception], ...]] = (
         *FlextLdifConstants.EXC_BROAD_IO_TYPE,
         _Ldap3LDAPException,
     )
     "Boundary catch for ldap3 connect/bind: c.EXC_BROAD_IO_TYPE plus LDAPException."
 
-    DEFAULT_SCOPE: Final[SearchScope] = SearchScope.SUBTREE
+    DEFAULT_SCOPE: ClassVar[SearchScope] = SearchScope.SUBTREE
 
-    DEFAULT_TLS_VALIDATION: Final[TlsValidation] = TlsValidation.REQUIRED
+    DEFAULT_TLS_VALIDATION: ClassVar[TlsValidation] = TlsValidation.REQUIRED
     "Certificate validation applied whenever LDAPS or STARTTLS is enabled."
 
-    TLS_VERIFY_MODE_BY_VALIDATION: Final[Mapping[TlsValidation, ssl.VerifyMode]] = (
+    TLS_VERIFY_MODE_BY_VALIDATION: ClassVar[Mapping[TlsValidation, ssl.VerifyMode]] = (
         MappingProxyType({
             TlsValidation.REQUIRED: ssl.CERT_REQUIRED,
             TlsValidation.NONE: ssl.CERT_NONE,
@@ -245,7 +245,7 @@ class FlextLdapConstantsBase:
     )
     "Map each TLS validation mode to the stdlib peer verification mode."
 
-    LDAP3_SCOPE_BY_SEARCH_SCOPE: Final[
+    LDAP3_SCOPE_BY_SEARCH_SCOPE: ClassVar[
         Mapping[
             SearchScope,
             SearchScopeValue,
@@ -256,11 +256,11 @@ class FlextLdapConstantsBase:
         SearchScope.SUBTREE: (SearchScopeValue.SUBTREE),
     })
 
-    DEFAULT_TYPE: Final[FlextLdifConstants.Ldif.ServerTypes] = (
+    DEFAULT_TYPE: ClassVar[FlextLdifConstants.Ldif.ServerTypes] = (
         FlextLdifConstants.Ldif.ServerTypes.RFC
     )
 
-    ROOT_DSE_DETECTION_ORDER: Final[Sequence[str]] = (
+    ROOT_DSE_DETECTION_ORDER: ClassVar[Sequence[str]] = (
         FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value,
         FlextLdifConstants.Ldif.ServerTypes.OID.value,
         FlextLdifConstants.Ldif.ServerTypes.OUD.value,
@@ -268,29 +268,33 @@ class FlextLdapConstantsBase:
         FlextLdifConstants.Ldif.ServerTypes.DS389.value,
     )
 
-    ROOT_DSE_EXTENSION_MARKERS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
-        FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value: frozenset({"openldap"}),
-        FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle", "oid"}),
-        FlextLdifConstants.Ldif.ServerTypes.OUD.value: frozenset({"oud"}),
-        FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
-            "microsoft",
-            "windows",
-        }),
-        FlextLdifConstants.Ldif.ServerTypes.DS389.value: frozenset({
-            "389",
-            "dirsrv",
-        }),
-    })
+    ROOT_DSE_EXTENSION_MARKERS: ClassVar[Mapping[str, frozenset[str]]] = (
+        MappingProxyType({
+            FlextLdifConstants.Ldif.ServerTypes.OPENLDAP.value: frozenset({"openldap"}),
+            FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle", "oid"}),
+            FlextLdifConstants.Ldif.ServerTypes.OUD.value: frozenset({"oud"}),
+            FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
+                "microsoft",
+                "windows",
+            }),
+            FlextLdifConstants.Ldif.ServerTypes.DS389.value: frozenset({
+                "389",
+                "dirsrv",
+            }),
+        })
+    )
 
-    ROOT_DSE_CONTEXT_MARKERS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
-        FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle"}),
-        FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
-            "microsoft",
-            "windows",
-        }),
-    })
+    ROOT_DSE_CONTEXT_MARKERS: ClassVar[Mapping[str, frozenset[str]]] = (
+        MappingProxyType({
+            FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({"oracle"}),
+            FlextLdifConstants.Ldif.ServerTypes.AD.value: frozenset({
+                "microsoft",
+                "windows",
+            }),
+        })
+    )
 
-    ROOT_DSE_VENDOR_REQUIRED_MARKERS: Final[Mapping[str, frozenset[str]]] = (
+    ROOT_DSE_VENDOR_REQUIRED_MARKERS: ClassVar[Mapping[str, frozenset[str]]] = (
         MappingProxyType({
             FlextLdifConstants.Ldif.ServerTypes.OUD.value: frozenset({
                 "oracle",
@@ -303,7 +307,7 @@ class FlextLdapConstantsBase:
         })
     )
 
-    ROOT_DSE_VENDOR_ANY_MARKERS: Final[Mapping[str, frozenset[str]]] = (
+    ROOT_DSE_VENDOR_ANY_MARKERS: ClassVar[Mapping[str, frozenset[str]]] = (
         MappingProxyType({
             FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({
                 "internet directory",
@@ -322,7 +326,7 @@ class FlextLdapConstantsBase:
         })
     )
 
-    ROOT_DSE_VENDOR_EXCLUDED_MARKERS: Final[Mapping[str, frozenset[str]]] = (
+    ROOT_DSE_VENDOR_EXCLUDED_MARKERS: ClassVar[Mapping[str, frozenset[str]]] = (
         MappingProxyType({
             FlextLdifConstants.Ldif.ServerTypes.OID.value: frozenset({
                 "unified directory",
@@ -330,7 +334,7 @@ class FlextLdapConstantsBase:
         })
     )
 
-    ROOT_DSE_VENDOR_MAX_TOKENS: Final[Mapping[str, int]] = MappingProxyType({
+    ROOT_DSE_VENDOR_MAX_TOKENS: ClassVar[Mapping[str, int]] = MappingProxyType({
         FlextLdifConstants.Ldif.ServerTypes.OID.value: VENDOR_STRING_MAX_TOKENS,
     })
 
