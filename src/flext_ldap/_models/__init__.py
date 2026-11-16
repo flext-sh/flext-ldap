@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_ldap._models.base import FlextLdapModelsBase
@@ -32,4 +32,22 @@ install_lazy_exports(
         "FlextLdapModelsFlextLdap": ".ldap",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextLdapModelsBase": (),
+        "FlextLdapModelsConfig": (
+            "Identity",
+            "Connection",
+            "Validation",
+            "Ldap",
+            "Root",
+        ),
+        "FlextLdapModelsFlextLdap": ("FlextLdapModelsLdap",),
+    },
+)
+
+defer_lazy_bases(
+    __name__,
+    {
+        "FlextLdapModelsBase": (("flext_ldap", "FlextLdapModelsConfigNamespace"),),
+    },
 )
