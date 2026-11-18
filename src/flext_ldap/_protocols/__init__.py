@@ -44,4 +44,13 @@ install_lazy_exports(
         "FlextLdapProtocolsStructural": ".structural_protocols",
     },
     public_exports=__all__,
+    deferred_members=(
+        "FlextLdapProtocolsClient",
+        "FlextLdapProtocolsConfig",
+        "FlextLdapProtocolsLdap",
+        "FlextLdapProtocolsSearch",
+        "FlextLdapProtocolsService",
+        "FlextLdapProtocolsSettings",
+        "FlextLdapProtocolsStructural",
+    ),
 )

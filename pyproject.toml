@@ -2,7 +2,7 @@
 # @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
 # @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
 # @flext-regenerate: make gen
-# @flext-rendered-by: flext-infra 0.12.0
+# @flext-rendered-by: flext-infra 0.12.1
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
@@ -19,8 +19,8 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
-  "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
+  "flext-core",
+  "flext-ldif",
   "ldap3>=2.10.2rc4",
   "pydantic>=2.14.1,<3",
 ]
@@ -61,16 +61,16 @@ Repository = "https://github.com/flext-sh/flext"
 
 [dependency-groups]
 dev = [
+  "properdocs>=1.6.7",                                # flext: derived member environment
   "types-networkx",
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+  "flext-infra",                                      # flext: derived member environment
   "mkdocstrings-python>=2.0.9",
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
   "editables>=0.6",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+  "flext-tests",                                      # flext: derived member environment
   "hypothesis",
-  "mkdocs",
   "mkdocs-autorefs",
   "mkdocs-exclude>=1.0.2",
   "mkdocs-git-revision-date-localized-plugin>=1.5.4",
@@ -81,11 +81,9 @@ dev = [
   "mkdocs-section-index>=0.3.12",
   "mkdocstrings>=1.0.6",
   "msgpack-types",
-  "mypy>=2.3.1",
   "platformdirs>=4.12.0",
   "pymdown-extensions",
   "pyrefly>=1.2.0",
-  "pyright>=1.1.411",
   "pytest>=9.1.1",
   "pytest-asyncio",
   "pytest-benchmark",
@@ -124,7 +122,7 @@ dev = [
   "yamlfix>=1.19.1",
 ]
 codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+  "flext-infra", # flext: derived member environment
 ]
 
 [tool.flext.docs]
@@ -180,7 +178,22 @@ optional_dependencies_dev_groups = []
 [tool.mypy]
 allow_redefinition = true
 check_untyped_defs = true
-disable_error_code = ["call-arg","prop-decorator","arg-type","assignment","attr-defined","has-type","list-item","misc","name-defined","no-any-return","override", "unreachable","valid-type","var-annotated"]
+disable_error_code = [
+  "call-arg",
+  "prop-decorator",
+  "arg-type",
+  "assignment",
+  "attr-defined",
+  "has-type",
+  "list-item",
+  "misc",
+  "name-defined",
+  "no-any-return",
+  "override",
+  "unreachable",
+  "valid-type",
+  "var-annotated",
+]
 exclude = "(?s:(?:.+/)?[^/]*\\.bak)\\Z|(?s:(?:.+/)?[^/]*\\.egg\\-info/.*)\\Z|(?s:(?:.+/)?[^/]*\\.orig)\\Z|(?s:(?:.+/)?[^/]*\\.rej)\\Z|(?s:(?:.+/)?[^/]*\\.swp)\\Z|(?s:(?:.+/)?\\.agents\\-sync\\-home/.*)\\Z|(?s:(?:.+/)?\\.agents/.*)\\Z|(?s:(?:.+/)?\\.archive/.*)\\Z|(?s:(?:.+/)?\\.beads/.*)\\Z|(?s:(?:.+/)?\\.benchmarks/.*)\\Z|(?s:(?:.+/)?\\.bkp/.*)\\Z|(?s:(?:.+/)?\\.cache/.*)\\Z|(?s:(?:.+/)?\\.claude/.*)\\Z|(?s:(?:.+/)?\\.codex/.*)\\Z|(?s:(?:.+/)?\\.cursor/.*)\\Z|(?s:(?:.+/)?\\.gemini/.*)\\Z|(?s:(?:.+/)?\\.git/.*)\\Z|(?s:(?:.+/)?\\.hypothesis/.*)\\Z|(?s:(?:.+/)?\\.kilo/.*)\\Z|(?s:(?:.+/)?\\.mypy_cache/.*)\\Z|(?s:(?:.+/)?\\.omo/.*)\\Z|(?s:(?:.+/)?\\.opencode/.*)\\Z|(?s:(?:.+/)?\\.pylance_cache/.*)\\Z|(?s:(?:.+/)?\\.pyrefly_cache/.*)\\Z|(?s:(?:.+/)?\\.pytest_cache/.*)\\Z|(?s:(?:.+/)?\\.reports/.*)\\Z|(?s:(?:.+/)?\\.ruff_cache/.*)\\Z|(?s:(?:.+/)?\\.serena/.*)\\Z|(?s:(?:.+/)?\\.snapshots/.*)\\Z|(?s:(?:.+/)?\\.test\\-tmp/.*)\\Z|(?s:(?:.+/)?\\.tmp/.*)\\Z|(?s:(?:.+/)?\\.tox/.*)\\Z|(?s:(?:.+/)?\\.venv\\.[^/]*/.*)\\Z|(?s:(?:.+/)?\\.venv/.*)\\Z|(?s:(?:.+/)?\\.vscode/.*)\\Z|(?s:(?:.+/)?\\.worktrees/.*)\\Z|(?s:(?:.+/)?__pycache__/.*)\\Z|(?s:(?:.+/)?__pyrefly_virtual__/.*)\\Z|(?s:(?:.+/)?_tmp_[^/]*/.*)\\Z|(?s:(?:.+/)?build/.*)\\Z|(?s:(?:.+/)?dist\\-packages/.*)\\Z|(?s:(?:.+/)?dist/.*)\\Z|(?s:(?:.+/)?htmlcov/.*)\\Z|(?s:(?:.+/)?incoming/.*)\\Z|(?s:(?:.+/)?legado/.*)\\Z|(?s:(?:.+/)?node_modules/.*)\\Z|(?s:(?:.+/)?reports/.*)\\Z|(?s:(?:.+/)?site\\-packages/.*)\\Z|(?s:(?:.+/)?site/.*)\\Z|(?s:(?:.+/)?target/.*)\\Z|(?s:(?:.+/)?tests/fixtures/.*)\\Z|(?s:(?:.+/)?venv/.*)\\Z|(?s:\\.github/agents/.*)\\Z|(?s:\\.github/hooks/.*)\\Z|(?s:\\.github/instructions/.*)\\Z|(?s:\\.github/skills/.*)\\Z"
 explicit_package_bases = false
 extra_checks = true
@@ -230,7 +243,6 @@ project-excludes = [
   "**/.git/**",
   "**/.hypothesis/**",
   "**/.kilo/**",
-  "**/.mypy_cache/**",
   "**/.omo/**",
   "**/.opencode/**",
   "**/.pylance_cache/**",
@@ -285,6 +297,7 @@ bad-index = "error"
 bad-instantiation = "error"
 bad-keyword-argument = "error"
 bad-match = "error"
+bad-override = "ignore"
 bad-param-name-override = "error"
 bad-raise = "error"
 bad-return = "error"
@@ -295,6 +308,7 @@ bad-unpacking = "error"
 deprecated = "error"
 implicit-abstract-class = "error"
 implicit-any = "error"
+implicit-any-type-argument = "ignore"
 implicit-import = "error"
 implicitly-defined-attribute = "error"
 inconsistent-inheritance = "error"
@@ -477,7 +491,7 @@ filterwarnings = ["error", "once::pytest.PytestAssertRewriteWarning"]
 flext_fixture_trees_root = "tests/fixtures"
 flext_make_ci_value = "Y"
 flext_make_ci_variable = "CI"
-flext_slow_timeout_seconds = "25"
+flext_slow_timeout_seconds = "20"
 markers = [
   "smoke: public-interface smoke tests",
   "unit: unit tests",
@@ -501,6 +515,8 @@ minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
+timeout = 20
+timeout_method = "signal"
 
 [tool.ruff]
 extend-exclude = [
@@ -523,7 +539,6 @@ extend-exclude = [
   "**/.git/**",
   "**/.hypothesis/**",
   "**/.kilo/**",
-  "**/.mypy_cache/**",
   "**/.omo/**",
   "**/.opencode/**",
   "**/.pylance_cache/**",
@@ -580,7 +595,12 @@ skip-magic-trailing-comma = false
 [tool.ruff.lint]
 extend-safe-fixes = ["relative-imports", "camelcase-imported-as-lowercase"]
 extend-select = ["missing-blank-line-after-last-section"]
-ignore = ["TC", "missing-trailing-comma", "non-empty-init-module"]
+ignore = [
+  "TC",
+  "missing-trailing-comma",
+  "non-empty-init-module",
+  "non-pep695-type-alias",
+]
 select = ["ALL"]
 unfixable = [
   "multi-value-repeated-key-literal",
@@ -660,6 +680,7 @@ whitelines = 1
 [tool.uv]
 constraint-dependencies = [
   "pillow>=13.0.0",
+  "soupsieve>=4.0.0",
   "certifi>=2026.10.19",
   "setuptools>=84.1.0",
   "virtualenv>=21.14.13",
@@ -670,33 +691,21 @@ environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "P10D"
 link-mode = "clone"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@bc2b0450c2a05f955ad5eaa52e8571b17614c9a8",
-  "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-  "flext-ldif @ git+https://github.com/flext-sh/flext-ldif.git@0.12.0-dev",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@3a0cb69024fb5f17ba32064bf6c294d016c7d9d8",
 ]
+[[tool.uv.cache-keys]]
+file = "pyproject.toml"
 
-[[tool.uv.exclude-dependencies]]
-dependencies = ["flext-ldap"]
+[[tool.uv.cache-keys]]
+file = "setup.py"
 
-[tool.uv.exclude-dependencies.package]
-name = "flext-core"
+[[tool.uv.cache-keys]]
+file = "setup.cfg"
 
-[[tool.uv.exclude-dependencies]]
-dependencies = ["flext-ldap"]
+[[tool.uv.cache-keys]]
+file = "src/**"
 
-[tool.uv.exclude-dependencies.package]
-name = "flext-infra"
+[tool.uv.exclude-newer-package]
+soupsieve = false
 
-[[tool.uv.exclude-dependencies]]
-dependencies = ["flext-ldap"]
-
-[tool.uv.exclude-dependencies.package]
-name = "flext-ldif"
-
-[[tool.uv.exclude-dependencies]]
-dependencies = ["flext-ldap"]
-
-[tool.uv.exclude-dependencies.package]
-name = "flext-tests"
+[tool.uv.sources]

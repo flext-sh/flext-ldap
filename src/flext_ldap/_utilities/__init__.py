@@ -47,4 +47,13 @@ install_lazy_exports(
         "FlextLdapUtilitiesValidation": ".validation",
     },
     public_exports=__all__,
+    deferred_members=(
+        "FlextLdapUtilitiesComparison",
+        "FlextLdapUtilitiesConversion",
+        "FlextLdapUtilitiesDetection",
+        "FlextLdapUtilitiesNormalization",
+        "FlextLdapUtilitiesRootDse",
+        "FlextLdapUtilitiesServer",
+        "FlextLdapUtilitiesValidation",
+    ),
 )

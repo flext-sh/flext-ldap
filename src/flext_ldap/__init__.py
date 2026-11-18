@@ -114,6 +114,7 @@ install_lazy_exports(
         "x": "flext_ldif",
     },
     public_exports=__all__,
+    deferred_members=("FlextLdapModelsConfigNamespace",),
 )
 
 if not TYPE_CHECKING:

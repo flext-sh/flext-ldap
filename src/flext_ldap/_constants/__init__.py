@@ -22,4 +22,5 @@ install_lazy_exports(
     globals(),
     {"FlextLdapConstantsBase": ".base"},
     public_exports=__all__,
+    deferred_members=("FlextLdapConstantsBase",),
 )
