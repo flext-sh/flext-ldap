@@ -31,6 +31,19 @@ if TYPE_CHECKING:
         main,
         settings,
     )
+    from flext_ldap.adapters import (
+        FlextLdapAdapterHost,
+        FlextLdapEntryAdapter,
+        FlextLdapLdap3Adapter,
+    )
+    from flext_ldap.services import (
+        FlextLdapApiRuntime,
+        FlextLdapConnection,
+        FlextLdapOperations,
+        FlextLdapServicesSubtree,
+        FlextLdapServicesUpsert,
+        FlextLdapSync,
+    )
     from tests.base import TestsFlextLdapServiceBase, s
     from tests.constants import TestsFlextLdapConstants, c
     from tests.models import TestsFlextLdapModels, m
@@ -42,13 +55,22 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "FlextLdap",
+    "FlextLdapAdapterHost",
+    "FlextLdapApiRuntime",
     "FlextLdapConfig",
+    "FlextLdapConnection",
     "FlextLdapConstants",
+    "FlextLdapEntryAdapter",
+    "FlextLdapLdap3Adapter",
     "FlextLdapModels",
     "FlextLdapModelsConfigNamespace",
+    "FlextLdapOperations",
     "FlextLdapProtocols",
     "FlextLdapService",
+    "FlextLdapServicesSubtree",
+    "FlextLdapServicesUpsert",
     "FlextLdapSettings",
+    "FlextLdapSync",
     "FlextLdapTypes",
     "FlextLdapUtilities",
     "FlextLdapVersion",
@@ -86,13 +108,22 @@ install_lazy_exports(
     globals(),
     {
         "FlextLdap": "flext_ldap",
+        "FlextLdapAdapterHost": "flext_ldap.adapters",
+        "FlextLdapApiRuntime": "flext_ldap.services",
         "FlextLdapConfig": "flext_ldap",
+        "FlextLdapConnection": "flext_ldap.services",
         "FlextLdapConstants": "flext_ldap",
+        "FlextLdapEntryAdapter": "flext_ldap.adapters",
+        "FlextLdapLdap3Adapter": "flext_ldap.adapters",
         "FlextLdapModels": "flext_ldap",
         "FlextLdapModelsConfigNamespace": "flext_ldap",
+        "FlextLdapOperations": "flext_ldap.services",
         "FlextLdapProtocols": "flext_ldap",
         "FlextLdapService": "flext_ldap",
+        "FlextLdapServicesSubtree": "flext_ldap.services",
+        "FlextLdapServicesUpsert": "flext_ldap.services",
         "FlextLdapSettings": "flext_ldap",
+        "FlextLdapSync": "flext_ldap.services",
         "FlextLdapTypes": "flext_ldap",
         "FlextLdapUtilities": "flext_ldap",
         "FlextLdapVersion": "flext_ldap",

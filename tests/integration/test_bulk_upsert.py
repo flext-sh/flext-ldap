@@ -12,8 +12,7 @@ from uuid import uuid4
 
 import pytest
 
-from flext_ldap import FlextLdap
-from tests import c, m, p, t, tm, u
+from tests import FlextLdap, c, m, p, t, tm, u
 
 pytestmark = [pytest.mark.integration, pytest.mark.docker]
 
@@ -22,7 +21,7 @@ def _person(
     dn: str, uid: str, *, cn: str = "Bulk Person", description: str | None = None
 ) -> p.Ldif.Entry:
     attrs = {
-        "objectClass": list(c.Ldap.Tests.ADD_WRAPPER_OBJECT_CLASSES),
+        "objectClass": list(c.Tests.ADD_WRAPPER_OBJECT_CLASSES),
         "uid": [uid],
         "cn": [cn],
         "sn": ["Bulk"],
@@ -75,7 +74,7 @@ def _connected(
         raise TypeError(msg)
     root = f"ou={name},{base_dn}"
     with FlextLdap() as client:
-        tm.ok(client.connect(u.Ldap.Tests.create_connection_config(config)))
+        tm.ok(client.connect(u.Tests.create_connection_config(config)))
         tm.ok(
             client.add(
                 m.Ldif.Entry(

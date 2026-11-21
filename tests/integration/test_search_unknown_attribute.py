@@ -30,7 +30,7 @@ class TestsFlextLdapSearchUnknownAttribute:
         ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """The entry comes back with ``cn``; the undefined attribute is absent."""
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"flext-ldap-unknown-attr-{uuid4().hex}"
         dn = f"uid={identifier},{base_dn}"
@@ -38,7 +38,7 @@ class TestsFlextLdapSearchUnknownAttribute:
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {
-                    "objectClass": list(c.Ldap.Tests.ADD_WRAPPER_OBJECT_CLASSES),
+                    "objectClass": list(c.Tests.ADD_WRAPPER_OBJECT_CLASSES),
                     "uid": [identifier],
                     "cn": [identifier],
                     "sn": [identifier],

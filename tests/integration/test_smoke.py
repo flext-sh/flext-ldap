@@ -34,15 +34,15 @@ class TestsFlextLdapSmoke:
     ) -> None:
         """The real LDAP container binds and exposes server info (precondition)."""
         # Arrange
-        server = u.Ldap.Tests.create_ldap3_server(ldap_container)
+        server = u.Tests.create_ldap3_server(ldap_container)
 
         # Act
-        connection = u.Ldap.Tests.create_ldap3_connection(server, ldap_container)
+        connection = u.Tests.create_ldap3_connection(server, ldap_container)
 
         # Assert - external boundary is healthy before exercising the unit
         try:
-            u.Ldap.Tests.assert_connection_bound(connection)
-            u.Ldap.Tests.assert_server_info_available(connection)
+            u.Tests.assert_connection_bound(connection)
+            u.Tests.assert_server_info_available(connection)
         finally:
             connection.unbind()
 
@@ -52,7 +52,7 @@ class TestsFlextLdapSmoke:
     ) -> None:
         """``connect`` yields a successful result and drives ``is_connected``."""
         # Arrange
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         tm.fail(ldap.is_connected)
 
         # Act
@@ -93,7 +93,7 @@ class TestsFlextLdapSmoke:
         # the rejected-bind path.
         rejected_value = "invalid"
         rejected_password = rejected_value + "-bind-password"
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         rejected = conn_config.model_copy(
             update={"bind_password": rejected_password},
         )
@@ -117,7 +117,7 @@ class TestsFlextLdapMultivalueAdd:
     ) -> None:
         """A multi-class entry adds and reads back with every class."""
         # Arrange - real runtime connection and a unique leaf entry
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"flext-ldap-add-{uuid4().hex}"
         dn = f"uid={identifier},{base_dn}"
@@ -125,7 +125,7 @@ class TestsFlextLdapMultivalueAdd:
             dn=m.Ldif.DN(value=dn),
             attributes=m.Ldif.Attributes.model_validate({
                 "attributes": {
-                    "objectClass": list(c.Ldap.Tests.ADD_WRAPPER_OBJECT_CLASSES),
+                    "objectClass": list(c.Tests.ADD_WRAPPER_OBJECT_CLASSES),
                     "uid": [identifier],
                     "cn": [identifier],
                     "sn": [identifier],
@@ -160,7 +160,7 @@ class TestsFlextLdapMultivalueAdd:
             tm.that(len(entries), eq=1)
             stored = tm.not_none(entries[0].attributes)
             stored_classes = sorted(stored.attributes.get("objectClass", []))
-            tm.that(stored_classes, eq=sorted(c.Ldap.Tests.ADD_WRAPPER_OBJECT_CLASSES))
+            tm.that(stored_classes, eq=sorted(c.Tests.ADD_WRAPPER_OBJECT_CLASSES))
         finally:
             _ = ldap.delete(dn)
             ldap.disconnect()

@@ -11,8 +11,7 @@ from typing import override
 
 import pytest
 
-from flext_ldap import FlextLdap
-from tests import c, m, p, r, u
+from tests import FlextLdap, c, m, p, r, u
 
 pytestmark = pytest.mark.unit
 
@@ -109,21 +108,21 @@ class TestsFlextLdapSubtreeDelete:
         """An empty base DN is rejected without touching the directory."""
         operations = FlextLdap()
         result = operations.delete_subtree("   ")
-        u.Ldap.Tests.that(result.failure, eq=True)
-        u.Ldap.Tests.that("non-empty base DN" in u.Ldap.Tests.fail(result), eq=True)
+        u.Tests.that(result.failure, eq=True)
+        u.Tests.that("non-empty base DN" in u.Tests.fail(result), eq=True)
 
     def test_not_connected_existence_check_fails_typed(self) -> None:
         """Without a connection the existence search fails as a typed failure."""
         operations = FlextLdap()
         result = operations.delete_subtree(self.BASE_DN)
-        u.Ldap.Tests.that(result.failure, eq=True)
+        u.Tests.that(result.failure, eq=True)
 
     def test_absent_base_fails_typed(self) -> None:
         """A base that does not exist fails naming the DN."""
         operations = self.SubtreeOperations([])
         result = operations.delete_subtree(self.BASE_DN)
-        u.Ldap.Tests.that(result.failure, eq=True)
-        u.Ldap.Tests.that(self.BASE_DN in u.Ldap.Tests.fail(result), eq=True)
+        u.Tests.that(result.failure, eq=True)
+        u.Tests.that(self.BASE_DN in u.Tests.fail(result), eq=True)
 
     def test_subtree_deleted_deepest_first(self) -> None:
         """Children are deleted before parents and the count covers all entries."""
@@ -133,10 +132,10 @@ class TestsFlextLdapSubtreeDelete:
             self._entry(self.LEAF_DN),
         ])
         result = operations.delete_subtree(self.BASE_DN)
-        u.Ldap.Tests.ok(result)
-        u.Ldap.Tests.that(result.value.deleted_count, eq=3)
-        u.Ldap.Tests.that(result.value.base_dn, eq=self.BASE_DN)
-        u.Ldap.Tests.that(
+        u.Tests.ok(result)
+        u.Tests.that(result.value.deleted_count, eq=3)
+        u.Tests.that(result.value.base_dn, eq=self.BASE_DN)
+        u.Tests.that(
             operations.deleted_order(),
             eq=[self.LEAF_DN, self.CHILD_DN, self.BASE_DN],
         )
@@ -152,18 +151,18 @@ class TestsFlextLdapSubtreeDelete:
             fail_on_dn=self.LEAF_DN,
         )
         result = operations.delete_subtree(self.BASE_DN)
-        u.Ldap.Tests.that(result.failure, eq=True)
-        message = u.Ldap.Tests.fail(result)
-        u.Ldap.Tests.that(self.LEAF_DN in message, eq=True)
-        u.Ldap.Tests.that("deleted_count=0" in message, eq=True)
-        u.Ldap.Tests.that(operations.deleted_order(), eq=[])
+        u.Tests.that(result.failure, eq=True)
+        message = u.Tests.fail(result)
+        u.Tests.that(self.LEAF_DN in message, eq=True)
+        u.Tests.that("deleted_count=0" in message, eq=True)
+        u.Tests.that(operations.deleted_order(), eq=[])
 
     def test_dn_model_input_is_accepted(self) -> None:
         """The public API accepts an m.Ldif.DN model as the subtree root."""
         operations = self.SubtreeOperations([self._entry(self.BASE_DN)])
         result = operations.delete_subtree(m.Ldif.DN(value=self.BASE_DN))
-        u.Ldap.Tests.ok(result)
-        u.Ldap.Tests.that(result.value.deleted_count, eq=1)
+        u.Tests.ok(result)
+        u.Tests.that(result.value.deleted_count, eq=1)
 
 
 class TestsFlextLdapPlanUpsert:
@@ -195,12 +194,12 @@ class TestsFlextLdapPlanUpsert:
         plan_result = operations.plan_upsert([
             self._modify_entry(self.EXISTS_DN, additions={"description": "added"}),
         ])
-        u.Ldap.Tests.that(plan_result.failure, eq=True)
+        u.Tests.that(plan_result.failure, eq=True)
 
     def test_plan_modify_without_additions_fails_like_the_write_path(self) -> None:
         """A modify entry without add operations fails the plan and the upsert alike."""
         operations = FlextLdap()
         entry = self._modify_entry(self.EXISTS_DN, additions={})
-        plan_error = u.Ldap.Tests.fail(operations.plan_upsert([entry]))
-        write_error = u.Ldap.Tests.fail(operations.upsert(entry))
-        u.Ldap.Tests.that(plan_error, eq=write_error)
+        plan_error = u.Tests.fail(operations.plan_upsert([entry]))
+        write_error = u.Tests.fail(operations.upsert(entry))
+        u.Tests.that(plan_error, eq=write_error)
