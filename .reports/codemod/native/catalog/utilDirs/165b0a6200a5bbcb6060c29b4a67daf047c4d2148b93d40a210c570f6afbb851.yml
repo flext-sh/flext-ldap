@@ -1,0 +1,1 @@
+{"id":"c1b9988e08c4602e8b5c36c514a937a0f89f0894ee5ae63ee5a5d13562b96b2e","language":"python","rule":{"kind":"import_from_statement","all":[{"has":{"pattern":"FlextInfraModelsConfigRelease","stopBy":"end"}},{"not":{"has":{"kind":"aliased_import","stopBy":"end","has":{"pattern":"FlextInfraModelsConfigRelease","stopBy":"end"}}}}]}}

@@ -1,0 +1,1 @@
+{"id":"087b96bd3b11d3b213f5102c5297c9965eeafee3e7f4871b399eaef39271a1b5","language":"Python","rule":{"all":[{"kind":"if_statement"},{"has":{"field":"consequence","all":[{"has":{"kind":"pass_statement"}},{"not":{"has":{"nthChild":2}}}]}},{"has":{"field":"alternative","has":{"kind":"block","not":{"has":{"nthChild":2}}}}}]}}

@@ -1,0 +1,1 @@
+{"id":"033774e46a07bb9d382a24223871a3140fea2617b6fc49e844a3b3b2e3a57fb3","language":"python","rule":{"any":[{"kind":"raise_statement"},{"all":[{"kind":"call"},{"has":{"field":"function","kind":"attribute","has":{"field":"attribute","regex":"^fail"}}}]}]}}

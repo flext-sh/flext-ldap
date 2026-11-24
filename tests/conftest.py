@@ -28,7 +28,7 @@ def ldap_container() -> Generator[Mapping[str, t.Scalar]]:
         Connection facts with the shared service lease held for this test only.
 
     """
-    docker = u.Ldap.Tests.get_docker_control()
+    docker = u.Tests.get_docker_control()
     with docker.lease():
         info = docker.verify().unwrap()
         environment = docker.fetch_container_environment(
@@ -36,9 +36,7 @@ def ldap_container() -> Generator[Mapping[str, t.Scalar]]:
             ("LDAP_BASE_DN", "LDAP_ADMIN_PASSWORD"),
         ).unwrap()
         base = environment["LDAP_BASE_DN"].get_secret_value()
-        port = u.Tests.resolve_host_port(
-            info, c.Ldap.Tests.DOCKER_CONTAINER_PORT
-        ).unwrap()
+        port = u.Tests.resolve_host_port(info, c.Tests.DOCKER_CONTAINER_PORT).unwrap()
         yield {
             "server_url": f"ldap://{c.LOCALHOST}:{port}",
             "host": c.LOCALHOST,

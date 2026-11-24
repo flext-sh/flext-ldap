@@ -1,0 +1,1 @@
+{"id":"d9abee601c78b7552f927fab396e2fe15aa9fe15eeb4f18ad859ec06bff5c04f","language":"python","rule":{"any":[{"kind":"none"},{"kind":"true"},{"kind":"false"},{"pattern":"[]"},{"pattern":"()"},{"pattern":"{}"},{"pattern":"set()"},{"pattern":"frozenset()"}]}}

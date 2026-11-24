@@ -1,0 +1,1 @@
+{"id":"1c38585b145ba4ed564c5c7b2963fc25141476f4add25173d5800cafff58777a","language":"python","rule":{"regex":"(?i)(^(pas+wo?r?d|pass(phrase)?|pwd|token|secrete?)$|_(pas+wo?r?d|pass(phrase)?|pwd|token|secrete?)_|^(pas+wo?r?d|pass(phrase)?|pwd|token|secrete?)_|_(pas+wo?r?d|pass(phrase)?|pwd|token|secrete?)$)"}}

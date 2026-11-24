@@ -1,0 +1,1 @@
+{"id":"b1019d0ce6b48540dcea3b5b2581a71f9d72e6a8c530370e1e2f552a4c35bb87","language":"python","rule":{"kind":"function_definition","has":{"field":"return_type","pattern":"$_","has":{"any":[{"all":[{"kind":"generic_type"},{"has":{"kind":"identifier","regex":"^(?:r|Result)$"}}]},{"pattern":"$FACADE.Result[$INNER]"}]}}}}

@@ -40,23 +40,23 @@ class TestsFlextLdapConnection:
 
         """
         return m.Ldap.ConnectionConfig(
-            host=c.Ldap.Tests.CONFIG_INVALID_HOST,
+            host=c.Tests.CONFIG_INVALID_HOST,
             port=c.Ldap.PORT,
-            bind_dn=c.Ldap.Tests.BIND_ADMIN_DN,
-            bind_password=c.Ldap.Tests.BIND_ADMIN_PASSWORD,
+            bind_dn=c.Tests.BIND_ADMIN_DN,
+            bind_password=c.Tests.BIND_ADMIN_PASSWORD,
         )
 
     @staticmethod
     def test_is_connected_is_false_before_any_connection() -> None:
         """A freshly obtained facade reports no active connection."""
-        u.Ldap.Tests.that(ldap.is_connected, eq=False)
+        u.Tests.that(ldap.is_connected, eq=False)
 
     @staticmethod
     def test_execute_without_connection_fails_with_not_connected() -> None:
         """execute() surfaces a NOT_CONNECTED failure when unbound."""
-        error = u.Ldap.Tests.fail(ldap.execute())
+        error = u.Tests.fail(ldap.execute())
 
-        u.Ldap.Tests.that(
+        u.Tests.that(
             error.lower(),
             contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
@@ -80,9 +80,9 @@ class TestsFlextLdapConnection:
             retry_delay=0.0,
         )
 
-        error = u.Ldap.Tests.fail(result)
-        u.Ldap.Tests.that(error, none=False)
-        u.Ldap.Tests.that(ldap.is_connected, eq=False)
+        error = u.Tests.fail(result)
+        u.Tests.that(error, none=False)
+        u.Tests.that(ldap.is_connected, eq=False)
 
     @staticmethod
     def test_disconnect_is_idempotent_and_preserves_failure_semantics() -> None:
@@ -90,9 +90,9 @@ class TestsFlextLdapConnection:
         ldap.disconnect()
         ldap.disconnect()
 
-        u.Ldap.Tests.that(ldap.is_connected, eq=False)
-        error = u.Ldap.Tests.fail(ldap.execute())
-        u.Ldap.Tests.that(
+        u.Tests.that(ldap.is_connected, eq=False)
+        error = u.Tests.fail(ldap.execute())
+        u.Tests.that(
             error.lower(),
             contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
@@ -101,17 +101,17 @@ class TestsFlextLdapConnection:
     def test_context_manager_yields_same_facade() -> None:
         """The context manager binds the facade itself as the ``as`` target."""
         with ldap as client:
-            u.Ldap.Tests.that(client is ldap, eq=True)
+            u.Tests.that(client is ldap, eq=True)
 
     @staticmethod
     def test_context_manager_exit_leaves_facade_disconnected() -> None:
         """Leaving the context disconnects and keeps NOT_CONNECTED semantics."""
         with ldap as client:
-            u.Ldap.Tests.that(client.is_connected, eq=False)
+            u.Tests.that(client.is_connected, eq=False)
 
-        u.Ldap.Tests.that(ldap.is_connected, eq=False)
-        error = u.Ldap.Tests.fail(ldap.execute())
-        u.Ldap.Tests.that(
+        u.Tests.that(ldap.is_connected, eq=False)
+        error = u.Tests.fail(ldap.execute())
+        u.Tests.that(
             error.lower(),
             contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )

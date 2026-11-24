@@ -1,0 +1,1 @@
+{"id":"278681fe83ab16eb186528721ab808a4bd549f1915c264d42549cc8d31d456bc","language":"python","rule":{"kind":"module","has":{"stopBy":"end","kind":"import_from_statement","all":[{"has":{"field":"module_name","regex":"^tests$"}},{"has":{"kind":"dotted_name","regex":"^u$","not":{"inside":{"kind":"import_from_statement","field":"module_name"}}}}]}}}

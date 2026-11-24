@@ -1,0 +1,1 @@
+{"id":"5406037c1875a47121dba442667738138a8f170ebfb40956755f90b10945d373","language":"python","rule":{"any":[{"all":[{"kind":"identifier"},{"regex":"^(?:Exception|BaseException)$"}]},{"all":[{"pattern":"$_"},{"not":{"any":[{"kind":"identifier"},{"kind":"attribute"},{"kind":"tuple"},{"kind":"parenthesized_expression"},{"kind":"as_pattern"},{"kind":"as_pattern_target"}]}}]}]}}
