@@ -472,10 +472,10 @@ class TestsFlextLdapUtilitiesUnitFilter:
 
     # --- normalize_value_set ---
     @staticmethod
-    def test_normalize_value_set_lowercases_and_drops_empty() -> None:
-        """Verify normalize value set lowercases and drops empty."""
-        result = u.Ldap.normalize_value_set(["Alice", "BOB", ""])
-        tm.that(result, eq=frozenset({"alice", "bob"}))
+    def test_normalize_value_set_preserves_exact_value_identity() -> None:
+        """Case-sensitive values such as credentials keep their exact identity."""
+        result = u.Ldap.normalize_value_set(["Alice", "alice", ""])
+        tm.that(result, eq={"Alice", "alice", ""})
 
 
 class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
