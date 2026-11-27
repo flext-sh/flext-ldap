@@ -52,7 +52,7 @@ def _user_entry(dn: str, identifier: str, *, cn: str) -> p.Ldif.Entry:
         dn=m.Ldif.DN(value=dn),
         attributes=m.Ldif.Attributes.model_validate({
             "attributes": {
-                "objectClass": list(c.Ldap.Tests.ADD_WRAPPER_OBJECT_CLASSES),
+                "objectClass": list(c.Tests.ADD_WRAPPER_OBJECT_CLASSES),
                 "uid": [identifier],
                 "cn": [cn],
                 "sn": [identifier],
@@ -114,7 +114,7 @@ class TestsFlextLdapSubtreeDeleteIntegration:
         ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """A three-level tree is deleted deepest-first with deleted_count=3."""
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         token = f"st{uuid4().hex[:10]}"
         root_dn = f"ou={token},{base_dn}"
@@ -153,7 +153,7 @@ class TestsFlextLdapSubtreeDeleteIntegration:
         ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """Deleting a subtree whose base does not exist fails naming the DN."""
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         absent_dn = f"ou=absent{uuid4().hex[:8]},{base_dn}"
         tm.ok(ldap.connect(conn_config))
@@ -173,7 +173,7 @@ class TestsFlextLdapPlanUpsertIntegration:
         ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """Plans 1 add / 1 modify / 1 unchanged and writes nothing."""
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"pl-{uuid4().hex[:8]}"
         stored_dn = f"uid={identifier},{base_dn}"
@@ -231,7 +231,7 @@ class TestsFlextLdapPlanUpsertIntegration:
 
         Applying the batch matches the plan.
         """
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"pm-{uuid4().hex[:8]}"
         stored_dn = f"uid={identifier},{base_dn}"
@@ -277,7 +277,7 @@ class TestsFlextLdapFindEntryIntegration:
         ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """A DN that does not exist reads as a successful empty result."""
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         absent_dn = f"uid=absent-{uuid4().hex[:8]},{base_dn}"
         tm.ok(ldap.connect(conn_config))
@@ -293,7 +293,7 @@ class TestsFlextLdapFindEntryIntegration:
         ldap_container: Mapping[str, t.Scalar],
     ) -> None:
         """A present entry is returned with the attributes asked for."""
-        conn_config = u.Ldap.Tests.create_connection_config(ldap_container)
+        conn_config = u.Tests.create_connection_config(ldap_container)
         base_dn = str(ldap_container["base_dn"])
         identifier = f"fe-{uuid4().hex[:8]}"
         stored_dn = f"uid={identifier},{base_dn}"

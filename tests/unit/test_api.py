@@ -10,8 +10,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_ldap import FlextLdap
-from tests import c, ldap, m, t, u
+from tests import FlextLdap, c, ldap, m, t, u
 
 pytestmark = [pytest.mark.unit]
 
@@ -24,14 +23,14 @@ class TestsFlextLdapApi:
     def test_with_statement_yields_same_facade() -> None:
         """Verify with statement yields same facade."""
         with ldap as ctx:
-            u.Ldap.Tests.that(ctx, eq=ldap)
+            u.Tests.that(ctx, eq=ldap)
 
     @staticmethod
     def test_context_manager_exit_leaves_facade_disconnected() -> None:
         """Verify context manager exit leaves facade disconnected."""
         with ldap:
             pass
-        u.Ldap.Tests.that(ldap.is_connected, eq=False)
+        u.Tests.that(ldap.is_connected, eq=False)
 
     @staticmethod
     def test_context_manager_does_not_suppress_exceptions() -> None:
@@ -42,72 +41,72 @@ class TestsFlextLdapApi:
 
         """
         with u.Tests.raises(RuntimeError), ldap:
-            raise RuntimeError(c.Ldap.Tests.RFC_DEFAULT_FILTER)
+            raise RuntimeError(c.Tests.RFC_DEFAULT_FILTER)
 
     # --- Connection state invariant ---
     @staticmethod
     def test_is_connected_default_false() -> None:
         """Verify is connected default false."""
-        u.Ldap.Tests.that(ldap.is_connected, eq=False)
+        u.Tests.that(ldap.is_connected, eq=False)
 
     @staticmethod
     def test_is_connected_is_idempotent_read() -> None:
         """Verify is connected is idempotent read."""
         first = ldap.is_connected
         second = ldap.is_connected
-        u.Ldap.Tests.that(first, eq=second)
+        u.Tests.that(first, eq=second)
 
     # --- Callback Type Guards ---
     @staticmethod
     def _callback_for_case(
-        case: c.Ldap.Tests.CallbackGuardCase,
+        case: c.Tests.CallbackGuardCase,
     ) -> t.Ldap.ProgressCallbackUnion | None:
         """Return the callback payload for one callback-guard case."""
         callbacks: Mapping[
-            c.Ldap.Tests.CallbackGuardCase,
+            c.Tests.CallbackGuardCase,
             t.Ldap.ProgressCallbackUnion | None,
         ] = {
-            c.Ldap.Tests.CallbackGuardCase.NONE: None,
-            c.Ldap.Tests.CallbackGuardCase.MULTI: u.Ldap.Tests.multi_phase_cb,
-            c.Ldap.Tests.CallbackGuardCase.SINGLE: u.Ldap.Tests.single_phase_cb,
+            c.Tests.CallbackGuardCase.NONE: None,
+            c.Tests.CallbackGuardCase.MULTI: u.Tests.multi_phase_cb,
+            c.Tests.CallbackGuardCase.SINGLE: u.Tests.single_phase_cb,
         }
         return callbacks[case]
 
-    @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
+    @pytest.mark.parametrize("case", c.Tests.CallbackGuardCase)
     def test_is_multi_phase_callback(
         self,
-        case: c.Ldap.Tests.CallbackGuardCase,
+        case: c.Tests.CallbackGuardCase,
     ) -> None:
         """Verify is multi phase callback."""
         callback = self._callback_for_case(case)
-        expected, _ = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
-        u.Ldap.Tests.that(FlextLdap.multi_phase_callback(callback), eq=expected)
+        expected, _ = c.Tests.CALLBACK_GUARD_EXPECTED[case]
+        u.Tests.that(FlextLdap.multi_phase_callback(callback), eq=expected)
 
-    @pytest.mark.parametrize("case", c.Ldap.Tests.CallbackGuardCase)
+    @pytest.mark.parametrize("case", c.Tests.CallbackGuardCase)
     def test_is_single_phase_callback(
         self,
-        case: c.Ldap.Tests.CallbackGuardCase,
+        case: c.Tests.CallbackGuardCase,
     ) -> None:
         """Verify is single phase callback."""
         callback = self._callback_for_case(case)
-        _, expected = c.Ldap.Tests.CALLBACK_GUARD_EXPECTED[case]
-        u.Ldap.Tests.that(FlextLdap.single_phase_callback(callback), eq=expected)
+        _, expected = c.Tests.CALLBACK_GUARD_EXPECTED[case]
+        u.Tests.that(FlextLdap.single_phase_callback(callback), eq=expected)
 
     @staticmethod
     def test_search_without_connection_returns_failure() -> None:
         """Verify search without connection returns failure."""
         search_options = m.Ldap.SearchOptions(
-            base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
-            filter_str=c.Ldap.Tests.RFC_DEFAULT_FILTER,
+            base_dn=c.Tests.RFC_DEFAULT_BASE_DN,
+            filter_str=c.Tests.RFC_DEFAULT_FILTER,
             scope=c.Ldap.SearchScope.SUBTREE.value,
         )
-        u.Ldap.Tests.fail(ldap.search(search_options))
+        u.Tests.fail(ldap.search(search_options))
 
     @staticmethod
     def test_execute_without_connection_reports_not_connected() -> None:
         """Verify execute without connection reports not connected."""
-        error = u.Ldap.Tests.fail(ldap.execute())
-        u.Ldap.Tests.that(
+        error = u.Tests.fail(ldap.execute())
+        u.Tests.that(
             error.lower(),
             contains=str(c.Ldap.ErrorMessage.NOT_CONNECTED).lower(),
         )
