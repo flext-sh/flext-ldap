@@ -24,10 +24,10 @@ class TestsFlextLdapSync:
         # Arrange / Act
         result = ldap.execute()
         # Assert: placeholder mixin surfaces a failure, never a silent success
-        error = u.Ldap.Tests.fail(result)
-        u.Ldap.Tests.that(error, contains="Not connected")
+        error = u.Tests.fail(result)
+        u.Tests.that(error, contains="Not connected")
 
-    @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
+    @pytest.mark.parametrize("phase", c.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
     @staticmethod
     def test_sync_phase_entries_missing_file_fails_with_parse_error(
         phase: str,
@@ -35,14 +35,14 @@ class TestsFlextLdapSync:
         """Verify sync phase entries missing file fails with parse error."""
         # Arrange / Act
         result = ldap.sync_phase_entries(
-            Path(c.Ldap.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
+            Path(c.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
             phase,
         )
         # Assert
-        error = u.Ldap.Tests.fail(result)
-        u.Ldap.Tests.that(error, contains="Failed to parse LDIF file")
+        error = u.Tests.fail(result)
+        u.Tests.that(error, contains="Failed to parse LDIF file")
 
-    @pytest.mark.parametrize("phase", c.Ldap.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
+    @pytest.mark.parametrize("phase", c.Tests.SYNC_FACADE_MISSING_FILE_PHASES)
     @staticmethod
     def test_sync_multiple_phases_missing_file_fails_with_not_found(
         phase: str,
@@ -50,11 +50,11 @@ class TestsFlextLdapSync:
         """Verify sync multiple phases missing file fails with not found."""
         # Arrange / Act
         result = ldap.sync_multiple_phases({
-            phase: Path(c.Ldap.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
+            phase: Path(c.Tests.SYNC_FACADE_MISSING_LDIF_PATH),
         })
         # Assert
-        error = u.Ldap.Tests.fail(result)
-        u.Ldap.Tests.that(error, contains="not found")
+        error = u.Tests.fail(result)
+        u.Tests.that(error, contains="not found")
 
     @staticmethod
     def test_sync_multiple_phases_missing_file_fails_when_stop_on_error(
@@ -62,14 +62,14 @@ class TestsFlextLdapSync:
     ) -> None:
         """Verify sync multiple phases missing file fails when stop on error."""
         # Arrange
-        missing_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        missing_file = tmp_path / c.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         # Act
         result = ldap.sync_multiple_phases(
-            {c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS: missing_file},
+            {c.Tests.SYNC_FACADE_PHASE_NAME_USERS: missing_file},
             settings=m.Ldap.SyncPhaseConfig(stop_on_error=True),
         )
         # Assert
-        u.Ldap.Tests.fail(result)
+        u.Tests.fail(result)
 
     @staticmethod
     def test_sync_phase_entries_empty_ldif_succeeds_with_zeroed_result(
@@ -77,25 +77,25 @@ class TestsFlextLdapSync:
     ) -> None:
         """Verify sync phase entries empty ldif succeeds with zeroed result."""
         # Arrange
-        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        ldif_file = tmp_path / c.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text("", encoding="utf-8")
         # Act
-        summary = u.Ldap.Tests.ok(
+        summary = u.Tests.ok(
             ldap.sync_phase_entries(
                 ldif_file,
-                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+                c.Tests.SYNC_FACADE_PHASE_NAME_USERS,
             ),
         )
         # Assert: public PhaseSyncResult contract for an empty phase
-        u.Ldap.Tests.that(
+        u.Tests.that(
             summary.phase_name,
-            eq=c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            eq=c.Tests.SYNC_FACADE_PHASE_NAME_USERS,
         )
-        u.Ldap.Tests.that(summary.total_entries, eq=0)
-        u.Ldap.Tests.that(summary.synced, eq=0)
-        u.Ldap.Tests.that(summary.failed, eq=0)
-        u.Ldap.Tests.that(summary.skipped, eq=0)
-        u.Ldap.Tests.that(summary.success_rate, eq=100.0)
+        u.Tests.that(summary.total_entries, eq=0)
+        u.Tests.that(summary.synced, eq=0)
+        u.Tests.that(summary.failed, eq=0)
+        u.Tests.that(summary.skipped, eq=0)
+        u.Tests.that(summary.success_rate, eq=100.0)
 
     @staticmethod
     def test_sync_multiple_phases_empty_ldif_succeeds_with_aggregate_result(
@@ -103,26 +103,26 @@ class TestsFlextLdapSync:
     ) -> None:
         """Verify sync multiple phases empty ldif succeeds with aggregate."""
         # Arrange
-        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        ldif_file = tmp_path / c.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text("", encoding="utf-8")
         # Act
-        aggregate = u.Ldap.Tests.ok(
+        aggregate = u.Tests.ok(
             ldap.sync_multiple_phases({
-                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS: ldif_file,
+                c.Tests.SYNC_FACADE_PHASE_NAME_USERS: ldif_file,
             }),
         )
         # Assert: public MultiPhaseSyncResult contract
-        u.Ldap.Tests.that(aggregate.overall_success, eq=True)
-        u.Ldap.Tests.that(aggregate.total_entries, eq=0)
-        u.Ldap.Tests.that(aggregate.total_synced, eq=0)
-        u.Ldap.Tests.that(
-            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS in aggregate.phase_results,
+        u.Tests.that(aggregate.overall_success, eq=True)
+        u.Tests.that(aggregate.total_entries, eq=0)
+        u.Tests.that(aggregate.total_synced, eq=0)
+        u.Tests.that(
+            c.Tests.SYNC_FACADE_PHASE_NAME_USERS in aggregate.phase_results,
             eq=True,
         )
 
     @pytest.mark.parametrize(
         "callback",
-        [None, u.Ldap.Tests.single_phase_cb, u.Ldap.Tests.multi_phase_cb],
+        [None, u.Tests.single_phase_cb, u.Tests.multi_phase_cb],
     )
     @staticmethod
     def test_sync_phase_entries_accepts_valid_callback_arities(
@@ -131,20 +131,20 @@ class TestsFlextLdapSync:
     ) -> None:
         """Verify sync phase entries accepts valid callback arities."""
         # Arrange: a real entry forces callback normalization + batch upsert
-        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        ldif_file = tmp_path / c.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text(
-            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
+            c.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
             encoding="utf-8",
         )
         # Act: single- and multi-phase signatures (and no callback) are all accepted;
         # without a live server the batch stage fails rather than raising TypeError.
         result = ldap.sync_phase_entries(
             ldif_file,
-            c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+            c.Tests.SYNC_FACADE_PHASE_NAME_USERS,
             settings=m.Ldap.SyncPhaseConfig(progress_callback=callback),
         )
         # Assert
-        u.Ldap.Tests.fail(result)
+        u.Tests.fail(result)
 
     @staticmethod
     def test_sync_phase_entries_rejects_invalid_callback_arity(
@@ -152,9 +152,9 @@ class TestsFlextLdapSync:
     ) -> None:
         """Verify sync phase entries rejects invalid callback arity."""
         # Arrange
-        ldif_file = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        ldif_file = tmp_path / c.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         ldif_file.write_text(
-            c.Ldap.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
+            c.Tests.SYNC_FACADE_SINGLE_ENTRY_LDIF,
             encoding="utf-8",
         )
         # Act / Assert: an unsupported arity is a contract violation, not a failure
@@ -162,9 +162,9 @@ class TestsFlextLdapSync:
         with u.Tests.raises(TypeError, match="single-phase"):
             ldap.sync_phase_entries(
                 ldif_file,
-                c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS,
+                c.Tests.SYNC_FACADE_PHASE_NAME_USERS,
                 settings=m.Ldap.SyncPhaseConfig(
-                    progress_callback=u.Ldap.Tests.invalid_phase_cb,
+                    progress_callback=u.Tests.invalid_phase_cb,
                 ),
             )
 
@@ -174,12 +174,12 @@ class TestsFlextLdapSync:
     ) -> None:
         """Verify sync multiple phases unparsable file fails without stop on."""
         # Arrange
-        bad_ldif = tmp_path / c.Ldap.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
+        bad_ldif = tmp_path / c.Tests.SYNC_FACADE_USERS_LDIF_FILENAME
         bad_ldif.write_bytes(b"not valid ldif content\x00\xff")
         # Act
         result = ldap.sync_multiple_phases(
-            {c.Ldap.Tests.SYNC_FACADE_PHASE_NAME_USERS: bad_ldif},
+            {c.Tests.SYNC_FACADE_PHASE_NAME_USERS: bad_ldif},
             settings=m.Ldap.SyncPhaseConfig(stop_on_error=False),
         )
         # Assert: aggregate reports failure honestly instead of masking the bad phase
-        u.Ldap.Tests.fail(result)
+        u.Tests.fail(result)

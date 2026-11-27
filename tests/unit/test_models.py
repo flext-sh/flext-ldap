@@ -20,57 +20,57 @@ class TestsFlextLdapModelsUnit:
     @staticmethod
     def test_entry_exposes_dn_value_and_null_attributes() -> None:
         """Verify entry exposes dn value and null attributes."""
-        dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
+        dn = m.Ldif.DN(value=c.Tests.RFC_DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(dn=dn, attributes=None, domain_events=[])
 
-        u.Ldap.Tests.that(entry.dn_str, eq=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
-        u.Ldap.Tests.that(entry.attributes, none=True)
+        u.Tests.that(entry.dn_str, eq=c.Tests.RFC_DEFAULT_BASE_DN)
+        u.Tests.that(entry.attributes, none=True)
 
     @staticmethod
     def test_entry_exposes_attributes_through_public_accessor() -> None:
         """Verify entry exposes attributes through public accessor."""
-        dn = m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN)
+        dn = m.Ldif.DN(value=c.Tests.RFC_DEFAULT_BASE_DN)
         entry = m.Ldif.Entry(
             dn=dn,
             attributes=m.Ldif.Attributes(attributes={"cn": ["alice"], "sn": ["smith"]}),
             domain_events=[],
         )
 
-        u.Ldap.Tests.that(entry.attributes_dict, eq={"cn": ["alice"], "sn": ["smith"]})
+        u.Tests.that(entry.attributes_dict, eq={"cn": ["alice"], "sn": ["smith"]})
 
     @staticmethod
     def test_connection_config_default_values() -> None:
         """Verify connection config default values."""
         settings = m.Ldap.ConnectionConfig(port=c.Ldap.PORT)
 
-        u.Ldap.Tests.that(settings.host, eq=c.LOCALHOST)
-        u.Ldap.Tests.that(settings.port, eq=c.Ldap.PORT)
-        u.Ldap.Tests.that(settings.use_ssl, eq=False)
-        u.Ldap.Tests.that(settings.use_tls, eq=False)
-        u.Ldap.Tests.that(settings.bind_dn, none=True)
-        u.Ldap.Tests.that(settings.bind_password, none=True)
-        u.Ldap.Tests.that(settings.timeout, eq=c.Ldap.TIMEOUT)
-        u.Ldap.Tests.that(settings.auto_bind, eq=True)
-        u.Ldap.Tests.that(settings.auto_range, eq=True)
+        u.Tests.that(settings.host, eq=c.LOCALHOST)
+        u.Tests.that(settings.port, eq=c.Ldap.PORT)
+        u.Tests.that(settings.use_ssl, eq=False)
+        u.Tests.that(settings.use_tls, eq=False)
+        u.Tests.that(settings.bind_dn, none=True)
+        u.Tests.that(settings.bind_password, none=True)
+        u.Tests.that(settings.timeout, eq=c.Ldap.TIMEOUT)
+        u.Tests.that(settings.auto_bind, eq=True)
+        u.Tests.that(settings.auto_range, eq=True)
 
     @staticmethod
     def test_connection_config_custom_values() -> None:
         """Verify connection config custom values."""
         settings = m.Ldap.ConnectionConfig(
-            host=c.Ldap.Tests.MODELS_LDAP_EXAMPLE_HOST,
-            port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
+            host=c.Tests.MODELS_LDAP_EXAMPLE_HOST,
+            port=c.Tests.CONFIG_LDAPS_PORT,
             use_ssl=True,
-            bind_dn=c.Ldap.Tests.ENTRY_DN_ADMIN_EXAMPLE,
-            bind_password=c.Ldap.Tests.BIND_ADMIN_PASSWORD,
-            timeout=c.Ldap.Tests.MODELS_CUSTOM_TIMEOUT,
+            bind_dn=c.Tests.ENTRY_DN_ADMIN_EXAMPLE,
+            bind_password=c.Tests.BIND_ADMIN_PASSWORD,
+            timeout=c.Tests.MODELS_CUSTOM_TIMEOUT,
         )
 
-        u.Ldap.Tests.that(settings.host, eq=c.Ldap.Tests.MODELS_LDAP_EXAMPLE_HOST)
-        u.Ldap.Tests.that(settings.port, eq=c.Ldap.Tests.CONFIG_LDAPS_PORT)
-        u.Ldap.Tests.that(settings.use_ssl, eq=True)
-        u.Ldap.Tests.that(settings.bind_dn, eq=c.Ldap.Tests.ENTRY_DN_ADMIN_EXAMPLE)
-        u.Ldap.Tests.that(settings.bind_password, eq=c.Ldap.Tests.BIND_ADMIN_PASSWORD)
-        u.Ldap.Tests.that(settings.timeout, eq=c.Ldap.Tests.MODELS_CUSTOM_TIMEOUT)
+        u.Tests.that(settings.host, eq=c.Tests.MODELS_LDAP_EXAMPLE_HOST)
+        u.Tests.that(settings.port, eq=c.Tests.CONFIG_LDAPS_PORT)
+        u.Tests.that(settings.use_ssl, eq=True)
+        u.Tests.that(settings.bind_dn, eq=c.Tests.ENTRY_DN_ADMIN_EXAMPLE)
+        u.Tests.that(settings.bind_password, eq=c.Tests.BIND_ADMIN_PASSWORD)
+        u.Tests.that(settings.timeout, eq=c.Tests.MODELS_CUSTOM_TIMEOUT)
 
     @staticmethod
     def test_connection_config_rejects_ssl_and_tls_together() -> None:
@@ -79,12 +79,12 @@ class TestsFlextLdapModelsUnit:
             m.Ldap.ConnectionConfig(port=c.Ldap.PORT, use_ssl=True, use_tls=True)
 
     @staticmethod
-    @pytest.mark.parametrize("case", c.Ldap.Tests.ConnectionSecurityCase)
+    @pytest.mark.parametrize("case", c.Tests.ConnectionSecurityCase)
     def test_connection_config_accepts_single_security_mode(
-        case: c.Ldap.Tests.ConnectionSecurityCase,
+        case: c.Tests.ConnectionSecurityCase,
     ) -> None:
         """Verify connection config accepts single security mode."""
-        use_ssl, use_tls = c.Ldap.Tests.MODELS_ALLOWED_SECURITY_COMBOS[case]
+        use_ssl, use_tls = c.Tests.MODELS_ALLOWED_SECURITY_COMBOS[case]
 
         settings = m.Ldap.ConnectionConfig(
             port=c.Ldap.PORT,
@@ -92,22 +92,22 @@ class TestsFlextLdapModelsUnit:
             use_tls=use_tls,
         )
 
-        u.Ldap.Tests.that(settings.use_ssl, eq=use_ssl)
-        u.Ldap.Tests.that(settings.use_tls, eq=use_tls)
+        u.Tests.that(settings.use_ssl, eq=use_ssl)
+        u.Tests.that(settings.use_tls, eq=use_tls)
 
     @pytest.mark.parametrize(
         "port",
-        [c.Ldap.Tests.CONFIG_PORT_MIN, c.Ldap.Tests.CONFIG_PORT_MAX],
+        [c.Tests.CONFIG_PORT_MIN, c.Tests.CONFIG_PORT_MAX],
     )
     @staticmethod
     def test_connection_config_accepts_boundary_ports(port: int) -> None:
         """Verify connection config accepts boundary ports."""
         settings = m.Ldap.ConnectionConfig(port=port)
 
-        u.Ldap.Tests.that(settings.port, eq=port)
+        u.Tests.that(settings.port, eq=port)
 
     @staticmethod
-    @pytest.mark.parametrize("invalid_port", c.Ldap.Tests.MODELS_INVALID_PORTS)
+    @pytest.mark.parametrize("invalid_port", c.Tests.MODELS_INVALID_PORTS)
     def test_connection_config_rejects_out_of_range_ports(
         invalid_port: int,
     ) -> None:
@@ -122,20 +122,20 @@ class TestsFlextLdapModelsUnit:
 
         dump = settings.model_dump()
 
-        u.Ldap.Tests.that(dump, keys=[c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.FIELD_PORT])
-        u.Ldap.Tests.that(dump[c.Ldap.Tests.FIELD_HOST], eq=c.LOCALHOST)
-        u.Ldap.Tests.that(dump[c.Ldap.Tests.FIELD_PORT], eq=c.Ldap.PORT)
+        u.Tests.that(dump, keys=[c.Tests.FIELD_HOST, c.Tests.FIELD_PORT])
+        u.Tests.that(dump[c.Tests.FIELD_HOST], eq=c.LOCALHOST)
+        u.Tests.that(dump[c.Tests.FIELD_PORT], eq=c.Ldap.PORT)
 
     @staticmethod
     def test_connection_config_survives_dump_validate_roundtrip() -> None:
         """Verify connection config survives dump validate roundtrip."""
         original = m.Ldap.ConnectionConfig(
-            host=c.Ldap.Tests.MODELS_LDAP_EXAMPLE_HOST,
-            port=c.Ldap.Tests.CONFIG_LDAPS_PORT,
+            host=c.Tests.MODELS_LDAP_EXAMPLE_HOST,
+            port=c.Tests.CONFIG_LDAPS_PORT,
             use_ssl=True,
-            timeout=c.Ldap.Tests.MODELS_CUSTOM_TIMEOUT,
+            timeout=c.Tests.MODELS_CUSTOM_TIMEOUT,
         )
 
         restored = m.Ldap.ConnectionConfig.model_validate(original.model_dump())
 
-        u.Ldap.Tests.that(restored, eq=original)
+        u.Tests.that(restored, eq=original)

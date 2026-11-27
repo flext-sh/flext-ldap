@@ -83,7 +83,7 @@ class TestsFlextLdapEntryAdapter:
 
         """
         return m.Ldif.Entry(
-            dn=m.Ldif.DN(value=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE),
+            dn=m.Ldif.DN(value=c.Tests.ENTRY_DN_USER_EXAMPLE),
             attributes=m.Ldif.Attributes(
                 attributes={key: list(values) for key, values in attributes.items()},
                 attribute_metadata={},
@@ -102,7 +102,7 @@ class TestsFlextLdapEntryAdapter:
 
         result = adapter.execute()
 
-        tm.ok(u.Ldap.Tests.ok(result))
+        tm.ok(u.Tests.ok(result))
 
     # ------------------------------------------------------------------
     # ldif_entry_to_ldap3_attributes() — LDIF -> ldap3 attributes
@@ -126,8 +126,8 @@ class TestsFlextLdapEntryAdapter:
 
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
 
-        converted = u.Ldap.Tests.ok(result)
-        u.Ldap.Tests.that(
+        converted = u.Tests.ok(result)
+        u.Tests.that(
             converted,
             keys=list(attributes),
             kv={key: list(values) for key, values in attributes.items()},
@@ -140,13 +140,13 @@ class TestsFlextLdapEntryAdapter:
 
         result = adapter.ldif_entry_to_ldap3_attributes(entry)
 
-        err = u.Ldap.Tests.fail(
+        err = u.Tests.fail(
             result,
-            has=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
+            has=c.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
         )
-        u.Ldap.Tests.that(
+        u.Tests.that(
             err.lower(),
-            contains=c.Ldap.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
+            contains=c.Tests.ENTRY_ADAPTER_NO_ATTRIBUTES_ERROR,
         )
 
     # ------------------------------------------------------------------
@@ -157,29 +157,29 @@ class TestsFlextLdapEntryAdapter:
         """Verify ldap3 to ldif preserves dn and attributes."""
         adapter = FlextLdapEntryAdapter()
         source = self._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+            dn=c.Tests.ENTRY_DN_USER_EXAMPLE,
             attributes={"cn": [c.ContextScope.USER], "sn": ["Doe"]},
         )
 
         result = adapter.ldap3_to_ldif_entry(source)
 
-        entry = u.Ldap.Tests.ok(result)
+        entry = u.Tests.ok(result)
         dn = tm.not_none(entry.dn)
         attributes = tm.not_none(entry.attributes)
-        tm.that(dn.value, eq=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE)
+        tm.that(dn.value, eq=c.Tests.ENTRY_DN_USER_EXAMPLE)
         tm.that(attributes.attributes, eq={"cn": [c.ContextScope.USER], "sn": ["Doe"]})
 
     def test_ldap3_to_ldif_tracks_base64_attributes_for_non_ascii(self) -> None:
         """Verify ldap3 to ldif tracks base64 attributes for non ascii."""
         adapter = FlextLdapEntryAdapter()
         source = self._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+            dn=c.Tests.ENTRY_DN_USER_EXAMPLE,
             attributes={"cn": ["naïve"]},
         )
 
         result = adapter.ldap3_to_ldif_entry(source)
 
-        entry = u.Ldap.Tests.ok(result)
+        entry = u.Tests.ok(result)
         metadata = tm.not_none(entry.metadata)
         tm.that(metadata.extensions["base64_encoded_attributes"], eq=["cn"])
 
@@ -187,7 +187,7 @@ class TestsFlextLdapEntryAdapter:
     def _source_entry() -> TestsFlextLdapEntryAdapter._Ldap3Entry:
         """Return the canonical ldap3 source entry for conversion tests."""
         return TestsFlextLdapEntryAdapter._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+            dn=c.Tests.ENTRY_DN_USER_EXAMPLE,
             attributes={"cn": [c.ContextScope.USER]},
         )
 
@@ -205,7 +205,7 @@ class TestsFlextLdapEntryAdapter:
 
         result = adapter.ldap3_to_ldif_entry(source)
 
-        entry = u.Ldap.Tests.ok(result)
+        entry = u.Tests.ok(result)
         metadata = tm.not_none(entry.metadata)
         tm.that(metadata.server_type, eq=server_type)
 
@@ -216,7 +216,7 @@ class TestsFlextLdapEntryAdapter:
 
         result = adapter.ldap3_to_ldif_entry(source)
 
-        entry = u.Ldap.Tests.ok(result)
+        entry = u.Tests.ok(result)
         metadata = tm.not_none(entry.metadata)
         tm.that(metadata.server_type, eq=c.Ldif.ServerTypes.RFC)
 
@@ -225,12 +225,12 @@ class TestsFlextLdapEntryAdapter:
         adapter = FlextLdapEntryAdapter()
         original = {"cn": [c.ContextScope.USER], "sn": ["Doe"]}
         source = self._Ldap3Entry(
-            dn=c.Ldap.Tests.ENTRY_DN_USER_EXAMPLE,
+            dn=c.Tests.ENTRY_DN_USER_EXAMPLE,
             attributes=original,
         )
 
-        ldif_entry = u.Ldap.Tests.ok(adapter.ldap3_to_ldif_entry(source))
+        ldif_entry = u.Tests.ok(adapter.ldap3_to_ldif_entry(source))
         round_tripped = adapter.ldif_entry_to_ldap3_attributes(ldif_entry)
 
-        converted = u.Ldap.Tests.ok(round_tripped)
-        u.Ldap.Tests.that(converted, keys=list(original), kv=original)
+        converted = u.Tests.ok(round_tripped)
+        u.Tests.that(converted, keys=list(original), kv=original)

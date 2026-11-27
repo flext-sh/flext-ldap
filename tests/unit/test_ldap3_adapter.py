@@ -24,7 +24,7 @@ pytestmark = pytest.mark.unit
 class TestsFlextLdapLdap3Adapter:
     """Public-contract behavior of ``FlextLdapLdap3Adapter``.
 
-    All test data comes from ``c.Ldap.Tests.*`` / ``m.Ldap.*`` — no inline
+    All test data comes from ``c.Tests.*`` / ``m.Ldap.*`` — no inline
     constants. Behavior only: return values, ``r[T]`` outcomes, public
     property state, invariants, and idempotence.
     """
@@ -51,8 +51,8 @@ class TestsFlextLdapLdap3Adapter:
     ) -> None:
         """Verify fresh adapter reports not connected."""
         # Arrange / Act / Assert — public property contract on a new adapter.
-        u.Ldap.Tests.that(adapter.is_connected, eq=False)
-        u.Ldap.Tests.that(adapter.connection, eq=None)
+        u.Tests.that(adapter.is_connected, eq=False)
+        u.Tests.that(adapter.connection, eq=None)
 
     @pytest.mark.parametrize("op", list(DisconnectedOp))
     def test_operations_fail_when_not_connected(
@@ -63,34 +63,34 @@ class TestsFlextLdapLdap3Adapter:
         """Verify operations fail when not connected."""
         # Every public fallible operation returns a failed r[T] carrying the
         # "Not connected" contract message while the adapter is unbound.
-        needle = c.Ldap.Tests.LDAP3_ADAPTER_NOT_CONNECTED_ERROR
+        needle = c.Tests.LDAP3_ADAPTER_NOT_CONNECTED_ERROR
         match op:
             case self.DisconnectedOp.EXECUTE:
-                u.Ldap.Tests.fail(adapter.execute(), has=needle)
+                u.Tests.fail(adapter.execute(), has=needle)
             case self.DisconnectedOp.ADD:
                 entry = m.Ldif.Entry(
-                    dn=m.Ldif.DN(value=c.Ldap.Tests.RFC_DEFAULT_BASE_DN),
+                    dn=m.Ldif.DN(value=c.Tests.RFC_DEFAULT_BASE_DN),
                     attributes=m.Ldif.Attributes(attributes={}),
                     domain_events=[],
                 )
-                u.Ldap.Tests.fail(adapter.add(entry), has=needle)
+                u.Tests.fail(adapter.add(entry), has=needle)
             case self.DisconnectedOp.DELETE:
-                u.Ldap.Tests.fail(
-                    adapter.delete(c.Ldap.Tests.RFC_DEFAULT_BASE_DN),
+                u.Tests.fail(
+                    adapter.delete(c.Tests.RFC_DEFAULT_BASE_DN),
                     has=needle,
                 )
             case self.DisconnectedOp.MODIFY:
-                u.Ldap.Tests.fail(
-                    adapter.modify(c.Ldap.Tests.RFC_DEFAULT_BASE_DN, {}),
+                u.Tests.fail(
+                    adapter.modify(c.Tests.RFC_DEFAULT_BASE_DN, {}),
                     has=needle,
                 )
             case self.DisconnectedOp.SEARCH:
                 options = m.Ldap.SearchOptions(
-                    base_dn=c.Ldap.Tests.RFC_DEFAULT_BASE_DN,
-                    filter_str=c.Ldap.Tests.SEARCH_FILTER_CN,
+                    base_dn=c.Tests.RFC_DEFAULT_BASE_DN,
+                    filter_str=c.Tests.SEARCH_FILTER_CN,
                     scope=c.Ldap.SearchScope.SUBTREE,
                 )
-                u.Ldap.Tests.fail(adapter.search_many([options]), has=needle)
+                u.Tests.fail(adapter.search_many([options]), has=needle)
 
     @staticmethod
     def test_disconnect_is_idempotent_and_keeps_state_unbound(
@@ -101,39 +101,39 @@ class TestsFlextLdapLdap3Adapter:
         # nothing and leaves the observable state unbound; repeat is safe.
         adapter.disconnect()
         adapter.disconnect()
-        u.Ldap.Tests.that(adapter.is_connected, eq=False)
-        u.Ldap.Tests.that(adapter.connection, eq=None)
+        u.Tests.that(adapter.is_connected, eq=False)
+        u.Tests.that(adapter.connection, eq=None)
 
-    @pytest.mark.parametrize("case", list(c.Ldap.Tests.Ldap3ServerCase))
+    @pytest.mark.parametrize("case", list(c.Tests.Ldap3ServerCase))
     @staticmethod
     def test_create_server_configures_host_and_port(
-        case: c.Ldap.Tests.Ldap3ServerCase,
+        case: c.Tests.Ldap3ServerCase,
     ) -> None:
         """Verify create server configures host and port."""
         # create_server is public via the ConnectionManager ClassVar; its
         # contract is a Server object addressing the requested host/port
         # across plain / SSL / TLS transport modes.
-        port, use_ssl, use_tls = c.Ldap.Tests.LDAP3_SERVER_SCENARIOS[case]
+        port, use_ssl, use_tls = c.Tests.LDAP3_SERVER_SCENARIOS[case]
         settings = m.Ldap.ConnectionConfig(
             host=c.LOCALHOST,
             port=port,
             use_ssl=use_ssl,
             use_tls=use_tls,
-            timeout=c.Ldap.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
+            timeout=c.Tests.LDAP3_ADAPTER_DEFAULT_TIMEOUT,
         )
 
         server = FlextLdapLdap3Adapter.ConnectionManager.create_server(settings)
 
         tm.that(server, none=False)
-        u.Ldap.Tests.that(
-            getattr(server, c.Ldap.Tests.FIELD_HOST, c.Ldap.Tests.STRING_EMPTY),
+        u.Tests.that(
+            getattr(server, c.Tests.FIELD_HOST, c.Tests.STRING_EMPTY),
             eq=c.LOCALHOST,
         )
-        u.Ldap.Tests.that(
+        u.Tests.that(
             getattr(
                 server,
-                c.Ldap.Tests.FIELD_PORT,
-                c.Ldap.Tests.SYNC_DEFAULT_ZERO_COUNT,
+                c.Tests.FIELD_PORT,
+                c.Tests.SYNC_DEFAULT_ZERO_COUNT,
             ),
             eq=port,
         )
@@ -144,4 +144,4 @@ class TestsFlextLdapLdap3Adapter:
         # FlextLdapAdapterHost exposes is_connected without eagerly building
         # an adapter; before any use it must observe an unbound state.
         host = FlextLdapAdapterHost()
-        u.Ldap.Tests.that(host.is_connected, eq=False)
+        u.Tests.that(host.is_connected, eq=False)

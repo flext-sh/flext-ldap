@@ -41,12 +41,12 @@ class TestsFlextLdapConstantsUnit:
         expected_value: str,
     ) -> None:
         """Verify status member exposes expected string value."""
-        u.Ldap.Tests.that(status.value, eq=expected_value)
+        u.Tests.that(status.value, eq=expected_value)
 
     @staticmethod
     def test_valid_statuses_covers_every_status_member() -> None:
         """Verify valid statuses covers every status member."""
-        u.Ldap.Tests.that(frozenset(c.Ldap.Status) == c.Ldap.VALID_STATUSES, eq=True)
+        u.Tests.that(frozenset(c.Ldap.Status) == c.Ldap.VALID_STATUSES, eq=True)
 
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     @staticmethod
@@ -54,7 +54,7 @@ class TestsFlextLdapConstantsUnit:
         status: c.Ldap.Status,
     ) -> None:
         """Verify is valid status accepts every enum member."""
-        u.Ldap.Tests.that(u.Ldap.valid_status(status), eq=True)
+        u.Tests.that(u.Ldap.valid_status(status), eq=True)
 
     @pytest.mark.parametrize("status", list(c.Ldap.Status))
     @staticmethod
@@ -62,13 +62,13 @@ class TestsFlextLdapConstantsUnit:
         status: c.Ldap.Status,
     ) -> None:
         """Verify is valid status accepts every status string value."""
-        u.Ldap.Tests.that(u.Ldap.valid_status(status.value), eq=True)
+        u.Tests.that(u.Ldap.valid_status(status.value), eq=True)
 
     @staticmethod
     def test_is_valid_status_rejects_unknown_string() -> None:
         """Verify is valid status rejects unknown string."""
-        u.Ldap.Tests.that(
-            u.Ldap.valid_status(c.Ldap.Tests.CONSTANT_INVALID_STATUS),
+        u.Tests.that(
+            u.Ldap.valid_status(c.Tests.CONSTANT_INVALID_STATUS),
             eq=False,
         )
 
@@ -92,7 +92,7 @@ class TestsFlextLdapConstantsUnit:
         expected_int: int,
     ) -> None:
         """Verify result code exposes expected int value."""
-        u.Ldap.Tests.that(int(code), eq=expected_int)
+        u.Tests.that(int(code), eq=expected_int)
 
     @pytest.mark.parametrize(
         ("code", "is_partial_success"),
@@ -110,7 +110,7 @@ class TestsFlextLdapConstantsUnit:
         is_partial_success: bool,
     ) -> None:
         """Verify partial success codes membership."""
-        u.Ldap.Tests.that(code in c.Ldap.PARTIAL_SUCCESS_CODES, eq=is_partial_success)
+        u.Tests.that(code in c.Ldap.PARTIAL_SUCCESS_CODES, eq=is_partial_success)
 
     # ------------------------------------------------------------------ #
     # Search-scope mapping to ldap3 integer values
@@ -119,7 +119,7 @@ class TestsFlextLdapConstantsUnit:
     @staticmethod
     def test_ldap3_scope_mapping_covers_every_search_scope() -> None:
         """Verify ldap3 scope mapping covers every search scope."""
-        u.Ldap.Tests.that(
+        u.Tests.that(
             set(c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE) == set(c.Ldap.SearchScope),
             eq=True,
         )
@@ -138,12 +138,12 @@ class TestsFlextLdapConstantsUnit:
         expected: c.Ldap.SearchScopeValue,
     ) -> None:
         """Verify ldap3 scope mapping translates scope."""
-        u.Ldap.Tests.that(c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE[scope], eq=expected)
+        u.Tests.that(c.Ldap.LDAP3_SCOPE_BY_SEARCH_SCOPE[scope], eq=expected)
 
     @staticmethod
     def test_default_scope_is_subtree() -> None:
         """Verify default scope is subtree."""
-        u.Ldap.Tests.that(c.Ldap.DEFAULT_SCOPE, eq=c.Ldap.SearchScope.SUBTREE)
+        u.Tests.that(c.Ldap.DEFAULT_SCOPE, eq=c.Ldap.SearchScope.SUBTREE)
 
     # ------------------------------------------------------------------ #
     # Operation message maps keyed by every OperationType
@@ -156,7 +156,7 @@ class TestsFlextLdapConstantsUnit:
     ) -> None:
         """Verify operation success messages defined for every operation."""
         message: str = c.Ldap.OPERATION_SUCCESS_MESSAGES[operation]
-        u.Ldap.Tests.that(bool(message), eq=True)
+        u.Tests.that(bool(message), eq=True)
 
     @staticmethod
     @pytest.mark.parametrize(c.ContextScope.OPERATION, list(c.Ldap.OperationType))
@@ -165,7 +165,7 @@ class TestsFlextLdapConstantsUnit:
     ) -> None:
         """Verify operation failure prefixes defined for every operation."""
         prefix: str = c.Ldap.OPERATION_FAILURE_PREFIXES[operation]
-        u.Ldap.Tests.that(prefix.endswith("failed"), eq=True)
+        u.Tests.that(prefix.endswith("failed"), eq=True)
 
     # ------------------------------------------------------------------ #
     # ENTRY_ALREADY_EXISTS_RE matching behaviour
@@ -184,7 +184,7 @@ class TestsFlextLdapConstantsUnit:
     @staticmethod
     def test_entry_already_exists_re_matches_known_phrases(message: str) -> None:
         """Verify entry already exists re matches known phrases."""
-        u.Ldap.Tests.that(
+        u.Tests.that(
             c.Ldap.ENTRY_ALREADY_EXISTS_RE.search(message) is not None,
             eq=True,
         )
@@ -198,7 +198,7 @@ class TestsFlextLdapConstantsUnit:
         message: str,
     ) -> None:
         """Verify entry already exists re rejects unrelated phrases."""
-        u.Ldap.Tests.that(
+        u.Tests.that(
             c.Ldap.ENTRY_ALREADY_EXISTS_RE.search(message) is None,
             eq=True,
         )
@@ -211,13 +211,13 @@ class TestsFlextLdapConstantsUnit:
     def test_exc_connection_is_a_tuple_of_exception_types() -> None:
         """Verify exc connection is a tuple of exception types."""
         expected_exceptions = {_Ldap3LDAPException, *c.EXC_BROAD_IO_TYPE}
-        u.Ldap.Tests.that(set(c.Ldap.EXC_CONNECTION) == expected_exceptions, eq=True)
+        u.Tests.that(set(c.Ldap.EXC_CONNECTION) == expected_exceptions, eq=True)
 
     @staticmethod
     def test_exc_connection_extends_broad_io_boundary_types() -> None:
         """Verify exc connection extends broad io boundary types."""
         broad_io: tuple[type[BaseException], ...] = c.EXC_BROAD_IO_TYPE
-        u.Ldap.Tests.that(
+        u.Tests.that(
             set(broad_io).issubset(set(c.Ldap.EXC_CONNECTION))
             and len(c.Ldap.EXC_CONNECTION) > len(broad_io),
             eq=True,

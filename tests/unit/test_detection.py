@@ -29,7 +29,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("attrs", "key", "expected"),
-        c.Ldap.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS,
+        c.Tests.DETECTION_GET_FIRST_VALUE_SCENARIOS,
     )
     @staticmethod
     def test_get_first_attribute_value_returns_first_truthy_value(
@@ -44,7 +44,7 @@ class TestsFlextLdapDetection:
 
     @pytest.mark.parametrize(
         ("vendor_name", "vendor_version", "supported_controls", "expected"),
-        c.Ldap.Tests.DETECTION_FROM_ATTRIBUTES_SCENARIOS,
+        c.Tests.DETECTION_FROM_ATTRIBUTES_SCENARIOS,
     )
     @staticmethod
     def test_detect_server_type_classifies_vendor_metadata(

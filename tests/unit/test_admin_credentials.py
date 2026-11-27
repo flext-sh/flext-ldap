@@ -10,8 +10,7 @@ from uuid import uuid4
 
 import pytest
 
-from flext_ldap import settings
-from tests import tm, u
+from tests import settings, tm, u
 
 
 class TestsFlextLdapAdminCredentials:
@@ -32,7 +31,7 @@ class TestsFlextLdapAdminCredentials:
             u.Tests.env_vars_context(configured, vars_to_clear=(missing,)),
             pytest.raises(KeyError) as failure,
         ):
-            u.Ldap.Tests.get_admin_credentials()
+            u.Tests.get_admin_credentials()
         tm.that(failure.value.args, eq=(missing,))
 
     @staticmethod
@@ -46,7 +45,7 @@ class TestsFlextLdapAdminCredentials:
             }
             with u.Tests.env_vars_context(configured):
                 tm.that(
-                    u.Ldap.Tests.get_admin_credentials(),
+                    u.Tests.get_admin_credentials(),
                     eq=(
                         configured["FLEXT_LDAP_BIND_DN"],
                         configured["FLEXT_LDAP_BIND_PASSWORD"],
