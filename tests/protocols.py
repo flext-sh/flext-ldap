@@ -11,20 +11,17 @@ from __future__ import annotations
 
 from flext_tests import FlextTestsProtocols
 
-from flext_ldap import FlextLdapProtocols
+from tests import FlextLdapProtocols
 
 
 class TestsFlextLdapProtocols(FlextTestsProtocols, FlextLdapProtocols):
     """Protocol definitions for flext-ldap tests."""
 
-    class Ldap(FlextLdapProtocols.Ldap):
-        """Flext-ldap-specific test protocols."""
+    class Tests(FlextTestsProtocols.Tests):
+        """Project-specific test protocols.
 
-        class Tests(FlextTestsProtocols.Tests):
-            """Project-specific test protocols.
-
-            Extends TestsFlextProtocols.Tests with flext-ldap-specific protocols.
-            """
+        Extends TestsFlextProtocols.Tests with flext-ldap-specific protocols.
+        """
 
 
 p = TestsFlextLdapProtocols

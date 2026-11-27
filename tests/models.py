@@ -14,36 +14,32 @@ from typing import override
 
 from flext_tests import FlextTestsModels
 
-from flext_ldap import FlextLdapModels
-from tests import TestsFlextLdapServiceBase, p, r
+from tests import FlextLdapModels, TestsFlextLdapServiceBase, p, r
 
 
 class TestsFlextLdapModels(FlextLdapModels, FlextTestsModels):
     """Test models composed from TestsFlextModels plus m."""
 
-    class Ldap(FlextLdapModels.Ldap):
-        """LDAP test models."""
+    class Tests(FlextTestsModels.Tests):
+        """Test fixture models namespace."""
 
-        class Tests:
-            """Test fixture models namespace."""
+        FAIL_ERROR_MESSAGE = "nope"
 
-            FAIL_ERROR_MESSAGE = "nope"
+        class SuccessService(TestsFlextLdapServiceBase[bool]):
+            """Test service that always succeeds."""
 
-            class SuccessService(TestsFlextLdapServiceBase[bool]):
-                """Test service that always succeeds."""
+            @override
+            def execute(self) -> p.Result[bool]:
+                return r[bool].ok(value=True)
 
-                @override
-                def execute(self) -> p.Result[bool]:
-                    return r[bool].ok(value=True)
+        class FailService(TestsFlextLdapServiceBase[bool]):
+            """Test service that always fails."""
 
-            class FailService(TestsFlextLdapServiceBase[bool]):
-                """Test service that always fails."""
-
-                @override
-                def execute(self) -> p.Result[bool]:
-                    return r[bool].fail(
-                        TestsFlextLdapModels.Ldap.Tests.FAIL_ERROR_MESSAGE,
-                    )
+            @override
+            def execute(self) -> p.Result[bool]:
+                return r[bool].fail(
+                    TestsFlextLdapModels.Tests.FAIL_ERROR_MESSAGE,
+                )
 
 
 # Short aliases for tests
