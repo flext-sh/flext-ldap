@@ -15,7 +15,7 @@ from typing import Annotated
 from flext_core import FlextConfig
 from pydantic import Field
 
-from flext_ldap.config_models import FlextLdapModelsConfigNamespace
+from flext_ldap import FlextLdapModelsConfigNamespace
 
 
 class FlextLdapConfig(FlextConfig):
