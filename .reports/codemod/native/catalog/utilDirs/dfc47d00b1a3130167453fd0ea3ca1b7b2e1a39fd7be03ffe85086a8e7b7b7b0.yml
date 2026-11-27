@@ -1,0 +1,1 @@
+{"id":"551fa5818ddbb712a5c645e188ce712e03fbf7d4db65ca14a0563ac090998403","language":"python","rule":{"kind":"class_definition","inside":{"kind":"block","inside":{"kind":"class_definition","has":{"field":"superclasses","has":{"kind":"identifier","pattern":"$FTBASE","regex":"^(FlextTests[A-Z][A-Za-z0-9]*|flext_tests_[ctmpu])$"}}}}}}

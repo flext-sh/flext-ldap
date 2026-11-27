@@ -1,0 +1,1 @@
+{"id":"b5b308927d95a4d684cc2916e3899ad58fe2ff2e738eb34f02e50bb1e02bc9f4","language":"python","rule":{"kind":"import_from_statement","all":[{"has":{"pattern":"u","stopBy":"end"}},{"any":[{"has":{"field":"module_name","matches":"facade-package"}},{"has":{"kind":"relative_import"}}]},{"not":{"has":{"kind":"aliased_import","stopBy":"end","has":{"pattern":"u","stopBy":"end"}}}}]}}

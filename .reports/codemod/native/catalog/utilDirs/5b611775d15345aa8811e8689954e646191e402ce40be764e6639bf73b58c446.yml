@@ -1,0 +1,1 @@
+{"id":"cddbae3c248213cb27606e1a66fa9344ca17146e0e3787428ba35d52d85c665f","language":"python","rule":{"kind":"return_statement","any":[{"regex":"^return\\s*$"},{"has":{"matches":"d9abee601c78b7552f927fab396e2fe15aa9fe15eeb4f18ad859ec06bff5c04f"}}]}}

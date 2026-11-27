@@ -1,0 +1,1 @@
+{"id":"exports--flext_ldap.adapters","language":"Python","rule":{"regex":"^(?:FlextLdapAdapterHost|FlextLdapEntryAdapter|FlextLdapLdap3Adapter)$"}}

@@ -1,0 +1,1 @@
+{"id":"cdb81a6669b2b0254d1d3447e80b65ea92d58531d9132c4e47c0f9998e957c9d","language":"python","rule":{"kind":"import_from_statement","all":[{"has":{"field":"module_name","regex":"^pydantic$"}},{"has":{"pattern":"TypeAdapter","stopBy":"end"}},{"not":{"has":{"kind":"aliased_import","stopBy":"end","has":{"pattern":"TypeAdapter","stopBy":"end"}}}}]}}

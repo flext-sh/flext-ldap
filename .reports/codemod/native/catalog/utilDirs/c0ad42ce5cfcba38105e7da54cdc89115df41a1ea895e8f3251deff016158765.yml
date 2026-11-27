@@ -1,0 +1,1 @@
+{"id":"2ed5acc07c1ed95657fdb1887ab8c23181f69c0764984d1ceb66b264eae3e5c9","language":"python","rule":{"kind":"import_from_statement","all":[{"has":{"pattern":"u","stopBy":"end"}},{"has":{"field":"module_name","regex":"^(?:tests|flext_tests)$"}}]}}

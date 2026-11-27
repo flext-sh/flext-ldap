@@ -1,0 +1,1 @@
+{"id":"6c2ffc9cced6773fb024584da851c1f5b7a93733733450dc3fddcd73e8a9fa13","language":"python","rule":{"kind":"import_from_statement","all":[{"has":{"field":"module_name","regex":"^typing$"}},{"has":{"stopBy":"end","kind":"dotted_name","regex":"^Dict$","not":{"inside":{"kind":"aliased_import"}}}}]}}
