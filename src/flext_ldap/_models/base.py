@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_ldap.config_models import FlextLdapModelsConfigNamespace
+from flext_ldap import FlextLdapModelsConfigNamespace
 
 
 class FlextLdapModelsBase(FlextLdapModelsConfigNamespace):

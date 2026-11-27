@@ -472,10 +472,10 @@ class TestsFlextLdapUtilitiesUnitFilter:
 
     # --- normalize_value_set ---
     @staticmethod
-    def test_normalize_value_set_lowercases_and_drops_empty() -> None:
-        """Verify normalize value set lowercases and drops empty."""
-        result = u.Ldap.normalize_value_set(["Alice", "BOB", ""])
-        tm.that(result, eq=frozenset({"alice", "bob"}))
+    def test_normalize_value_set_preserves_exact_value_identity() -> None:
+        """Case-sensitive values such as credentials keep their exact identity."""
+        result = u.Ldap.normalize_value_set(["Alice", "alice", ""])
+        tm.that(result, eq={"Alice", "alice", ""})
 
 
 class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
@@ -503,14 +503,14 @@ class TestsFlextLdapUtilitiesUnitProcess(TestsFlextLdapUtilitiesUnit):
         tm.that(changes, lacks="cn")
 
     @staticmethod
-    def test_process_new_attributes_value_comparison_is_case_insensitive() -> None:
-        """Verify process new attributes value comparison is case insensitive."""
+    def test_process_new_attributes_value_comparison_is_exact() -> None:
+        """A value differing only in case is a real change to replace."""
         changes, _processed = u.Ldap.process_new_attributes(
             {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE]},
             {c.Ldap.AttributeName.COMMON_NAME: [c.Ldap.Tests.STRING_SIMPLE_UPPER]},
             frozenset(),
         )
-        tm.that(changes, lacks=c.Ldap.AttributeName.COMMON_NAME)
+        tm.that(changes, has=c.Ldap.AttributeName.COMMON_NAME)
 
     @staticmethod
     def test_process_new_attributes_ignored() -> None:
